@@ -1,1 +1,1 @@
-from .qernel import Qernel, Input
+from .qernel import Qernel, QernelArgs

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 
-from qstack.qernel import Qernel, Input
+from qstack.qernel import Qernel, QernelArgs
 
 
 class QOSEngineI(ABC):
@@ -12,7 +12,7 @@ class QOSEngineI(ABC):
         pass
 
     @abstractmethod
-    def execute_qernel(self, qid: int, input: Input, exec_args: Dict[str, Any]) -> None:
+    def execute_qernel(self, qid: int, args: QernelArgs, shots: int) -> None:
         pass
 
 
