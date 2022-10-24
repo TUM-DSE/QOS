@@ -2,7 +2,7 @@ from typing import Any, Dict
 from qiskit_aer import AerSimulator
 
 from qstack.qernel import Qernel, QernelArgs
-from qstack.qos.types import QPUWrapper
+from qstack.types import QPUWrapper
 
 
 class IBMQQPU(QPUWrapper):
@@ -23,7 +23,6 @@ class IBMQQPU(QPUWrapper):
     def execute_qernel(self, qid: int, args: QernelArgs, shots: int) -> None:
         qernel = self._qernels[qid]
         circ = qernel.with_input(args=args)
-        
 
     def cost(self, qid: int) -> float:
         pass

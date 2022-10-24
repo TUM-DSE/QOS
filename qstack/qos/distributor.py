@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
-from qstack.qernel.qernel import Input, Qernel
-from qstack.qos.types import QOSEngineI, QPUWrapper
+from qstack.qernel.qernel import Qernel, QernelArgs
+from qstack.types import QOSEngineI, QPUWrapper
 
 
 class Distributor(QOSEngineI):
@@ -14,5 +14,7 @@ class Distributor(QOSEngineI):
     def register_qernel(self, qernel: Qernel, compile_args: Dict[str, Any]) -> int:
         pass
 
-    def execute_qernel(self, qid: int, input: Input, exec_args: Dict[str, Any]) -> None:
+    def execute_qernel(
+        self, qid: int, input: QernelArgs, exec_args: Dict[str, Any]
+    ) -> None:
         pass
