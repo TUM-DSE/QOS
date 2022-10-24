@@ -2,14 +2,14 @@ from dataclasses import dataclass
 from typing import Dict, Optional, Sequence, Union
 
 from qiskit.circuit.quantumcircuit import (
+    Bit,
+    Instruction,
+    InstructionSet,
+    Parameter,
+    ParameterValueType,
     QuantumCircuit,
     Qubit,
-    Bit,
     Register,
-    InstructionSet,
-    ParameterValueType,
-    Instruction,
-    Parameter,
 )
 
 
