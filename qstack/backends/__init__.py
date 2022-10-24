@@ -1,1 +1,1 @@
-from _ibm import IBMQQPU
+from ._ibm import IBMQQPU
