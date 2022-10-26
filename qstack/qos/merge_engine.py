@@ -6,10 +6,10 @@ from qstack.types import QPUWrapper
 class MergeEngine:
     """QOS engine for merging qernels based on a matching score"""
     
-    default_qpu = None
+    _qpu = None
     
     def __init__(self, qpu : QPUWrapper = None) -> None:
-        self.default_qpu = qpu
+        self._qpu = qpu
         
     def merge_qernels(self, qernel1: Qernel, qernel2: Qernel, qpu: QPUWrapper = None, forced: bool = False) -> Qernel:
     """ Merge Qernels if compatible or if forced=True"""
