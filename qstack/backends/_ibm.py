@@ -14,6 +14,10 @@ from qstack.types import QPUWrapper
 
 
 class IBMQQPU(QPUWrapper):
+	
+    #Added this, check if you agree
+    backend_name:str
+
     def __init__(
         self, backend_name: str, provider: Optional[AccountProvider] = None
     ) -> None:
