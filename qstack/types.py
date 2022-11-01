@@ -32,22 +32,15 @@ class Job():
 	costs:Dict[str, float]
 
 
-class Scheduler(ABC):
-	'''Base Abstract Scheduler Class'''
+class scheduler_policy(ABC):
 
-	'''The advise method outputs where should the distributor insert the new job
-	based on the input that the scheduler policy needs'''
 	@abstractmethod
-	def advise(self, **kwargs):
+	def advise(self, **kargs):
 		pass
 
 
-class fifo_policy(Scheduler):
-	'''First Come First Served Policy or First In First Out'''
-	'''
-	This policy works with a single-queue. The scheduler assigns the oldest
-	job on the queue to the 
-	'''
-	def advise(self, run_costs:Dict[str, Any], ):
-		#TODO
+class distributor_policy(ABC):
+
+	@abstractmethod
+	def advise(self, **kargs):
 		pass
