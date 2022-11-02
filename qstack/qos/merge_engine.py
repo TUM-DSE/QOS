@@ -8,7 +8,7 @@ class MergeEngine:
     
     _qpu = None
     
-    def __init__(self, qpu : QPUWrapper = None) -> None:
+    def __init__(self, qpu : QPUWrapper) -> None:
         self._qpu = qpu
      
     def __merge_qernels(self, q1: Qernel, q2: Qernel) -> Qernel:
@@ -23,23 +23,21 @@ class MergeEngine:
         
         return toReturn
     
-    def merge_qernels(self, q1: Qernel, q2: Qernel, qpu: QPUWrapper = None, forced: bool = False, simThres: float = 0.8, costThres: float = 0.3) -> Qernel:
+    def merge_qernels(self, q1: Qernel, q2: Qernel, forced: bool = False, simThres: float = 0.8, costThres: float = 0.3) -> Qernel:
     """ Merge Qernels if compatible or if forced=True"""
         if forced is True:
             return self.__merge_qernels(q1, q2)
         else:
-            if self.__qpu is None and qpu is None:
-                raise ValueError("Need a QPU to compute cost on")
             score = self.get_matching_score(q1, q2)
             if score >= simThres:
                 q3 = self.__merge_qernels(q1, q2)
-                id = qpu.register_qernel(q3)
-                cost = qpu.cost(id)
+                id = self._qpu.register_qernel(q3)
+                cost = self._qpu.cost(id)
                 if cost <= costThres:
                     return q3
             return None
     
-    def find_best_match(self, q1: Qernel, qernels: List, qpu: QPUWrapper = None, simThres: float = 0.8) -> Qernel:
+    def find_best_match(self, q1: Qernel, qernels: List, simThres: float = 0.8) -> Qernel:
         max = 0
         toReturn = None
         
@@ -52,7 +50,7 @@ class MergeEngine:
         return toReturn
             
     
-    def get_matching_score(self, q1: Qernel, q2: Qernel, qpu: QPUWrapper = None) -> float:
+    def get_matching_score(self, q1: Qernel, q2: Qernel) -> float:
     """ Get a matching score in [0,1] for two Qernels"""
         score = 1.0
     
