@@ -31,6 +31,10 @@ class Job():
 	_qernel:Qernel
 	costs:Dict[str, float]
 
+	def __init__(self, qernel) -> None:
+		self._qernel = qernel
+		self.costs={}
+
 
 class scheduler_policy(ABC):
 

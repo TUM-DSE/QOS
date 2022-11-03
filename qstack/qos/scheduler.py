@@ -1,9 +1,7 @@
-import secrets
-from backends import IBMQQPU
 from typing import Any, Dict, List
 
 from qstack.qernel.qernel import Qernel, QernelArgs
-from qstack.types import QOSEngineI, QPUWrapper, Job, scheduler_policy 
+from qstack.types import QOSEngineI, scheduler_policy 
 
 
 class Scheduler(QOSEngineI):
@@ -16,7 +14,6 @@ class Scheduler(QOSEngineI):
 	def execute_qernel(self, qid: int, args: QernelArgs, shots: int) -> None:
 		#TODO
 		pass
-
 
 class fifo_policy(scheduler_policy):
 	'''First Come First Served Policy or First In First Out'''
