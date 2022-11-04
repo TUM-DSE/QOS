@@ -7,9 +7,13 @@ class MergeEngine:
     """QOS engine for merging qernels based on a matching score"""
     
     _qpu = None
+    _backendCNOTerror = 0
+    _backendReadoutError = 0
     
     def __init__(self, qpu : QPUWrapper) -> None:
         self._qpu = qpu
+        self._backendCNOTerror = self._qpu.properties().gate_error('cx',(1,0))
+        self._backendReadoutError = self._qpu.properties().readout_error(0)
      
     def __merge_qernels(self, q1: Qernel, q2: Qernel) -> Qernel:
         toReturn = Qernel(q1.num_qubits + q2.num_qubits, q1.num_clbits + q2.num_clbits)
@@ -55,13 +59,13 @@ class MergeEngine:
         score = 1.0
     
         depthDiff = self.__depthComparison(q1, q2)
-        score = score - 0.3 * depthDiff
+        score = score - 0.2 * depthDiff
         
-        cnotDiff = self.__cnotComparison(q1, q2, 100)
+        cnotDiff = self.__cnotComparison(q1, q2)
         score = score - 0.4 * cnotDiff
         
-        measurementDiff = self.__measurementComparison(q1, q2, 20)
-        score = score - 0.3 * measurementDiff
+        measurementDiff = self.__measurementComparison(q1, q2)
+        score = score - 0.4 * measurementDiff
         
         return score 
         
@@ -73,7 +77,7 @@ class MergeEngine:
         return depthDiffPerc
 
 
-    def __cnotComparison(q1: Qernel, q2: Qernel, threshold: int) -> int:
+    def __cnotComparison(q1: Qernel, q2: Qernel) -> float:
         ops1 = q1.count_ops()
         ops2 = q2.count_ops()
         nCNOTs1, nCNOTs2 = 0,0
@@ -86,25 +90,23 @@ class MergeEngine:
             if key == 'cx':
                 nCNOTs2 = value
         
-        if nCNOTs1 + nCNOTs2 > threshold:
-            return 1
+        CNOTdensity = (nCNOTs1 + nCNOTs2) / (q1.width() + q2.width())
         
-        return 0 
+        return self._backendCNOTerror * CNOTdensity 
 
-    def __measurementComparison(q1: Qernel, q2: Qernel, threshold: int) -> int:
+    def __measurementComparison(q1: Qernel, q2: Qernel) -> float:
         ops1 = q1.count_ops()
         ops2 = q2.count_ops()
         nMs1, nMs2 = 0,0
         
         for (key, value) in ops1.items():
-            if key == 'm':
+            if key == 'measure':
                 nMs1 = value
                 
         for (key, value) in ops2.items():
-            if key == 'm':
+            if key == 'measure':
                 nMs2 = value
         
-        if (nMs1 - circ1.num_qubits) + (nMs2 - circ2.num_qubits) > threshold:
-            return 1
-            
-        return 0 
+        measurementDensity = (nMs1 + nMs2 - q1.num_qubits + q2.num_qubits) / (q1.width() + q2.width())
+        
+        return self._backendReadoutError * measurementDensity
