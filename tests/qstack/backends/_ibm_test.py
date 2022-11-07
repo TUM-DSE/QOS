@@ -1,6 +1,7 @@
-from qstack.backends import IBMQQPU
 import pytest
 from qiskit import IBMQ
+
+from qstack.backends import IBMQQPU
 
 
 @pytest.fixture
