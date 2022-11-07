@@ -42,13 +42,13 @@ class Distributor(QOSEngineI):
 		# Send the job to the QPU as advised by the policy
 		print("Job sent to QPU", advise_qpu.backend_name)
 
-		advise_qpu.execute_qernel(self.qernel_id_counter, None, 10)
+		#advise_qpu.execute_qernel(self.qernel_id_counter, None, 10)
 
 		self.qernel_id_counter +=1
 
 		return self.qernel_id_counter-1
 
-	def execute_qernel(self, qid: int) -> None:
+	def execute_qernel(self, qid: int, args: QernelArgs, shots: int) -> None:
 		pass
 
 	def add_QPU(self, new_QPU)->int:

@@ -56,12 +56,12 @@ class QPUWrapper(QOSEngineI, ABC):
 class scheduler_policy(ABC):
 
 	@abstractmethod
-	def advise(self, **kargs):
+	def advise(self, kargs:Dict):
 		pass
 
 
 class distributor_policy(ABC):
 
 	@abstractmethod
-	def advise(self, **kargs):
+	def advise(self, kargs:Dict) -> QPUWrapper:
 		pass
