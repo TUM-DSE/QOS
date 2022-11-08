@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 import sys
+from threading import Thread, Lock, Semaphore
 
 from qstack.qernel import Qernel, QernelArgs
 
@@ -25,11 +26,25 @@ class Job():
 		self._qernel = qernel
 		self.costs={}
 
+class scheduler_policy(ABC):
+
+	@abstractmethod
+	def advise(self, new_job:Job, kargs:Dict):
+		pass
+
 class Scheduler_base(QOSEngineI, ABC):
 	'''Local scheduler abstract class so we can use it in this file without
 	importing the scheduler file because it creates a circular dependency
 	But it can't be really abstract because this attribute is needed'''
 	queue:List[Job]
+	queue_lock: Lock
+	queue_counter: Semaphore
+	policy:scheduler_policy
+	'''For now registering a qernel will open a new thread to register the qernel and exit just after that.
+	This is not the best implementation in terms of performance, it would be best to have permanently two runnuing threads
+	one for registering and another for executing qernels'''
+	#register_thread:threading.Thread
+	#executer_thread:threading.Thread
 
 	@abstractmethod
 	def register_qernel(self, qernel: Qernel, compile_args: Dict[str, Any]) -> int:
@@ -52,13 +67,6 @@ class QPUWrapper(QOSEngineI, ABC):
 	@abstractmethod
 	def overhead(self, qid: int) -> int:
 		pass
-
-class scheduler_policy(ABC):
-
-	@abstractmethod
-	def advise(self, kargs:Dict):
-		pass
-
 
 class distributor_policy(ABC):
 
