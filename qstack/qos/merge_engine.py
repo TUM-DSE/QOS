@@ -1,3 +1,5 @@
+from typing import List
+
 from qiskit.circuit.quantumcircuit import QuantumCircuit
 from qstack.qernel.qernel import Qernel, QernelArgs
 from qstack.types import QPUWrapper
@@ -28,7 +30,7 @@ class MergeEngine:
         return toReturn
     
     def merge_qernels(self, q1: Qernel, q2: Qernel, forced: bool = False, simThres: float = 0.8, costThres: float = 0.3) -> Qernel:
-    """ Merge Qernels if compatible or if forced=True"""
+        """ Merge Qernels if compatible or if forced=True"""
         if forced is True:
             return self.__merge_qernels(q1, q2)
         else:
@@ -55,7 +57,7 @@ class MergeEngine:
             
     
     def get_matching_score(self, q1: Qernel, q2: Qernel) -> float:
-    """ Get a matching score in [0,1] for two Qernels"""
+        """ Get a matching score in [0,1] for two Qernels"""
         score = 1.0
     
         depthDiff = self.__depthComparison(q1, q2)

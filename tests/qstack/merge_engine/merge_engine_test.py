@@ -1,7 +1,11 @@
 import numpy as np
+import sys
+
+#sys.path.insert(0, '/mnt/c/Users/giort/Documents/GitHub/qos/')
 
 #from qiskit.quantum_info.analysis import hellinger_fidelity
-from qiskit.compiler.transpile import * 
+from qiskit.compiler import transpile  
+
 from qiskit.providers.fake_provider import *
 
 from qstack.benchmarking import (
@@ -13,13 +17,9 @@ from qstack.benchmarking import (
     VQEBenchmark,
 )
 
-from qstack.qos.merge_engine import (
-    MergeEngine
-)
+from qstack.qos.merge_engine import MergeEngine
 
-from qstack.qos.backends import (
-    IBMQQPU
-)
+from qstack.backends import IBMQQPU
 
 def get_counts(counts1, counts2):
     kl = len(list(counts1.keys())[0])
