@@ -70,11 +70,11 @@ class Job:
 
 class scheduler_policy(ABC):
     @abstractmethod
-    def advise(self, new_job: Job, kargs: Dict):
+    def schedule(self, new_job: Job, kargs: Dict):
         pass
 
 
 class distributor_policy(ABC):
     @abstractmethod
-    def advise(self, kargs: Dict) -> QPUWrapper:
+    def distribute(self, kargs: Dict) -> QPUWrapper:
         pass

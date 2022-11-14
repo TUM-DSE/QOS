@@ -11,13 +11,17 @@ from qiskit.providers.models.backendproperties import BackendProperties
 
 from qstack.qernel.qernel import Qernel, QernelArgs
 from qstack.types import QPUWrapper
-
+from qstack.qos.scheduler import Scheduler
 
 class IBMQQPU(QPUWrapper):
 
-    def __init__(
-        self, backend_name: str, provider: Optional[AccountProvider] = None
-    ) -> None:
+    scheduler: Scheduler
+    backend_name: str
+
+    def __init__(self, backend_name: str, scheduler_policy:str, provider: Optional[AccountProvider] = None) -> None:
+        self.scheduler = Scheduler(scheduler_policy)
+        self.backend_name = backend_name
+
         if "Fake" in backend_name:
             if provider is not None:
                 warn("AccountProvider passed but fake backend requested.")
@@ -61,8 +65,7 @@ class IBMQQPU(QPUWrapper):
         self._qid_ctr += 1
         return self._qid_ctr - 1
 
-    def execute_qernel(self, qid: int, args: QernelArgs, shots: int) -> None:
-        qernel = self._qernels[qid]
+    def execute_qernel(self, qernel:Qernel, args: QernelArgs, shots: int) -> None:
         circ = qernel.with_input(args=args)
 
     def cost(self, qernel: Qernel) -> float:

@@ -2,6 +2,7 @@ import secrets
 import logging
 from typing import Any, Dict, List
 import pdb
+import time
 from qstack.qernel import Qernel, QernelArgs
 from qstack.types import QPUWrapper, Job, distributor_policy
 
@@ -25,8 +26,6 @@ class Distributor:
     def __init__(self, qpus: List[QPUWrapper], policy: str) -> None:
         # self._queue = [-1] # To avoid the queue from being removed by the garbage collector if there are no objects on the list
         self._qpus = qpus
-        format = "%(asctime)s: %(message)s"
-        logging.basicConfig(format=format, level=logging.INFO, datefmt="%H:%M:%S")
 
         if policy == "fifo":
             self.policy = fifo_policy()
@@ -52,12 +51,9 @@ class Distributor:
         # logging.debug("Costs: ", {"backends": self._qpus, "costs": running_costs})
         # print("Costs: ", {"backends": self._qpus, "costs": running_costs})
 
-        # Ask for advice from the distributor policy
-        choosen_qpu = self.policy.advise(
+        choosen_qpu = self.policy.distribute(new_job,
             {"backends": self._qpus, "costs": running_costs}
         )
-
-        new_job.assiged_qpu = choosen_qpu
 
         logging.info(
             "[INFO] - Job %d will be sent to QPU: %s",
@@ -65,7 +61,6 @@ class Distributor:
             choosen_qpu.backend_name,
         )
         # pdb.set_trace()
-        choosen_qpu.scheduler.register_job(new_job, 10)
 
         return self.job_id_counter - 1
 
@@ -85,12 +80,15 @@ class Distributor:
 
 
 class fifo_policy(distributor_policy):
-    def advise(self, kargs: Dict) -> QPUWrapper:
+    def distribute(self, new_job:Job, kargs: Dict) -> QPUWrapper:
         """This method simply advises and does not change the queue."""
         """Since this is the FIFO policy it simply returns the zero index and
 		the QPU with the smallest queue"""
 
+        print("Distributing job")
+
         all_queues = []
+        choosen_qpu:QPUWrapper
         backends = kargs[
             "backends"
         ]  # This returns all the backends/QPU available to the Distributor
@@ -99,10 +97,30 @@ class fifo_policy(distributor_policy):
         # with the least number of jobs
         qpu: QPUWrapper
         for qpu in backends:
-            # qpu.scheduler.queue_lock.acquire()
-            all_queues.append(len(qpu.scheduler.queue))
-            # qpu.scheduler.queue_lock.release()
+            qpu.scheduler.queue_lock.acquire()
 
-        # Returns the queue with the least number of jobs
-        # print("Current queues:", all_queues, "better qpu", min(all_queues))
+        for qpu in backends:
+            all_queues.append(len(qpu.scheduler.queue))
+        
+        # Puts job on the queue with the least number of jobs
+        choosen_qpu = backends[all_queues.index(min(all_queues))]
+        new_job.assiged_qpu = choosen_qpu
+
+        print("Registring now")
+        
+        choosen_qpu.scheduler.register_job(new_job, 10)
+
+        for qpu in backends:
+            #if qpu == choosen_qpu:
+            #    continue
+            qpu.scheduler.queue_lock.release()
+            #print(qpu.scheduler)
+
+        time.sleep(5)
+
+        #choosen_qpu.scheduler.queue_lock.release()
+
+        print("Current queues:", all_queues)
+        print("Choosen QPU:", choosen_qpu)
+
         return backends[all_queues.index(min(all_queues))]
