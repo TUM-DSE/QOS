@@ -6,25 +6,18 @@ import time
 from qstack.qernel import Qernel, QernelArgs
 from qstack.types import QPUWrapper, Job, distributor_policy
 
-# from qstack.qos import Scheduler
 
-# This engine manages the main queue it is the same as the Global Scheduler
 class Distributor:
-    """QOS Engine for scheduling qernels on a set of distributed QPUs"""
+    """
+    Engine for assigning qernels to QPUs based on a specific policy set
+    by the user.
+    """
 
-    """For now lets just use the IMBQ QPUs, but in the future we might
-	need to introduce a `type` variable which indicates which type of QPU we
-	are using"""
-
-    # _qpus: List[(IBMQQPU, Scheduler)]
     _qpus: List[QPUWrapper]
     policy: distributor_policy
     job_id_counter = 0
-    """The distributor has the information about every QPU's queue"""
-    # _queue: List[Job]
 
     def __init__(self, qpus: List[QPUWrapper], policy: str) -> None:
-        # self._queue = [-1] # To avoid the queue from being removed by the garbage collector if there are no objects on the list
         self._qpus = qpus
 
         if policy == "fifo":
@@ -39,88 +32,86 @@ class Distributor:
         job is created to be filled with the respective costs for each QPU, and
         the selected QPU afterwards
         """
+
         running_costs = {}
         choosen_qpu: QPUWrapper
         self.job_id_counter += 1
         new_job = Job(qernel, self.job_id_counter)
 
-        # Compute all cost of running the qernel on every QPU
+        ''' TODO - Compute all cost of running the qernel on every QPU, this is the job of the
+        matching engine, should be moved from here'''
         for i in self._qpus:
             running_costs[i.backend_name] = i.cost(qernel)
 
-        # logging.debug("Costs: ", {"backends": self._qpus, "costs": running_costs})
-        # print("Costs: ", {"backends": self._qpus, "costs": running_costs})
+        # Just to format the cost string to show on the debugs log
+        aux_string = str([(i.backend_name, running_costs[i.backend_name]) for i in self._qpus]).replace("\',", ":").replace("[","").replace("{","").replace("}","").replace("]", "").replace("'", "")
+        logging.log(42, "Costs: %s", aux_string)
 
         choosen_qpu = self.policy.distribute(new_job,
-            {"backends": self._qpus, "costs": running_costs}
-        )
+            {"backends": self._qpus,
+            "costs": running_costs})
 
-        logging.info(
-            "[INFO] - Job %d will be sent to QPU: %s",
-            self.job_id_counter,
-            choosen_qpu.backend_name,
-        )
-        # pdb.set_trace()
+        logging.info("Job %d will be sent to %s", self.job_id_counter, choosen_qpu.backend_name)
 
         return self.job_id_counter - 1
 
-    def register_qernel(self, qernel: Qernel, compile_args: Dict[str, Any]) -> int:
-        pass
-
-    def execute_qernel(self, qid: int, args: QernelArgs, shots: int) -> None:
-        pass
-
     def add_QPU(self, new_QPU) -> int:
+        '''
+        Simple method to add a QPU to the list of QPUs without
+        the need recreate the Distributor object
+        '''
+
         self._qpus.append(new_QPU)
         return self._qpus.index(new_QPU)  # Returns the QPU id
 
-    def remove_QPU(self, qpuid) -> int:
-        self._qpus.remove(qpuid)
-        return qpuid
+
+    def remove_QPU(self, qpu_id) -> int:
+        '''
+        Simple method to remove a QPU from the list of QPUs
+        '''
+        
+        self._qpus.remove(qpu_id)
+        return qpu_id
 
 
 class fifo_policy(distributor_policy):
+    
     def distribute(self, new_job:Job, kargs: Dict) -> QPUWrapper:
-        """This method simply advises and does not change the queue."""
-        """Since this is the FIFO policy it simply returns the zero index and
-		the QPU with the smallest queue"""
-
-        print("Distributing job")
+        """
+        Distributes a new job to a QPU based on the FIFO
+        policy and the QPU with the least elements on the queue.
+        Ideally this method should not change the queue just send
+        which QPU to send to, however I was having some problems
+        with the locks, for it is working but might change in the
+        future
+        """
 
         all_queues = []
-        choosen_qpu:QPUWrapper
-        backends = kargs[
-            "backends"
-        ]  # This returns all the backends/QPU available to the Distributor
+        chosen_qpu:QPUWrapper
+        qpu:QPUWrapper
+        backends = kargs["backends"]
 
-        # Fetches the queues from all the QPU local schedulers to find the queue
-        # with the least number of jobs
-        qpu: QPUWrapper
+        '''Locking all the queues from being changed until the policy
+        finishes, this is definitly not the best way of doing this, need
+        to think of a better way in the future'''            
         for qpu in backends:
             qpu.scheduler.queue_lock.acquire()
 
+        '''Fetches the queues from all the QPU local schedulers. Another way of doing
+        this could be by looking at the semaphores values, but in this case we should
+        take into consideration that the scheduler is decrementing the semaphore as
+        soon as the job arrives and not at the end of running the job'''
         for qpu in backends:
             all_queues.append(len(qpu.scheduler.queue))
         
-        # Puts job on the queue with the least number of jobs
-        choosen_qpu = backends[all_queues.index(min(all_queues))]
-        new_job.assiged_qpu = choosen_qpu
-
-        print("Registring now")
+        chosen_qpu = backends[all_queues.index(min(all_queues))]
+        new_job.assiged_qpu = chosen_qpu
         
-        choosen_qpu.scheduler.register_job(new_job, 10)
+        logging.log(42, "Assigned %s for job %d - (current queues: %s)", chosen_qpu.backend_name, new_job.id, str(all_queues))
 
         for qpu in backends:
-            #if qpu == choosen_qpu:
-            #    continue
             qpu.scheduler.queue_lock.release()
-            #print(qpu.scheduler)
-
-        time.sleep(5)
-
-        #choosen_qpu.scheduler.queue_lock.release()
-
-        print("Current queues:", all_queues)
-        print("Choosen QPU:", choosen_qpu)
+        
+        chosen_qpu.scheduler.register_job(new_job, 10)
 
         return backends[all_queues.index(min(all_queues))]
