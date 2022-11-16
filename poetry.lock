@@ -144,6 +144,18 @@ plugins = ["setuptools"]
 requirements-deprecated-finder = ["pip-api", "pipreqs"]
 
 [[package]]
+name = "mapomatic"
+version = "0.7.0"
+description = "Mapomatic"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+qiskit-terra = ">=0.19"
+retworkx = ">=0.10.2"
+
+[[package]]
 name = "mpmath"
 version = "1.2.1"
 description = "Python library for arbitrary-precision floating-point arithmetic"
@@ -573,7 +585,7 @@ python-versions = ">=3.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "a7201d7206937dc4d5b4b5729460fcab61e3a02ef67460e314d02f6581e04f11"
+content-hash = "df231c26d202df6a753d426e49d50e67ce42e8af247ac5ad935964f61a29b2b7"
 
 [metadata.files]
 attrs = [
@@ -728,6 +740,9 @@ iniconfig = [
 isort = [
     {file = "isort-5.10.1-py3-none-any.whl", hash = "sha256:6f62d78e2f89b4500b080fe3a81690850cd254227f27f75c3a0c491a1f351ba7"},
     {file = "isort-5.10.1.tar.gz", hash = "sha256:e8443a5e7a020e9d7f97f1d7d9cd17c88bcb3bc7e218bf9cf5095fe550be2951"},
+]
+mapomatic = [
+    {file = "mapomatic-0.7.0.tar.gz", hash = "sha256:2e860d1489d9168c7341e756d4a393e30a888110df42a5c9baa001f9f20a6a50"},
 ]
 mpmath = [
     {file = "mpmath-1.2.1-py3-none-any.whl", hash = "sha256:604bc21bd22d2322a177c73bdb573994ef76e62edd595d17e00aff24b0667e5c"},
