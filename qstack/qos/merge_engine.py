@@ -14,8 +14,8 @@ class MergeEngine:
     
     def __init__(self, qpu : QPUWrapper) -> None:
         self._qpu = qpu
-        self._backendCNOTerror = self._qpu.properties().gate_error('cx',(1,0))
-        self._backendReadoutError = self._qpu.properties().readout_error(0)
+        self._backendCNOTerror = self._qpu._backend.properties().gate_error('cx',(1,0))
+        self._backendReadoutError = self._qpu._backend.properties().readout_error(0)
      
     def __merge_qernels(self, q1: Qernel, q2: Qernel) -> Qernel:
         toReturn = Qernel(q1.num_qubits + q2.num_qubits, q1.num_clbits + q2.num_clbits)
@@ -43,13 +43,13 @@ class MergeEngine:
                     return q3
             return None
     
-    def find_best_match(self, q1: Qernel, qernels: List, simThres: float = 0.8) -> Qernel:
+    def find_best_match(self, q1: Qernel, qernels: List) -> Qernel:
         max = 0
         toReturn = None
         
         for q2 in qernels:
             score = self.get_matching_score(q1, q2)
-            if score >= simThres and score > max:
+            if score > max:
                 max = score
                 toReturn = q2
         
@@ -71,7 +71,7 @@ class MergeEngine:
         
         return score 
         
-    def __depthComparison(q1: Qernel, q2: Qernel) -> float:
+    def __depthComparison(self, q1: Qernel, q2: Qernel) -> float:
         depthDiff = q1.depth() / q2.depth()
         
         depthDiffPerc = depthDiff if depthDiff >= 1 else 1 / depthDiff
@@ -79,7 +79,7 @@ class MergeEngine:
         return depthDiffPerc
 
 
-    def __cnotComparison(q1: Qernel, q2: Qernel) -> float:
+    def __cnotComparison(self, q1: Qernel, q2: Qernel) -> float:
         ops1 = q1.count_ops()
         ops2 = q2.count_ops()
         nCNOTs1, nCNOTs2 = 0,0
@@ -96,7 +96,7 @@ class MergeEngine:
         
         return self._backendCNOTerror * CNOTdensity 
 
-    def __measurementComparison(q1: Qernel, q2: Qernel) -> float:
+    def __measurementComparison(self, q1: Qernel, q2: Qernel) -> float:
         ops1 = q1.count_ops()
         ops2 = q2.count_ops()
         nMs1, nMs2 = 0,0

@@ -1,7 +1,8 @@
 import numpy as np
 import sys
+from collections import Counter
 
-#sys.path.insert(0, '/mnt/c/Users/giort/Documents/GitHub/qos/')
+sys.path.insert(0, '/mnt/c/Users/giort/Documents/GitHub/qos/')
 
 #from qiskit.quantum_info.analysis import hellinger_fidelity
 from qiskit.compiler import transpile  
@@ -39,16 +40,19 @@ provider = FakeProvider()
 backends = [x for x in provider.backends() if hasattr(x.configuration(), 'processor_type') and x.configuration().n_qubits > 20]
 backend = backends[np.random.randint(len(backends))]
 
-qpu = IBMQQPU(backend.name())
+#print(backend.backend_name)
+qpu = IBMQQPU("FakeWashingtonV2")
 
 merge_engine = MergeEngine(qpu)
 
 circuits = []
+benchs = []
 
-num_circuits = 30
+num_circuits = 300
 
 for x in range(0, num_circuits): 
-    circuits.append(GHZBenchmark(np.random.randint(10) + 1).circuit())
+    benchs.append(GHZBenchmark(np.random.randint(10) + 1))
+    circuits.append(benchs[x].circuit())
     circuits[x] = transpile(circuits[x], backend, optimization_level=3)   
 
 circ1 = circuits.pop(0)
@@ -57,19 +61,21 @@ counts1 = job1.result().get_counts()
 
 avrg = 0
 maxFid = 0
+index = 0
 
-max_tests = 10
+max_tests = 30
 
 for x in range(0, max_tests):
-    circ2 = circuits[np.random.randint(max - 1)]
+    index = np.random.randint(num_circuits - 1)
+    circ2 = circuits[index]
 
     circ3 = merge_engine.merge_qernels(circ1, circ2, forced=True)
     
     job2 = backend.run(circ3)
     counts2 = job2.result().get_counts()
-    counts3 = get_counts(counts1, counts2)    
+    counts3 = Counter(get_counts(counts1, counts2))    
 
-    oldScore = circ1.score(counts3)
+    oldScore = benchs[0].score(counts3)
 
     circ2 = merge_engine.find_best_match(circ1, circuits)
     
@@ -78,9 +84,9 @@ for x in range(0, max_tests):
     job2 = backend.run(circ3)
     counts2 = job2.result().get_counts()
     
-    counts3 = get_counts(counts1, counts2)
+    counts3 = Counter(get_counts(counts1, counts2))
                
-    newScore = circ1.score(counts3)
+    newScore = benchs[index].score(counts3)
 
     if (newScore - oldScore) > maxFid:
         maxFid = newScore - oldScore
