@@ -1,2 +1,2 @@
-# qos
-Quantum Operating System
+# qvm
+Quantum Virtual Machine
