@@ -2,22 +2,25 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 import sys
 
-from qstack.qernel import Qernel, QernelArgs
-
-class QOSEngineI(ABC):
-    """Generic interface for implementations of QOS Layers"""
+class QOSEngine(ABC):
+    """Generic interface for implementations of QOS Engines"""
 
     @abstractmethod
-    def register_qernel(self, qernel: Qernel, compile_args: Dict[str, Any]) -> int:
+    def register(self, args: Dict[str, Any]) -> int:
         pass
 
     @abstractmethod
-    def execute_qernel(self, qid: int, args: QernelArgs, shots: int) -> None:
+    def execute(self, id: int, args: Dict[str, Any]) -> None:
         pass
 
-class Job():
-	'''Job class that holds the Qernel to be run and the runinng costs for all QPUs'''
-	'''If we have alot of QPUs this might create a large overhead'''
+    @abstractmethod
+    def fetch(self, id: int, args: Dict[str, Any]) -> None:
+        pass
+
+
+# Task class that holds a single circuit to be run and the runinng costs for all QPUs
+# If we have alot of QPUs this might create a large overhead
+class Task(ABC):
 	_qernel:Qernel
 	costs:Dict[str, float]
 
@@ -25,10 +28,19 @@ class Job():
 		self._qernel = qernel
 		self.costs={}
 
+
+# Generic interface for implementations of QOS Engines
+class Backend(ABC):
+
+    @abstractmethod
+    def run(self, args: Dict[str, Any]) -> int:
+        pass
+
+'''
 class Scheduler_base(QOSEngineI, ABC):
-	'''Local scheduler abstract class so we can use it in this file without
-	importing the scheduler file because it creates a circular dependency
-	But it can't be really abstract because this attribute is needed'''
+	#Local scheduler abstract class so we can use it in this file without
+	#importing the scheduler file because it creates a circular dependency
+	#But it can't be really abstract because this attribute is needed
 	queue:List[Job]
 
 	@abstractmethod
@@ -65,3 +77,4 @@ class distributor_policy(ABC):
 	@abstractmethod
 	def advise(self, kargs:Dict) -> QPUWrapper:
 		pass
+'''

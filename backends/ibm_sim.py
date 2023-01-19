@@ -1,6 +1,7 @@
-from types import MethodType
 from typing import Any, Dict, Optional
 from warnings import warn
+
+from components.types import Backend
 
 import mapomatic as mm
 import qiskit.providers.fake_provider as FakeAccountProvider
@@ -9,11 +10,8 @@ from qiskit.providers.ibmq import AccountProvider
 from qiskit.providers.ibmq.ibmqbackend import IBMQSimulator
 from qiskit.providers.models.backendproperties import BackendProperties
 
-from qstack.qernel.qernel import Qernel, QernelArgs
-from qstack.types import QPUWrapper
 
-
-class IBMQQPU(QPUWrapper):
+class simulator(Backend):
     def __init__(
         self, backend_name: str, provider: Optional[AccountProvider] = None
     ) -> None:
