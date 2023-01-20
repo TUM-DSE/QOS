@@ -1,30 +1,37 @@
 from typing import Any, Dict, List
 
-class Scheduler(Scheduler_base):
-	'''Local scheduler. Each instance of it will run on a separate thread'''
-	#queue:List[Job]
 
-	def register_qernel(self, qernel: Qernel, compile_args: Dict[str, Any]) -> int:
-		#TODO
-		pass
+class QOS:
+    """Main API that will be exposed to the user"""
 
-	def execute_qernel(self, qid: int, args: QernelArgs, shots: int) -> None:
-		#TODO
-		pass
+    # queue:List[Job]
+
+    def register_qernel(self, qernel: Qernel, compile_args: Dict[str, Any]) -> int:
+        # TODO
+        pass
+
+    def execute_qernel(self, qid: int, args: QernelArgs, shots: int) -> None:
+        # TODO
+        pass
 
 
 class fifo_policy(scheduler_policy):
-	'''First Come First Served Policy or First In First Out'''
-	'''
+    """First Come First Served Policy or First In First Out"""
+
+    """
 	This policy works with a single-queue. The scheduler sends/executes the
 	oldest job on the queue
-	'''
+	"""
 
-	def advise(self, run_costs:Dict[str, Any], ):
-		#TODO
-		pass
+    def advise(
+        self,
+        run_costs: Dict[str, Any],
+    ):
+        # TODO
+        pass
 
-'''
+
+"""
 import secrets
 from typing import Any, Dict, List
 
@@ -105,4 +112,4 @@ class fifo_policy(distributor_policy):
 		
 		# Returns the queue with the least number of jobs
 		return backends[min(all_queues)]
-'''
+"""

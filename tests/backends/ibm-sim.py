@@ -2,7 +2,7 @@ from qiskit import IBMQ
 from qiskit.providers import fake_provider
 from qiskit import transpile
 from qiskit import QuantumCircuit
-
+from qiskit.tools.visualization import plot_histogram
 
 backend = fake_provider.FakeManilaV2()
 
@@ -17,8 +17,6 @@ circuit.draw()
 # Transpile the ideal circuit to a circuit that can be directly executed by the backend
 transpiled_circuit = transpile(circuit, backend)
 transpiled_circuit.draw()
-
-from qiskit.tools.visualization import plot_histogram
 
 # Run the transpiled circuit using the simulated fake backend
 job = backend.run(transpiled_circuit)
