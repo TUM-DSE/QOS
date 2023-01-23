@@ -3,19 +3,28 @@ from typing import Any, Dict, List
 import sys
 from threading import Thread, Lock, Semaphore
 
-from qstack.qernel import Qernel, QernelArgs
 
-
-class QOSEngineI(ABC):
-    """Generic interface for implementations of QOS Layers"""
+class QOSEngine(ABC):
+    """Generic interface for implementations of QOS Engines"""
 
     @abstractmethod
-    def register_qernel(self, qernel: Qernel, compile_args: Dict[str, Any]) -> int:
+    def register(self, args: Dict[str, Any]) -> int:
         pass
 
     @abstractmethod
-    def execute_qernel(self, qid: int, args: QernelArgs, shots: int) -> None:
+    def execute(self, id: int, args: Dict[str, Any]) -> None:
         pass
+
+    @abstractmethod
+    def fetch(self, id: int, args: Dict[str, Any]) -> None:
+        pass
+
+
+# Task class that holds a single circuit to be run and the runinng costs for all QPUs
+# If we have alot of QPUs this might create a large overhead
+class Task(ABC):
+    _qernel: Qernel
+    costs: Dict[str, float]
 
 
 class Scheduler_base(ABC):
@@ -23,11 +32,20 @@ class Scheduler_base(ABC):
     importing the scheduler file because it creates a circular dependency
     But it can't be really abstract because this attribute is needed"""
 
-    """For now registering a qernel will open a new thread to register the qernel and exit just after that.
-	This is not the best implementation in terms of performance, it would be best to have permanently two runnuing threads
-	one for registering and another for executing qernels"""
-    # register_thread:threading.Thread
-    # executer_thread:threading.Thread
+
+# Generic interface for implementations of QOS Engines
+class Backend(ABC):
+    @abstractmethod
+    def run(self, args: Dict[str, Any]) -> int:
+        pass
+
+
+'''
+class Scheduler_base(QOSEngineI, ABC):
+	#Local scheduler abstract class so we can use it in this file without
+	#importing the scheduler file because it creates a circular dependency
+	#But it can't be really abstract because this attribute is needed
+	queue:List[Job]
 
     @abstractmethod
     def register_job(self, qernel: Qernel, compile_args: Dict[str, Any]) -> int:
@@ -56,6 +74,7 @@ class QPUWrapper(ABC):
 class Job:
     """Job class that holds the Qernel to be run and the runinng costs for all QPUs"""
 
+<<<<<<< HEAD:qstack/types.py
     """If we have alot of QPUs this might create a large overhead"""
     _qernel: Qernel
     id: int
@@ -78,3 +97,10 @@ class distributor_policy(ABC):
     @abstractmethod
     def distribute(self, kargs: Dict) -> QPUWrapper:
         pass
+=======
+	@abstractmethod
+	def advise(self, kargs:Dict) -> QPUWrapper:
+		pass
+<<<<<<< HEAD:qstack/types.py
+=======
+'''

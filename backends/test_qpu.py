@@ -15,14 +15,19 @@ class TestQPU(QPUWrapper):
     backend_name: str
     _qernels: Dict[int, Qernel]
     gen_seed: int
+    policy: scheduler_policy
     scheduler: Scheduler
 
     def __init__(self, backend_name: str, gen_seed: int, policy: str) -> None:
         self.backend_name = backend_name
         self._qernels = {}
-        self.scheduler = Scheduler(policy)
+        self.scheduler = Scheduler()
+        self.scheduler.queue = []
         self._qid_ctr: int = 0
         self.gen_seed = gen_seed
+
+        if policy == "fifo":
+            self.policy = fifo_policy()
 
     def register_qernel(self, qernel: Qernel, compile_args: Dict[str, Any]) -> int:
         self._qernels[self._qid_ctr] = qernel
@@ -31,7 +36,7 @@ class TestQPU(QPUWrapper):
 
     def execute_qernel(self, qid: int, args: QernelArgs, shots: int) -> None:
         qernel = self._qernels[qid]
-        # print("Executing Qernel", qid, "[ETA:",  )
+        print("Executing Qernel", qid)
 
     def cost(self, qernel: Qernel) -> float:
         # curr_qernel = self._qernels[qid]

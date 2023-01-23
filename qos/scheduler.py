@@ -1,3 +1,29 @@
+from typing import Any, Dict, List
+
+from components.types import QOSEngine, Task, Backend
+
+class Scheduler(QOSEngine):
+	#queue:List[Job]
+
+	def register_qernel(self, qernel: Qernel, compile_args: Dict[str, Any]) -> int:
+		#TODO
+		pass
+
+	def execute_qernel(self, qid: int, args: QernelArgs, shots: int) -> None:
+		#TODO
+		pass
+
+
+class fifo_policy(scheduler_policy):
+	#First Come First Served Policy or First In First Out
+	#This policy works with a single-queue. The scheduler sends/executes the
+	#oldest job on the queue
+
+	def advise(self, run_costs:Dict[str, Any], ):
+		#TODO
+		pass
+
+'''
 import secrets
 import logging
 from typing import Any, Dict, List
@@ -6,6 +32,19 @@ import time
 from qstack.qernel import Qernel, QernelArgs
 from qstack.types import QPUWrapper, Job, distributor_policy
 
+#This engine manages the main queue it is the same as the Global Scheduler
+class Distributor(QOSEngineI):
+	QOS Engine for scheduling qernels on a set of distributed QPUs
+	For now lets just use the IMBQ QPUs, but in the future we might
+	need to introduce a `type` variable which indicates which type of QPU we
+	are using
+	
+	# _qpus: List[(IBMQQPU, Scheduler)]
+	_qpus: List[QPUWrapper]
+	policy: distributor_policy
+	qernel_id_counter = 0
+	The distributor has the information about every QPU's queue
+	#_queue: List[Job]
 
 class Distributor:
     """
@@ -65,53 +104,20 @@ class Distributor:
         return self._qpus.index(new_QPU)  # Returns the QPU id
 
 
-    def remove_QPU(self, qpu_id) -> int:
-        '''
-        Simple method to remove a QPU from the list of QPUs
-        '''
-        
-        self._qpus.remove(qpu_id)
-        return qpu_id
+	def advise(self, kargs:Dict) -> QPUWrapper:
+		This method simply advises and does not change the queue.
+		Since this is the FIFO policy it simply returns the zero index and
+		the QPU with the smallest queue
 
+		all_queues = []
+		backends = kargs["backends"] # This returns all the backends/QPU available to the Distributor
 
-class fifo_policy(distributor_policy):
-    
-    def distribute(self, new_job:Job, kargs: Dict) -> QPUWrapper:
-        """
-        Distributes a new job to a QPU based on the FIFO
-        policy and the QPU with the least elements on the queue.
-        Ideally this method should not change the queue just send
-        which QPU to send to, however I was having some problems
-        with the locks, for it is working but might change in the
-        future
-        """
-
-        all_queues = []
-        chosen_qpu:QPUWrapper
-        qpu:QPUWrapper
-        backends = kargs["backends"]
-
-        '''Locking all the queues from being changed until the policy
-        finishes, this is definitly not the best way of doing this, need
-        to think of a better way in the future'''            
-        for qpu in backends:
-            qpu.scheduler.queue_lock.acquire()
-
-        '''Fetches the queues from all the QPU local schedulers. Another way of doing
-        this could be by looking at the semaphores values, but in this case we should
-        take into consideration that the scheduler is decrementing the semaphore as
-        soon as the job arrives and not at the end of running the job'''
-        for qpu in backends:
-            all_queues.append(len(qpu.scheduler.queue))
-        
-        chosen_qpu = backends[all_queues.index(min(all_queues))]
-        new_job.assiged_qpu = chosen_qpu
-        
-        logging.log(42, "Assigned %s for job %d - (current queues: %s)", chosen_qpu.backend_name, new_job.id, str(all_queues))
-
-        for qpu in backends:
-            qpu.scheduler.queue_lock.release()
-        
-        chosen_qpu.scheduler.register_job(new_job, 10)
-
-        return backends[all_queues.index(min(all_queues))]
+		# Fetches the queues from all the QPU local schedulers to find the queue
+		# with the least number of jobs
+		qpu:QPUWrapper
+		for qpu in backends:
+			all_queues.append(len(qpu.scheduler.queue))
+		
+		# Returns the queue with the least number of jobs
+		return backends[min(all_queues)]
+'''
