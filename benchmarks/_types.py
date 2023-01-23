@@ -1,20 +1,12 @@
 from abc import ABC, abstractmethod
 from collections import Counter
-from typing import List, Sequence, Union, Dict, Optional
+from typing import List, Sequence, Union, Dict, Optional, Any
 
-from vqc.prob import ProbDistribution
-from vqc.device.device import Device
-
-from qiskit.circuit import QuantumCircuit, transpile
 from qiskit.providers.ibmq import IBMQBackend
-from typing import List
-
 from qiskit import QuantumCircuit, transpile
 from qiskit.providers.aer import AerSimulator
 
-from vqc.prob import ProbDistribution
-
-from ..benchmarks.device import Device
+from ._utils import ProbDistribution
 
 
 class Benchmark(ABC):

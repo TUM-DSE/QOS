@@ -1,21 +1,14 @@
+from typing import Dict, List, Tuple, Union
+from sortedcontainers import SortedDict
+from dataclasses import dataclass
 from collections import Counter
+import numpy as np
+import json
 
-from typing import Dict
 from qiskit import QuantumCircuit
 from qiskit.quantum_info import hellinger_fidelity
 from qiskit.providers.aer import StatevectorSimulator
-import numpy as np
-from qiskit.circuit import QuantumCircuit
 from qiskit.quantum_info import Statevector
-from dataclasses import dataclass
-from typing import Dict, List, Tuple, Union
-import json
-
-from typing import Dict, Tuple, Union
-
-from sortedcontainers import SortedDict
-
-from vqc.prob import ProbDistribution
 
 
 def _get_ideal_counts(circuit: QuantumCircuit) -> Counter:
