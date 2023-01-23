@@ -5,6 +5,7 @@ from benchmarks import error_correction
 from benchmarks import optimization
 from benchmarks import quantum_information
 
+"""
 benchmarks = {
     "HamiltonianSimulationBenchmark": chemistry.HamiltonianSimulationBenchmark,
     "VQEBenchmark": chemistry.VQEBenchmark,
@@ -71,8 +72,15 @@ for i, j in enumerate(backends):
     print(i, j)
 
 
-bench_selection = input("Benchmark[0.." + str(len(benchmarks) - 1) + "]: ")
-back_selection = input("Backend[0.." + str(len(backends) - 1) + "]: ")
+bench_selection = int(input("Benchmark[0.." + str(len(benchmarks) - 1) + "]: "))
+back_selection = int(input("Backend[0.." + str(len(backends) - 1) + "]: "))
 
 
-circuit = benchmarks[bench_selection]
+benchmark = list(benchmarks.items())[bench_selection]
+backend = list(backends.items())[back_selection]
+"""
+from qiskit import IBMQ
+
+IBMQ.save_account(
+    "b1274042caedfc26a5d65428d8eddbb5090bc424134ddd70aa49ce1c5cb2b073cdba174b7afd8010457a2199577ffeb9c08e0e00b290021c1353b462af7a1242"
+)

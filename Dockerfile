@@ -14,6 +14,7 @@ RUN pip install mapomatic
 RUN pip install black
 RUN pip install matplotlib
 RUN pip install supermarq
+RUN pip install sortedcontainers
 CMD ["bash"]
 
 # 1. Build the container: `docker build -t qos .`
