@@ -5,7 +5,7 @@ from qiskit.providers.aer import AerSimulator
 
 from vqc.prob import ProbDistribution
 
-from .device import Device
+from ..benchmarks.device import Device
 
 
 class SimDevice(Device):
