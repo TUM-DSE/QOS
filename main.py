@@ -1,0 +1,4 @@
+from tests.benchmarking.benchmarking_test import test_hamiltonian_simulation_score
+
+
+test_hamiltonian_simulation_score()
