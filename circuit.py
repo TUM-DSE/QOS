@@ -1,5 +1,5 @@
 from typing import Optional
-from .operation import (
+from .application_layer.qernel.operation import (
     BinaryGate,
     Operation,
     UnaryGate,
@@ -66,7 +66,9 @@ class Circuit:
                     ops.append(UnaryBarrier(qs_instr.qubits[0].index))
                 elif len(qs_instr.qubits) == 2:
                     ops.append(
-                        BinaryBarrier(qs_instr.qubits[0].index, qs_instr.qubits[1].index)
+                        BinaryBarrier(
+                            qs_instr.qubits[0].index, qs_instr.qubits[1].index
+                        )
                     )
                 else:
                     raise ValueError("Barrier with more than 2 qubits not supported")

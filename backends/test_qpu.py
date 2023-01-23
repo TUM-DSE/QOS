@@ -4,7 +4,7 @@ from warnings import warn
 
 import random
 
-from qstack.qos.scheduler import Scheduler, scheduler_policy, fifo_policy
+from qos.scheduler_old import Scheduler, scheduler_policy, fifo_policy
 from qstack.qernel import Qernel, QernelArgs
 from qstack.types import QPUWrapper
 
