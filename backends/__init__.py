@@ -1,1 +1,1 @@
-from .ibm_backends import QPU
+from .ibm_backends import IBMQPU

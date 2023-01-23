@@ -13,15 +13,8 @@ from qiskit.circuit import QuantumCircuit
 class IBMQPU:
     def __init__(
         self, backend_name: str, provider: Optional[AccountProvider] = None
-    ) -> None:
-        if isinstance(provider, AccountProvider):
-            backend = provider.get_backend(backend_name)
-
-            if isinstance(backend, IBMQSimulator):
-                raise ValueError(
-                    "Simulators are not currently supported. Please choose a quantum backend."
-                )
-        elif "Fake" in backend_name:
+    ) -> None:        
+        if "Fake" in backend_name:
             if provider is not None:
                 warn("AccountProvider passed but fake backend requested.")
             backend = getattr(FakeAccountProvider, backend_name)()
@@ -42,6 +35,13 @@ class IBMQPU:
                     return self._properties
 
                 backend.properties = MethodType(properties, backend)
+        elif isinstance(provider, AccountProvider):
+            backend = provider.get_backend(backend_name)
+
+            if isinstance(backend, IBMQSimulator):
+                raise ValueError(
+                    "Simulators are not currently supported. Please choose a quantum backend."
+                )
         else:
             raise RuntimeError(
                 "Either an AccountProvider or a name of a fake backend must be provided. "
