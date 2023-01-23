@@ -7,7 +7,7 @@ Quantum Operating System
 Source code for running tasks on each different backend (ibmq-simulators, ibmq-physical, classical-resources, etc...).
 Some code might be specific to QVM and or reference QVM code that was taken out and is now inside the *might_be_useful* folder.
 
-## benchmarking/
+## benchmarks/
 Bechmarking scripts to measure different
 Some code might be specific to QVM and or reference QVM code that was taken out and is now inside the *might_be_useful* folder.
 
@@ -15,10 +15,10 @@ Some code might be specific to QVM and or reference QVM code that was taken out 
 Test scripts for debugging proposes.
 Some code might be specific to QVM and or reference QVM code that was taken out and is now inside the *might_be_useful* folder.
 
-## might_be_useful/
+## application_layer/
 Scrips and code left from the qvm project. Might be useful in the future, but this code is not included on the QOS code base.
 
-## components
+## qos
 Contains the code for the QOS components.
 
 ## Dockerfile
