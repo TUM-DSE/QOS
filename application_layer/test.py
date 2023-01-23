@@ -1,41 +1,37 @@
-from pydoc import describe
+import pdb
 import sys
+import logging
 
 sys.path.insert(0, "./../../../.")
-from qiskit import QuantumCircuit, QuantumRegister
 
-from qstack.qernel.qernel import Qernel
-from qstack.backends.test_qpu import TestQPU
+from qstack.backends._ibm import IBMQQPU
 from qstack.qos.distributor import Distributor
-#from qstack.types import
+from qiskit.circuit.random.utils import random_circuit
+from qiskit import IBMQ
 
-def generate_jobs(dist_engine, n_jobs:int):
-	empty_circuit = QuantumRegister(1)
-	empty_qernel = Qernel(empty_circuit)
-	jobs = n_jobs*[empty_qernel]
-	return jobs
+def generate_jobs(dist_engine, n_jobs: int):
+    circuit = random_circuit(num_qubits=3, depth=2)
+    jobs = n_jobs * [circuit]
+    return jobs
 
-'''
-def list_jobs(dist_engine):
-	print("There are currently:", dist_engine.job_counter, "jobs on the queue")
 
-	#for i in range(dist_engine.job_counter):
-	#	print("Job", i, ":", dist_engine.queue[i].costs)
-'''
+logging.basicConfig(format='[Scheduler] - %(message)s', level=42)
 
-qpu1 = TestQPU("test1", 1, "fifo")
-qpu2 = TestQPU("test2", 2, "fifo")
-qpu3 = TestQPU("test3", 3, "fifo")
+print("Loading IBMQ account and provider...")
 
-qpus = [qpu1,qpu2,qpu3]
+IBMQ.load_account()
+provider = IBMQ.get_provider(hub='ibm-q', group='open', project='main')
 
-dist_engine = Distributor(qpus, "fifo")
+print("Account and provider loaded...")
 
-jobs = generate_jobs(dist_engine, 10)
+qpu1 = IBMQQPU("ibm_nairobi", "fifo", provider=provider)
+qpu2 = IBMQQPU("ibm_oslo", "fifo", provider=provider)
+
+dist_engine = Distributor([qpu1, qpu2], "fifo")
+
+jobs = generate_jobs(dist_engine, 4)
 
 for i in jobs:
-	dist_engine.register_qernel(i,None)
+    dist_engine.run_qernel(i, None)
 
-#list_jobs(dist_engine)
-
-print("OK")
+print("-----No more jobs to register-----")

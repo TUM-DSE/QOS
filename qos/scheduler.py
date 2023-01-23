@@ -25,11 +25,12 @@ class fifo_policy(scheduler_policy):
 
 '''
 import secrets
+import logging
 from typing import Any, Dict, List
-
+import pdb
+import time
 from qstack.qernel import Qernel, QernelArgs
-from qstack.types import QOSEngineI, QPUWrapper, Job, distributor_policy
-#from qstack.qos import Scheduler
+from qstack.types import QPUWrapper, Job, distributor_policy
 
 #This engine manages the main queue it is the same as the Global Scheduler
 class Distributor(QOSEngineI):
@@ -45,48 +46,63 @@ class Distributor(QOSEngineI):
 	The distributor has the information about every QPU's queue
 	#_queue: List[Job]
 
-	def __init__(self, qpus: List[QPUWrapper], policy:str) -> None:
-		#self._queue = [-1] # To avoid the queue from being removed by the garbage collector if there are no objects on the list
-		self._qpus = qpus
+class Distributor:
+    """
+    Engine for assigning qernels to QPUs based on a specific policy set
+    by the user.
+    """
 
-		if (policy == "fifo"):
-			self.policy = fifo_policy()
-		else:
-			raise RuntimeError("[ERROR] - Distributing Policy not implemented.")
+    _qpus: List[QPUWrapper]
+    policy: distributor_policy
+    job_id_counter = 0
 
-	def register_qernel(self, qernel: Qernel, compile_args: Dict[str, Any]) -> int:
-		running_costs = {}
-		advise_qpu:QPUWrapper
+    def __init__(self, qpus: List[QPUWrapper], policy: str) -> None:
+        self._qpus = qpus
 
-		# Compute all cost of running the qernel on every QPU
-		for i in self._qpus:
-			running_costs[i.backend_name] = i.cost(qernel)
+        if policy == "fifo":
+            self.policy = fifo_policy()
+        else:
+            raise RuntimeError("[ERROR] - Distributing Policy not implemented.")
 
-		# Ask for advice from the distributor policy
-		advise_qpu = self.policy.advise({"backends":self._qpus, "costs":running_costs})
+    def run_qernel(self, qernel: Qernel, compile_args: Dict[str, Any]) -> int:
+        """
+        This is supposed to be used from outside the class and before this a job does
+        not exist yet. When a Qernel is registered here using this method a new
+        job is created to be filled with the respective costs for each QPU, and
+        the selected QPU afterwards
+        """
 
-		# Send the job to the QPU as advised by the policy
-		print("Job sent to QPU", advise_qpu.backend_name)
+        running_costs = {}
+        choosen_qpu: QPUWrapper
+        self.job_id_counter += 1
+        new_job = Job(qernel, self.job_id_counter)
 
-		#advise_qpu.execute_qernel(self.qernel_id_counter, None, 10)
+        ''' TODO - Compute all cost of running the qernel on every QPU, this is the job of the
+        matching engine, should be moved from here'''
+        for i in self._qpus:
+            running_costs[i.backend_name] = i.cost(qernel)
 
-		self.qernel_id_counter +=1
+        # Just to format the cost string to show on the debugs log
+        aux_string = str([(i.backend_name, running_costs[i.backend_name]) for i in self._qpus]).replace("\',", ":").replace("[","").replace("{","").replace("}","").replace("]", "").replace("'", "")
+        logging.log(42, "Costs: %s", aux_string)
 
-		return self.qernel_id_counter-1
+        choosen_qpu = self.policy.distribute(new_job,
+            {"backends": self._qpus,
+            "costs": running_costs})
 
-	def execute_qernel(self, qid: int, args: QernelArgs, shots: int) -> None:
-		pass
+        logging.info("Job %d will be sent to %s", self.job_id_counter, choosen_qpu.backend_name)
 
-	def add_QPU(self, new_QPU)->int:
-		self._qpus.append(new_QPU)
-		return self._qpus.index(new_QPU) #Returns the QPU id
+        return self.job_id_counter - 1
 
-	def remove_QPU(self, qpuid)->int:
-		self._qpus.remove(qpuid)
-		return qpuid
+    def add_QPU(self, new_QPU) -> int:
+        '''
+        Simple method to add a QPU to the list of QPUs without
+        the need recreate the Distributor object
+        '''
 
+        self._qpus.append(new_QPU)
+        return self._qpus.index(new_QPU)  # Returns the QPU id
 
-class fifo_policy(distributor_policy):
 
 	def advise(self, kargs:Dict) -> QPUWrapper:
 		This method simply advises and does not change the queue.

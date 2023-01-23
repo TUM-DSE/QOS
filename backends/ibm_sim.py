@@ -60,8 +60,7 @@ class simulator(Backend):
         self._qid_ctr += 1
         return self._qid_ctr - 1
 
-    def execute_qernel(self, qid: int, args: QernelArgs, shots: int) -> None:
-        qernel = self._qernels[qid]
+    def execute_qernel(self, qernel: Qernel, args: QernelArgs, shots: int) -> None:
         circ = qernel.with_input(args=args)
 
     def cost(self, qernel: Qernel) -> float:
