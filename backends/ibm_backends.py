@@ -1,8 +1,6 @@
 from typing import Any, Dict, Optional
 from warnings import warn
 
-from components.types import Backend
-
 import mapomatic as mm
 import qiskit.providers.fake_provider as FakeAccountProvider
 from qiskit.compiler import transpile
@@ -11,7 +9,7 @@ from qiskit.providers.ibmq.ibmqbackend import IBMQSimulator
 from qiskit.providers.models.backendproperties import BackendProperties
 
 
-class simulator(Backend):
+class QPU():
     def __init__(
         self, backend_name: str, provider: Optional[AccountProvider] = None
     ) -> None:
@@ -51,17 +49,17 @@ class simulator(Backend):
             )
 
         self._backend = backend
-        self._qernels: Dict[int, Qernel] = {}
+        #self._qernels: Dict[int, Qernel] = {}
         self._qid_ctr: int = 0
 
     # TODO - Is this method still needed?
-    def register_qernel(self, qernel: Qernel, compile_args: Dict[str, Any]) -> int:
-        self._qernels[self._qid_ctr] = qernel
-        self._qid_ctr += 1
-        return self._qid_ctr - 1
+    #def register_qernel(self, qernel: Qernel, compile_args: Dict[str, Any]) -> int:
+     #   self._qernels[self._qid_ctr] = qernel
+      #  self._qid_ctr += 1
+       # return self._qid_ctr - 1
 
-    def execute_qernel(self, qernel: Qernel, args: QernelArgs, shots: int) -> None:
-        circ = qernel.with_input(args=args)
+   # def execute_qernel(self, qernel: Qernel, args: QernelArgs, shots: int) -> None:
+        #circ = qernel.with_input(args=args)
 
     def cost(self, qernel: Qernel) -> float:
         trans_qc = transpile(
