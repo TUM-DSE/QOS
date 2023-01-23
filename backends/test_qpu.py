@@ -8,7 +8,6 @@ from qstack.qos.scheduler import Scheduler, scheduler_policy, fifo_policy
 from qstack.qernel import Qernel, QernelArgs
 from qstack.types import QPUWrapper
 
-
 class TestQPU(QPUWrapper):
 	
 	#Added this, check if you agree
@@ -22,6 +21,7 @@ class TestQPU(QPUWrapper):
 		self.backend_name = backend_name
 		self._qernels = {}
 		self.scheduler = Scheduler()
+		self.scheduler.queue = []
 		self._qid_ctr: int = 0
 		self.gen_seed = gen_seed
 

@@ -77,4 +77,7 @@ class distributor_policy(ABC):
 	@abstractmethod
 	def advise(self, kargs:Dict) -> QPUWrapper:
 		pass
+<<<<<<< HEAD:qstack/types.py
+=======
 '''
+>>>>>>> main:qos/types.py
