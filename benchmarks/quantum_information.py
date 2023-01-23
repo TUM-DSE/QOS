@@ -4,7 +4,7 @@ from typing import List, Union
 from qiskit.circuit import QuantumCircuit
 from qiskit.quantum_info import hellinger_fidelity
 
-from ._benchmark import Benchmark
+from ._types import Benchmark
 
 
 class GHZBenchmark(Benchmark):

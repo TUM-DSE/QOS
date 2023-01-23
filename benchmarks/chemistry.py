@@ -7,7 +7,7 @@ import numpy as np
 import scipy.optimize as opt
 from qiskit.circuit import QuantumCircuit
 
-from ._benchmark import Benchmark
+from ._types import Benchmark
 from ._utils import _get_ideal_counts
 
 

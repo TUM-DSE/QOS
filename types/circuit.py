@@ -1,3 +1,4 @@
+"""
 from typing import Dict, List, Optional, Set
 
 from qiskit.circuit import QuantumCircuit, QuantumRegister, Qubit, Barrier
@@ -6,7 +7,10 @@ import networkx as nx
 from vqc.converters import circuit_to_connectivity_graph
 from vqc.device import Device, SimDevice
 from vqc.virtual_gate.virtual_gate import VirtualBinaryGate
+"""
 
+# This code might be useful when we implement multitenency or multiprogramming
+"""'
 
 class Fragment(QuantumRegister):
     device: Device
@@ -104,3 +108,4 @@ class DistributedCircuit(QuantumCircuit):
             if set(instr.qubits) <= set(fragment):
                 circ.append(instr.operation, instr.qubits, instr.clbits)
         return circ
+"""
