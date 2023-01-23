@@ -7,6 +7,7 @@ from qiskit.compiler import transpile
 from qiskit.providers.ibmq import AccountProvider
 from qiskit.providers.ibmq.ibmqbackend import IBMQSimulator
 from qiskit.providers.models.backendproperties import BackendProperties
+from qiskit.circuit import QuantumCircuit
 
 
 class IBMQPU:
@@ -48,7 +49,7 @@ class IBMQPU:
                 "appended to the name if needed. Examples: FakeLondon, FakeAthensV2."
             )
 
-        self._backend = backend
+        self.backend = backend
         # self._qernels: Dict[int, Qernel] = {}
         self._qid_ctr: int = 0
 
@@ -61,10 +62,8 @@ class IBMQPU:
     # def execute_qernel(self, qernel: Qernel, args: QernelArgs, shots: int) -> None:
     # circ = qernel.with_input(args=args)
 
-    def cost(self, qernel: Qernel) -> float:
-        trans_qc = transpile(
-            circuits=qernel, backend=self._backend, optimization_level=3
-        )
+    def cost(self, circ: QuantumCircuit) -> float:
+        trans_qc = transpile(circuits=circ, backend=self._backend, optimization_level=3)
         small_qc = mm.deflate_circuit(input_circ=trans_qc)
         layouts = mm.matching_layouts(circ=small_qc, cmap=self._backend)
         scores = mm.evaluate_layouts(
