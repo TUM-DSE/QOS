@@ -35,6 +35,8 @@ class GHZBenchmark(Benchmark):
         total_shots = sum(counts.values())
         device_dist = {bitstr: count / total_shots for bitstr, count in counts.items()}
         return hellinger_fidelity(ideal_dist, device_dist)
+    def name(self):
+        return "GHZBenchmark"
 
 
 class MerminBellBenchmark(Benchmark):

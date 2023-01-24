@@ -1,4 +1,5 @@
 from typing import Any, Dict, Optional
+from types import MethodType
 from warnings import warn
 
 import mapomatic as mm
@@ -35,6 +36,7 @@ class IBMQPU:
                     return self._properties
 
                 backend.properties = MethodType(properties, backend)
+            self.is_simulator = True
         elif isinstance(provider, AccountProvider):
             backend = provider.get_backend(backend_name)
 
@@ -50,6 +52,7 @@ class IBMQPU:
             )
 
         self.backend = backend
+        
         # self._qernels: Dict[int, Qernel] = {}
         self._qid_ctr: int = 0
 
@@ -59,8 +62,8 @@ class IBMQPU:
     #  self._qid_ctr += 1
     # return self._qid_ctr - 1
 
-    # def execute_qernel(self, qernel: Qernel, args: QernelArgs, shots: int) -> None:
-    # circ = qernel.with_input(args=args)
+    #def run(self, qc: QuantumCircuit, shots : int = 1024) -> None:
+        #self.backend.run(qc, shots)
 
     def cost(self, circ: QuantumCircuit) -> float:
         trans_qc = transpile(circuits=circ, backend=self._backend, optimization_level=3)

@@ -101,6 +101,8 @@ class HamiltonianSimulationBenchmark(Benchmark):
         mag_experimental = self._average_magnetization(counts, total_shots)
 
         return 1 - abs(mag_ideal - mag_experimental) / 2
+    def name(self):
+        return "HamiltonianSimulationBenchmark"
 
 
 class VQEBenchmark(Benchmark):
@@ -235,3 +237,5 @@ class VQEBenchmark(Benchmark):
             - abs(ideal_expectation - experimental_expectation)
             / abs(2 * ideal_expectation)
         )
+    def name(self):
+        return "VQEBenchmark"

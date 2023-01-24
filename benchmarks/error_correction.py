@@ -56,6 +56,9 @@ class ErrorCorrectionBenchmark(Benchmark, abc.ABC):
             bitstr: shots / total_shots for bitstr, shots in counts.items()
         }
         return hellinger_fidelity(ideal_dist, experimental_dist)
+    
+    def name(self):
+        return "ErrorCorrectionBenchmark"
 
 
 def _error_correction_scaffold_function(
@@ -110,6 +113,8 @@ class BitCodeBenchmark(ErrorCorrectionBenchmark):
         # Since the quantum circuit is reference-based,
         # we just return the first yield
         return [circ for circ in circuit_generator][-1]
+    def name(self):
+        return "BitCodeBenchmark"
 
 
 class PhaseCodeBenchmark(ErrorCorrectionBenchmark):
@@ -147,3 +152,5 @@ class PhaseCodeBenchmark(ErrorCorrectionBenchmark):
         qc.h([2 * i for i in range(self.num_data_qubits)])
 
         return next(circuit_generator)
+    def name(self):
+        return "PhaseCodeBenchmark"
