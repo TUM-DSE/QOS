@@ -1,5 +1,5 @@
 import sys
-#sys.path.insert(0, "$(pwd)")
+#import argparse
 
 from qiskit import IBMQ
 from benchmarks import *
@@ -18,20 +18,31 @@ class App:
     filepath = ''
     provider = None
     nruns = 0
+    nqbits = 0
     
-    def __init__(self, backend, benchmark, nqbits, nruns, filepath='', shots=1024):
+    #def __init__(self, backend, benchmark, nqbits, nruns, filepath='', shots=1024):
+    def __init__(self, **kwargs):
             #print(backend, benchmark, args, filename)
-            self.provider = IBMQ.load_account()
-            self.backend = IBMQPU(backend, self.provider)
+            for k,v in kwargs.items():
+                if "bits" in k:
+                    self.nqbits = int(v)
+            for k,v in kwargs.items():
+                if "bench" in k:
+                    self.benchmark = eval(v)(self.nqbits)
+                elif "backend" in k:                    
+                    self.provider = IBMQ.load_account()
+                    self.backend = IBMQPU(v, self.provider)
+                elif "shots" in k:
+                    self.nshots = int(v)
+                elif "runs" in k:
+                    self.nruns = int(v)
+                elif "path" in k:
+                    self.filepath = v
+                else:
+                    raise RuntimeError("Invalid command passed")
             
-            self.benchmark = eval(benchmark)(int(nqbits))
-            self.nshots = shots
-            self.nruns = int(nruns)
             self.filename = self.backend.backend.name + self.benchmark.name() + str(nqbits) + "Shots" + str(shots)
-            if filepath != '':
-                self.filepath = filepath
-            
-    
+  
     def Run(self):
         circuit = self.benchmark.circuit()
         backend = self.backend.backend
@@ -56,5 +67,6 @@ class App:
         f.close()
                 
 
-app = App(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
+
+app = App(sys.argv)
 app.Run()
