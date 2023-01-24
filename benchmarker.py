@@ -58,14 +58,14 @@ backends = {
 }
 
 benchmarks = {
-    "HamiltonianSimulationBenchmark": 0,
+    # "HamiltonianSimulationBenchmark": 0,
     "VQEBenchmark": 0,
-    "ErrorCorrectionBenchmark": 0,
-    "BitCodeBenchmark": 0,
-    "PhaseCodeBenchmark": 0,
-    "VanillaQAOABenchmark": 0,
-    "FermionicSwapQAOABenchmark": 0,
-    "GHZBenchmark": 0,
+    # "VanillaQAOABenchmark": 0,
+    # "GHZBenchmark": 0,
+    # "BitCodeBenchmark": 0,
+    # "PhaseCodeBenchmark": 0,
+    # "ErrorCorrectionBenchmark": 0,
+    # "FermionicSwapQAOABenchmark": 0,
 }
 
 runs = 10
@@ -79,10 +79,10 @@ for i, j in backends.items():
         while 2**n <= backends[i]:
             print(
                 "./main.py",
-                str(i),
-                str(x),
-                str(2**n),
-                str(runs),
+                "backend=" + str(i),
+                "benchmark=" + str(x),
+                "nqbits=" + str(2**n),
+                "nruns=" + str(runs),
             )
             p = Popen(
                 [
