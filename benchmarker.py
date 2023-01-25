@@ -4,20 +4,8 @@ from operator import delitem
 import sys
 import os
 from subprocess import Popen, PIPE
+import subprocess
 import csv
-
-times = 11
-results = []
-
-setup = []
-encrp = []
-# compu = []
-# decr = []
-
-vec_sum = 0
-scal_sum = 0
-speedup_sum = 0
-
 
 # Source
 # IBMQ resource page: https://quantum-computing.ibm.com/services/resources?tab=systems
@@ -25,7 +13,7 @@ speedup_sum = 0
 backends = {
     # "FakeArmonkV2": 1,
     # "FakeAthensV2": 5,
-    "FakeBelemV2": 5,
+    ## "FakeBelemV2": 5,
     # "FakeYorktownV2": 5,
     # "FakeBogotaV2": 5,
     # "FakeOurenseV2": 5,
@@ -42,11 +30,11 @@ backends = {
     # "FakeLagosV2": 7,
     # "FakeMelbourneV2": 14,
     # "FakeGuadalupeV2": 16,
-    "FakeAlmadenV2": 20,
+    ##"FakeAlmadenV2": 20,
     # "FakeBoeblingenV2": 20,
     # "FakeSingaporeV2": 20,
     # "FakeJohannesburgV2": 20,
-    "FakeCairoV2": 27,
+    ##"FakeCairoV2": 27,
     # "FakeHanoiV2": 27,
     # "FakeParisV2": 27,
     # "FakeSydneyV2": 27,
@@ -58,17 +46,19 @@ backends = {
 }
 
 benchmarks = {
-    # "HamiltonianSimulationBenchmark": 0,
-    "VQEBenchmark": 0,
-    # "VanillaQAOABenchmark": 0,
-    # "GHZBenchmark": 0,
-    # "BitCodeBenchmark": 0,
-    # "PhaseCodeBenchmark": 0,
-    # "ErrorCorrectionBenchmark": 0,
+    # "HamiltonianSimulationBenchmark": [],
+    # "VQEBenchmark": "./main.py --backend {} --benchmark {} --runs {} --shots {} --path results/ ",
+    # "VanillaQAOABenchmark": "./main.py --backend {} --benchmark {} --bits {} --runs {} --shots {} --path results/",
+    # "GHZBenchmark": "./main.py --backend {} --benchmark {} --bits {} --runs {} --shots {} --path results/",
+    # "BitCodeBenchmark": ["-rounds 4"],
+    # "PhaseCodeBenchmark": ["-rounds 4"],
     # "FermionicSwapQAOABenchmark": 0,
 }
 
 runs = 10
+shots = 10
+
+run_cmd = "./main.py -backend {} -benchmark {} -runs {} -shots {} -bits {}"
 
 for i, j in backends.items():
     for x, y in benchmarks.items():
@@ -77,24 +67,11 @@ for i, j in backends.items():
         n = 2
 
         while 2**n <= backends[i]:
-            print(
-                "./main.py",
-                "backend=" + str(i),
-                "benchmark=" + str(x),
-                "nqbits=" + str(2**n),
-                "nruns=" + str(runs),
-            )
-            p = Popen(
-                [
-                    "./main.py",
-                    str(i),
-                    str(x),
-                    str(2**n),
-                    str(runs),
-                    "results/",
-                ],
-                stdout=PIPE,
-            )
-            aux = p.stdout.readlines()
-            print(aux)
+            cmd = run_cmd.format(str(i), str(x), str(runs), str(shots), str(2**n))
+            for w in y:
+                cmd += " " + w
+            # exit(0)
+            print(cmd)
+            this = subprocess.getoutput(cmd)
+            print(this)
             n += 1

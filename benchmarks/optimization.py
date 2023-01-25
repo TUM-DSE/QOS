@@ -38,6 +38,9 @@ class VanillaQAOABenchmark(Benchmark):
         self.hamiltonian = self._gen_sk_hamiltonian()
         self.params = self._gen_angles()
 
+    def name(self):
+        return "VanillaQAOABenchmark"
+
     def _get_opt_angles(self) -> Tuple[List, float]:
         def f(params: List) -> float:
             gamma, beta = params

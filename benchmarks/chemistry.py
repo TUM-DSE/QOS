@@ -101,6 +101,7 @@ class HamiltonianSimulationBenchmark(Benchmark):
         mag_experimental = self._average_magnetization(counts, total_shots)
 
         return 1 - abs(mag_ideal - mag_experimental) / 2
+
     def name(self):
         return "HamiltonianSimulationBenchmark"
 
@@ -114,7 +115,7 @@ class VQEBenchmark(Benchmark):
     def _calc(self, bit_list: List[str], bitstr: str, probs: Counter) -> float:
         energy = 0.0
         for item in bit_list:
-            if int(item, base=2).bit_count() == 0:
+            if int(item, base=2).bit_length() == 0:
                 energy += probs.get(bitstr, 0)
             else:
                 energy -= probs.get(bitstr, 0)
@@ -237,5 +238,6 @@ class VQEBenchmark(Benchmark):
             - abs(ideal_expectation - experimental_expectation)
             / abs(2 * ideal_expectation)
         )
+
     def name(self):
         return "VQEBenchmark"
