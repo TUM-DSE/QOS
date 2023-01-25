@@ -9,7 +9,6 @@ from benchmarks import *
 from backends import IBMQPU
 from qiskit.compiler import transpile
 from qiskit.visualization import plot_histogram
-from collections import Counter
 
 # from qiskit.circuit import QuantumCircuit
 
@@ -22,23 +21,15 @@ class App:
     filename = ""
     filepath = ""
     provider = None
-    nruns = 0
 
-    def __init__(self, backend, benchmark, nqbits, nruns, filepath="", shots=1024):
-        print(backend, benchmark, nqbits, nruns)
+    def __init__(self, backend, benchmark, args, filepath="", shots=1024):
+        # print(backend, benchmark, args, filename)
         self.provider = IBMQ.load_account()
         self.backend = IBMQPU(backend, self.provider)
 
-        self.benchmark = eval(benchmark)(int(nqbits))
+        self.benchmark = eval(benchmark)(int(args))
         self.nshots = shots
-        self.nruns = int(nruns)
-        self.filename = (
-            self.backend.backend.name
-            + self.benchmark.name()
-            + str(nqbits)
-            + "Shots"
-            + str(shots)
-        )
+        self.filename = self.backend.backend.name + self.benchmark.name() + str(shots)
         if filepath != "":
             self.filepath = filepath
 
@@ -47,24 +38,15 @@ class App:
         backend = self.backend.backend
 
         qc = transpile(circuit, backend)
-        avg_fid = 0
 
-        for i in range(self.nruns):
+        if self.backend.is_simulator:
+            job = backend.run(run_input=qc, shots=self.nshots)
+        else:
+            job = backend.run(circuits=qc, shots=self.nshots)
 
-            if self.backend.is_simulator:
-                job = backend.run(run_input=qc, shots=self.nshots)
-            else:
-                job = backend.run(circuits=qc, shots=self.nshots)
-
-            counts = job.result().get_counts()
-            plot_histogram(counts, filename=self.filepath + self.filename)
-            avg_fid = avg_fid + self.benchmark.score(Counter(counts))
-
-        avg_fid = avg_fid / self.nruns
-        f = open(self.filepath + self.filename + ".txt", "a")
-        f.write(str(avg_fid))
-        f.close()
+        counts = job.result().get_counts()
+        plot_histogram(counts, filename=self.filepath + self.filename)
 
 
-app = App(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
+app = App(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
 app.Run()

@@ -58,8 +58,8 @@ backends = {
 }
 
 benchmarks = {
-    # "HamiltonianSimulationBenchmark": 0,
-    "VQEBenchmark": 0,
+    "HamiltonianSimulationBenchmark": 0,
+    # "VQEBenchmark": 0,
     # "VanillaQAOABenchmark": 0,
     # "GHZBenchmark": 0,
     # "BitCodeBenchmark": 0,
