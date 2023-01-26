@@ -7,7 +7,7 @@ from qiskit import IBMQ
 from benchmarks import *
 from backends import IBMQPU
 from qiskit.compiler import transpile
-from qiskit.visualization import plot_histogram
+from qiskit.visualization import plot_histogram, plot_circuit_layout, plot_coupling_map
 from collections import Counter
 
 # from qiskit.circuit import QuantumCircuit
@@ -88,7 +88,7 @@ class App:
 
             counts = job.result().get_counts()
             plot_histogram(counts, filename=self.filepath + self.filename)
-            #            print(Counter(counts))
+            plot_circuit_layout(qc, self.backend.backend)
             avg_fid = avg_fid + self.benchmark.score(Counter(counts))
 
             # f.write(str(counts) + "\n")

@@ -24,7 +24,7 @@ backends = {
     "FakeJakartaV2": 7,
     # "FakeLagosV2": 7,
     # "FakeMelbourneV2": 14,
-    "FakeGuadalupeV2": 16,
+    # "FakeGuadalupeV2": 16,
     ##"FakeAlmadenV2": 20,
     # "FakeBoeblingenV2": 20,
     # "FakeSingaporeV2": 20,
@@ -37,7 +37,7 @@ backends = {
     # "FakeKolkataV2": 27,
     # "FakeMontrealV2": 27,
     # "FakeCambridgeV2": 28,
-    "FakeWashingtonV2": 127,
+    # "FakeWashingtonV2": 127,
 }
 
 benchmarks = {
@@ -46,20 +46,15 @@ benchmarks = {
     # "VanillaQAOABenchmark": [],
     "GHZBenchmark": [
         "-bits 4",
-        "-bits 7",
-        "-bits 12",
-        "-bits 15",
-        "-bits 20",
-        "-bits 27",
     ],
-    "BitCodeBenchmark": [
-        "-bits 4 -rounds 3",
-        "-bits 7 -rounds 3",
-        "-bits 12 -rounds 3",
-        "-bits 15 -rounds 3",
-        "-bits 20 -rounds 3",
-        "-bits 27 -rounds 3",
-    ]
+    # "BitCodeBenchmark": [
+    #    "-bits 4 -rounds 3",
+    #    "-bits 7 -rounds 3",
+    #    "-bits 12 -rounds 3",
+    #    "-bits 15 -rounds 3",
+    #    "-bits 20 -rounds 3",
+    #    "-bits 27 -rounds 3",
+    # ]
     ##"PhaseCodeBenchmark": ["-rounds 3"],
     # "MerminBellBenchmark": [],
     # "FermionicSwapQAOABenchmark": [],
@@ -73,7 +68,6 @@ run_cmd = "./main.py -backend {} -benchmark {} -runs {} -shots {} {}"
 for back_name, total_qbits in backends.items():
     for bench_name, bench_args in benchmarks.items():
         for arg in bench_args:
-            print(arg)
             cmd = run_cmd.format(
                 str(back_name), str(bench_name), str(runs), str(shots), arg
             )
