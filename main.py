@@ -31,7 +31,7 @@ class App:
 
         parser = argparse.ArgumentParser()
         parser.add_argument("-backend")
-        parser.add_argument("-benchmark")
+        parser.add_argument("-benchmark", nargs="+")
         parser.add_argument("-bits", type=int)
         parser.add_argument("-runs", type=int)
         parser.add_argument("-shots", type=int)
@@ -45,6 +45,8 @@ class App:
         print(args.runs)
         print(args.path)
 
+        exit(0)
+
         self.nqbits = args.bits
         self.rounds = args.rounds
         self.backend = args.backend
@@ -57,6 +59,8 @@ class App:
         print(*self.bench_args)
 
         self.benchmark = eval(args.benchmark)(*self.bench_args)
+        # args.benchmark is a list of the benchmarks inputted as "-benchmark GHZBenchmark HamiltonianSimulationBenchmark" for example
+        # now we just call the merge function?
 
         self.provider = IBMQ.load_account()
         self.backend = IBMQPU(args.backend, self.provider)
