@@ -12,6 +12,17 @@ from collections import Counter
 
 # from qiskit.circuit import QuantumCircuit
 
+def merge_circs(q1: QuantumCircuit, q2: QuantumCircuit) -> QuantumCircuit:
+        toReturn = QuantumCircuit(q1.num_qubits + q2.num_qubits, q1.num_clbits + q2.num_clbits)
+        qubits1 = [*range(0, q1.num_qubits)]
+        clbits1 = [*range(0, q1.num_clbits)]
+        qubits2 = [*range(q1.num_qubits, q1.num_qubits + q2.num_qubits)]
+        clbits2 = [*range(q1.num_clbits, q1.num_clbits + q2.num_clbits)]
+
+        toReturn.compose(q1, qubits=qubits1, clbits=clbits1, inplace=True)
+        toReturn.compose(q2, qubits=qubits2, clbits=clbits2, inplace=True)
+        
+        return toReturn
 
 class App:
     benchmark = ""
@@ -92,7 +103,9 @@ class App:
 
             counts = job.result().get_counts()
             plot_histogram(counts, filename=self.filepath + self.filename)
-            plot_circuit_layout(qc, self.backend.backend)
+            self.backend.backend.coupling_map.draw()
+            #print(len(self.backend.backend.coupling_map))
+            #plot_circuit_layout(qc, self.backend.backend)
             avg_fid = avg_fid + self.benchmark.score(Counter(counts))
 
             # f.write(str(counts) + "\n")
