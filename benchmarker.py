@@ -1,11 +1,6 @@
 #!/usr/bin/python3
 
-from operator import delitem
-import sys
-import os
-from subprocess import Popen, PIPE
 import subprocess
-import csv
 
 # Source
 # IBMQ resource page: https://quantum-computing.ibm.com/services/resources?tab=systems
@@ -25,8 +20,8 @@ backends = {
     # "FakeLimaV2": 5,
     # "FakeLondonV2": 5,
     # "FakeVigoV2": 5,
-    "FakeCasablancaV2": 7,
-    # "FakeJakartaV2": 7,
+    # "FakeCasablancaV2": 7,
+    "FakeJakartaV2": 7,
     # "FakeLagosV2": 7,
     # "FakeMelbourneV2": 14,
     # "FakeGuadalupeV2": 16,
@@ -38,7 +33,7 @@ backends = {
     # "FakeHanoiV2": 27,
     # "FakeParisV2": 27,
     # "FakeSydneyV2": 27,
-    # "FakeTorontoV2": 27,
+    ##"FakeTorontoV2": 27,
     # "FakeKolkataV2": 27,
     # "FakeMontrealV2": 27,
     # "FakeCambridgeV2": 28,
@@ -49,30 +44,40 @@ benchmarks = {
     # "HamiltonianSimulationBenchmark": [],
     # "VQEBenchmark": [],
     # "VanillaQAOABenchmark": [],
-    # "GHZBenchmark": [],
-    # "BitCodeBenchmark": ["-rounds 4"],
-    # "PhaseCodeBenchmark": ["-rounds 4"],
+    "GHZBenchmark": [
+        "-bits 4",
+        "-bits 7",
+        "-bits 12",
+        "-bits 15",
+        "-bits 20",
+        "-bits 27",
+    ],
+    "BitCodeBenchmark": [
+        "-bits 4 -rounds 3",
+        "-bits 7 -rounds 3",
+        "-bits 12 -rounds 3",
+        "-bits 15 -rounds 3",
+        "-bits 20 -rounds 3",
+        "-bits 27 -rounds 3",
+    ]
+    ##"PhaseCodeBenchmark": ["-rounds 3"],
+    # "MerminBellBenchmark": [],
     # "FermionicSwapQAOABenchmark": [],
 }
 
 runs = 10
-shots = 10
-qbits = [4, 7, 16, 25]
+shots = 1024
+qbits = [4, 7, 12, 15, 20, 27]
 
-run_cmd = "./main.py -backend {} -benchmark {} -runs {} -shots {} -bits {}"
+run_cmd = "./main.py -backend {} -benchmark {} -runs {} -shots {} {}"
 
-for i, j in backends.items():
-    for x, y in benchmarks.items():
-        # This variable is used to increment the number of qbits of the benchmark.
-        # It is used as an exponent of 2.
-
-        for q in qbits:
-            if q > backends[i]:
-                break
-
-            cmd = run_cmd.format(str(i), str(x), str(runs), str(shots), str(q))
-            for w in y:
-                cmd += " " + w
+for back_name, total_qbits in backends.items():
+    for bench_name, bench_args in benchmarks.items():
+        for arg in bench_args:
+            print(arg)
+            cmd = run_cmd.format(
+                str(back_name), str(bench_name), str(runs), str(shots), arg
+            )
             # exit(0)
             print(cmd)
             this = subprocess.getoutput(cmd)

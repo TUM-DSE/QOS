@@ -16,7 +16,7 @@ from collections import Counter
 class App:
     benchmark = ""
     args = []
-    backend = None
+    backend: IBMQ = None
     nshots = 0
     filename = ""
     filepath = ""
@@ -92,6 +92,7 @@ class App:
             # f.write(str(counts) + "\n")
         avg_fid = avg_fid / self.nruns
         f.write(str(avg_fid))
+        # f.write(str(self.nqbits / self.backend.backend.nbits))
         f.close()
 
 
