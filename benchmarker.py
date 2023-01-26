@@ -6,6 +6,7 @@ import os
 from subprocess import Popen, PIPE
 import subprocess
 import csv
+import math
 
 # Source
 # IBMQ resource page: https://quantum-computing.ibm.com/services/resources?tab=systems
@@ -26,10 +27,10 @@ backends = {
     # "FakeLondonV2": 5,
     # "FakeVigoV2": 5,
     #"FakeCasablancaV2": 7,
-     "FakeJakartaV2": 7,
+     #"FakeJakartaV2": 7,
     # "FakeLagosV2": 7,
     # "FakeMelbourneV2": 14,
-     "FakeGuadalupeV2": 16,
+     #"FakeGuadalupeV2": 16,
     ##"FakeAlmadenV2": 20,
     # "FakeBoeblingenV2": 20,
     # "FakeSingaporeV2": 20,
@@ -38,7 +39,7 @@ backends = {
     # "FakeHanoiV2": 27,
     # "FakeParisV2": 27,
     # "FakeSydneyV2": 27,
-     "FakeTorontoV2": 27,
+     #"FakeTorontoV2": 27,
     # "FakeKolkataV2": 27,
     # "FakeMontrealV2": 27,
     # "FakeCambridgeV2": 28,
@@ -48,8 +49,8 @@ backends = {
 benchmarks = {
     # "HamiltonianSimulationBenchmark": [],
     # "VQEBenchmark": [],
-     "VanillaQAOABenchmark": [],
-    # "GHZBenchmark": [],
+     #"VanillaQAOABenchmark": [],
+     "GHZBenchmark": [],
     # "BitCodeBenchmark": ["-rounds 4"],
     # "PhaseCodeBenchmark": ["-rounds 4"],
     # "FermionicSwapQAOABenchmark": [],
@@ -57,9 +58,10 @@ benchmarks = {
 
 runs = 10
 shots = 1024
-qbits = [4, 7, 16, 25]
+qbits = [4, 8, 16, 20]
+#qbits = [0.25, 0.5, 0.75, 1]
 
-run_cmd = "./main.py -backend {} -benchmark {} -runs {} -shots {} -bits {}"
+run_cmd = "python main.py -backend {} -benchmark {} -runs {} -shots {} -bits {}"
 
 for i, j in backends.items():
     for x, y in benchmarks.items():
@@ -67,8 +69,8 @@ for i, j in backends.items():
         # It is used as an exponent of 2.
 
         for q in qbits:
-            if q > backends[i]:
-                break
+            #if q > backends[i]:
+                #break
 
             cmd = run_cmd.format(str(i), str(x), str(runs), str(shots), str(q))
             for w in y:
