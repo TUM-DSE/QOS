@@ -47,16 +47,17 @@ backends = {
 
 benchmarks = {
     # "HamiltonianSimulationBenchmark": [],
-    # "VQEBenchmark": "./main.py --backend {} --benchmark {} --runs {} --shots {} --path results/ ",
-    # "VanillaQAOABenchmark": "./main.py --backend {} --benchmark {} --bits {} --runs {} --shots {} --path results/",
-    # "GHZBenchmark": "./main.py --backend {} --benchmark {} --bits {} --runs {} --shots {} --path results/",
+    # "VQEBenchmark": [],
+    # "VanillaQAOABenchmark": [],
+    # "GHZBenchmark": [],
     # "BitCodeBenchmark": ["-rounds 4"],
     # "PhaseCodeBenchmark": ["-rounds 4"],
-    # "FermionicSwapQAOABenchmark": 0,
+    # "FermionicSwapQAOABenchmark": [],
 }
 
 runs = 10
 shots = 10
+qbits = [4, 7, 16, 25]
 
 run_cmd = "./main.py -backend {} -benchmark {} -runs {} -shots {} -bits {}"
 
@@ -64,14 +65,15 @@ for i, j in backends.items():
     for x, y in benchmarks.items():
         # This variable is used to increment the number of qbits of the benchmark.
         # It is used as an exponent of 2.
-        n = 2
 
-        while 2**n <= backends[i]:
-            cmd = run_cmd.format(str(i), str(x), str(runs), str(shots), str(2**n))
+        for q in qbits:
+            if q > backends[i]:
+                break
+
+            cmd = run_cmd.format(str(i), str(x), str(runs), str(shots), str(q))
             for w in y:
                 cmd += " " + w
             # exit(0)
             print(cmd)
             this = subprocess.getoutput(cmd)
             print(this)
-            n += 1

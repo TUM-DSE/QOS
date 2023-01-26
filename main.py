@@ -87,11 +87,11 @@ class App:
             counts = job.result().get_counts()
             plot_histogram(counts, filename=self.filepath + self.filename)
             #            print(Counter(counts))
-            # avg_fid = avg_fid + self.benchmark.score(Counter(counts[0]))
+            avg_fid = avg_fid + self.benchmark.score(Counter(counts))
 
-            f.write(str(counts) + "\n")
-        # avg_fid = avg_fid / self.nruns
-        # f.write(str(avg_fid))
+            # f.write(str(counts) + "\n")
+        avg_fid = avg_fid / self.nruns
+        f.write(str(avg_fid))
         f.close()
 
 
