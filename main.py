@@ -72,6 +72,8 @@ class App:
     def Run(self):
         circuit = self.benchmark.circuit()
         backend = self.backend.backend
+        nqbits = self.backend.backend.num_qubits
+        utilization = self.nqbits / nqbits
 
         qc = transpile(circuit, backend)
         avg_fid = 0
@@ -92,7 +94,7 @@ class App:
             # f.write(str(counts) + "\n")
         avg_fid = avg_fid / self.nruns
         f.write(str(avg_fid))
-        # f.write(str(self.nqbits / self.backend.backend.nbits))
+        f.write(str(utilization))
         f.close()
 
 

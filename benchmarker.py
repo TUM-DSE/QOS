@@ -24,7 +24,7 @@ backends = {
     "FakeJakartaV2": 7,
     # "FakeLagosV2": 7,
     # "FakeMelbourneV2": 14,
-    # "FakeGuadalupeV2": 16,
+    "FakeGuadalupeV2": 16,
     ##"FakeAlmadenV2": 20,
     # "FakeBoeblingenV2": 20,
     # "FakeSingaporeV2": 20,
@@ -37,7 +37,7 @@ backends = {
     # "FakeKolkataV2": 27,
     # "FakeMontrealV2": 27,
     # "FakeCambridgeV2": 28,
-    # "FakeWashingtonV2": 127,
+    "FakeWashingtonV2": 127,
 }
 
 benchmarks = {
@@ -67,7 +67,6 @@ benchmarks = {
 
 runs = 10
 shots = 1024
-qbits = [4, 7, 12, 15, 20, 27]
 
 run_cmd = "./main.py -backend {} -benchmark {} -runs {} -shots {} {}"
 
