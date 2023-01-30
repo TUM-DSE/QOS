@@ -42,13 +42,13 @@ class ProbDistr(dict):
 
 def perfect_counts(original_circuit: QuantumCircuit) -> Dict[str, int]:
     cnt = (
-        StatevectorSimulator().run(original_circuit, shots=500000).result().get_counts()
+        StatevectorSimulator().run(original_circuit, shots=50000).result().get_counts()
     )
     return {k.replace(" ", ""): v for k, v in cnt.items()}
 
 
-def fidelity(orginal_circuit: QuantumCircuit, noisy_counts: Dict[str, int]) -> float:
-    return hellinger_fidelity(perfect_counts(orginal_circuit), noisy_counts)
+def fidelity(perfect_counts: Dict[str, int], noisy_counts: Dict[str, int]) -> float:
+    return hellinger_fidelity(perfect_counts, noisy_counts)
 
 
 class ProbDistribution:

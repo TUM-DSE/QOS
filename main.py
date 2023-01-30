@@ -117,6 +117,11 @@ class App:
 		for b in self.benchmarks:
 			circuits.append(b.circuit())
 		
+		prf_counts = []
+        
+		for c in circuits:
+			prf_counts.append(perfect_counts(c))
+        
 		qc = circuits[0]
 		ncircs = len(circuits)
 		
@@ -149,7 +154,7 @@ class App:
 			#print(len(self.backend.backend.coupling_map))
 			#plot_circuit_layout(qc, self.backend.backend)
 			for i in range(self.nbenchmarks):
-				avg_fid = avg_fid + fidelity(self.benchmarks[i].circuit(), splitted_counts[i])
+				avg_fid = avg_fid + fidelity(prf_counts[i], splitted_counts[i])
         
 
 			# f.write(str(counts) + "\n")
