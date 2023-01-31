@@ -3,8 +3,8 @@ from typing import Dict, List, Set, Type
 from qiskit.circuit import Qubit
 from qiskit.dagcircuit import DAGCircuit
 
-from vqc.cut.cut import CutPass, STANDARD_VIRTUAL_GATES
-from vqc.virtual_gate.virtual_gate import VirtualBinaryGate
+from .cut import CutPass, STANDARD_VIRTUAL_GATES
+from .virtual_gate import VirtualBinaryGate
 
 
 class QubitGroups(CutPass):
