@@ -3,10 +3,10 @@ from typing import Dict, Iterator, Set, Tuple
 
 from qiskit.circuit import QuantumCircuit, QuantumRegister, ClassicalRegister, Barrier
 
-from vqc.circuit import DistributedCircuit, Fragment
-from vqc.device import Device
-from vqc.prob import ProbDistribution
-from vqc.virtual_gate.virtual_gate import VirtualBinaryGate
+from .circuit import DistributedCircuit, Fragment
+from .device import Device
+from .prob import ProbDistribution
+from .virtual_gate import VirtualBinaryGate
 
 
 class FragmentExecutor:

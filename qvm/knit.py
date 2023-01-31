@@ -1,9 +1,9 @@
 import itertools
 from multiprocessing import Pool, cpu_count
 from typing import Iterable, Iterator, List, Tuple
-from vqc.executor.frag_executor import FragmentExecutor
-from vqc.prob import ProbDistribution
-from vqc.virtual_gate.virtual_gate import VirtualBinaryGate
+from .frag_executor import FragmentExecutor
+from .prob import ProbDistribution
+from .virtual_gate import VirtualBinaryGate
 
 
 def chunk(l: Iterable, n: int) -> Iterator[List]:
