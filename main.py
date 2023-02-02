@@ -31,6 +31,7 @@ def merge_circs(q1: QuantumCircuit, q2: QuantumCircuit) -> QuantumCircuit:
 def split_counts(counts, nbenchmarks):
     kl = len(list(counts.keys())[0])
     kl = int(kl / nbenchmarks)
+    print(kl)
 
     counts_list = []
 
@@ -39,10 +40,27 @@ def split_counts(counts, nbenchmarks):
 
         for (key, value) in counts.items():
             newKey = key[i * kl : i * kl + kl]
-
             dict.update({newKey: 0})
             for (key2, value2) in counts.items():
                 if newKey == key2[i * kl : i * kl + kl]:
+                    dict[newKey] = dict[newKey] + value2
+
+        counts_list.append(dict)
+
+    return counts_list
+
+
+def split_counts_bylist(counts, kl):
+    counts_list = []
+
+    for i in range(len(kl)):
+        dict = {}
+
+        for (key, value) in counts.items():
+            newKey = key[sum(kl[0:i]) : sum(kl[0:i]) + kl[i]]
+            dict.update({newKey: 0})
+            for (key2, value2) in counts.items():
+                if newKey == key2[sum(kl[0:i]) : sum(kl[0:i]) + kl[i]]:
                     dict[newKey] = dict[newKey] + value2
         counts_list.append(dict)
 
@@ -78,12 +96,12 @@ class App:
 
         args = parser.parse_args()
 
-        print(args.bits)
-        print(args.rounds)
-        print(args.benchmarks)
-        print(args.backend)
-        print(args.runs)
-        print(args.path)
+        # print(args.bits)
+        # print(args.rounds)
+        # print(args.benchmarks)
+        # print(args.backend)
+        # print(args.runs)
+        # print(args.path)
 
         self.nqbits = args.bits
         self.rounds = args.rounds
@@ -126,7 +144,6 @@ class App:
 
         # For same reason enumerate is not working correclty here
         for idx in range(len(args.benchmarks)):
-            print("fefwef  ", *self.bench_args[idx])
             self.benchmarks.append(eval(args.benchmarks[idx])(*self.bench_args[idx]))
 
         self.nbenchmarks = len(self.benchmarks)
@@ -172,6 +189,8 @@ class App:
             for i in range(2, ncircs):
                 qc = merge_circs(qc, circuits[i])
 
+                # Problem, we cant have different qbit circuits merged for some reason, i think.
+
         backend = self.backend.backend
         nqbits = self.backend.backend.num_qubits
         utilization = (sum(self.nqbits)) / nqbits
@@ -188,6 +207,9 @@ class App:
 
             counts = job.result().get_counts()
             splitted_counts = split_counts(counts, self.nbenchmarks)
+            print(splitted_counts)
+            # splitted_counts = split_counts_bylist(counts, self.nqbits)
+            # print(splitted_counts)
 
             for i in range(self.nbenchmarks):
                 plot_histogram(
@@ -197,12 +219,16 @@ class App:
             # print(len(self.backend.backend.coupling_map))
             # plot_circuit_layout(qc, self.backend.backend)
             for i in range(self.nbenchmarks):
+                # print(prf_counts[i])
+                # print(splitted_counts[i])
+                # print(fidelity(prf_counts[i], splitted_counts[i]))
                 avg_fid = avg_fid + fidelity(prf_counts[i], splitted_counts[i])
 
             # f.write(str(counts) + "\n")
 
         f = open(self.filepath + self.filename + ".txt", "a")
         avg_fid = avg_fid / (self.nbenchmarks * self.nruns)
+        print(avg_fid)
         f.write(str(avg_fid))
         f.write("\t")
         f.write(str(utilization))
