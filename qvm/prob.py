@@ -1,54 +1,6 @@
-from typing import Dict, List, Tuple, Union
+from typing import Dict, Tuple, Union
+
 from sortedcontainers import SortedDict
-from dataclasses import dataclass
-from collections import Counter
-import numpy as np
-import json
-
-from qiskit import QuantumCircuit
-from qiskit.quantum_info import hellinger_fidelity
-from qiskit.providers.aer import StatevectorSimulator
-from qiskit.quantum_info import Statevector
-
-
-def _get_ideal_counts(circuit: QuantumCircuit) -> Counter:
-    ideal_counts = {}
-    sv = Statevector.from_label("0" * circuit.num_qubits)
-    circuit_no_meas = circuit.remove_final_measurements(inplace=False)
-    sv.evolve(circuit_no_meas)
-
-    for i, amplitude in enumerate(sv):
-        bitstring = f"{i:>0{circuit.num_qubits}b}"
-        probability = np.abs(amplitude) ** 2
-        ideal_counts[bitstring] = probability
-    return Counter(ideal_counts)
-
-
-class ProbDistr(dict):
-    def __init__(self, data: Dict[str, float]) -> None:
-        super().__init__(data)
-
-    @staticmethod
-    def from_counts(counts: Dict[str, int]) -> "ProbDistr":
-        shots = sum(counts.values())
-        return ProbDistr({k: v / shots for k, v in counts.items()})
-
-    def __add__(self, other: "ProbDistr") -> "ProbDistr":
-        pass
-
-    def __sub__(self, other: "ProbDistr") -> "ProbDistr":
-        pass
-
-
-def perfect_counts(original_circuit: QuantumCircuit) -> Dict[str, int]:
-    cnt = (
-        StatevectorSimulator().run(original_circuit, shots=50000).result().get_counts()
-    )
-    return {k.replace(" ", ""): v for k, v in cnt.items()}
-
-
-def fidelity(perfect_counts: Dict[str, int], noisy_counts: Dict[str, int]) -> float:
-    return hellinger_fidelity(perfect_counts, noisy_counts)
 
 
 class ProbDistribution:
@@ -189,49 +141,3 @@ class ProbDistribution:
             for state2, prob2 in other._probs.items():
                 res[state1 | state2] = prob1 * prob2
         return ProbDistribution(res, num_meas)
-
-
-@dataclass
-class ExecutionStatistic:
-    execution_time: float
-    merge_time: float
-    knit_time: float
-    num_executions: int
-
-    def run_time(self) -> float:
-        return self.execution_time + self.merge_time + self.knit_time
-
-    def to_json(self) -> Dict[str, float]:
-        return {
-            "execution_time": self.execution_time,
-            "merge_time": self.merge_time,
-            "knit_time": self.knit_time,
-            "num_executions": float(self.num_executions),
-            "run_time": self.run_time(),
-        }
-
-    @staticmethod
-    def from_json(json_dict: Dict[str, float]) -> "ExecutionStatistic":
-        return ExecutionStatistic(
-            json_dict["execution_time"],
-            json_dict["merge_time"],
-            json_dict["knit_time"],
-            int(json_dict["num_executions"]),
-        )
-
-    def write_to_file(self, file_name: str) -> None:
-        with open(file_name, "w") as f:
-            json.dump(self.to_json(), f)
-
-    @staticmethod
-    def from_file(file_name: str) -> "ExecutionStatistic":
-        with open(file_name, "r") as f:
-            return ExecutionStatistic.from_json(json.load(f))
-
-
-def average_runtime(statistics: List[ExecutionStatistic]) -> float:
-    return sum(s.run_time() for s in statistics) / len(statistics)
-
-
-def min_max_runtime(statistics: List[ExecutionStatistic]) -> Tuple[float, float]:
-    return min(s.run_time() for s in statistics), max(s.run_time() for s in statistics)
