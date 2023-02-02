@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!python
 
 from operator import delitem
 import sys
@@ -76,13 +76,9 @@ run_cmd = "python main.py -backend {} -benchmarks {} -runs {} -shots {} -bits {}
 
 for i, j in backends.items():
     for x, y in benchmarks.items():
-        # This variable is used to increment the number of qbits of the benchmark.
-        # It is used as an exponent of 2.
-
         for q in qbits:
             # if q > backends[i]:
             # break
-
             cmd = run_cmd.format(str(i), str(x), str(runs), str(shots), str(q))
             for w in y:
                 cmd += " " + w

@@ -18,7 +18,7 @@ class QubitGroups(CutPass):
         super().__init__(vgates)
 
     def run(self, dag: DAGCircuit) -> DAGCircuit:
-        print(self.groups)
+        # print(self.groups)
         for op_node in dag.op_nodes():
             if (
                 sum(1 for g in self.groups if set(op_node.qargs) & g) > 1

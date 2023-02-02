@@ -19,13 +19,13 @@ from qvm.cut import STANDARD_VIRTUAL_GATES
 from benchmarks._utils import fidelity, perfect_counts
 
 # %%
-bench = HamiltonianSimulationBenchmark(4)
+bench = HamiltonianSimulationBenchmark(10)
 # bench = BitCodeBenchmark(8, 4)
 circuit = bench.circuit()
 # print(circuit)
 # print(circuit[1])
 
-back = FakeTorontoV2()
+back = StatevectorSimulator(shots=5000)
 # back = StatevectorSimulator()
 out = back.run(circuit).result().get_counts()
 plot_histogram(out)
@@ -55,6 +55,8 @@ plot_histogram(out2)
 # executor2 = FragmentExecutor(distcircuit, frags[1])
 
 # final_knit = knit([executor1, executor2], STANDARD_VIRTUAL_GATES)
+print(prob1)
+print(prob2)
 final_knit = merge([prob1, prob2]).counts()
 perf = perfect_counts(circuit)
 plot_histogram(perf)
@@ -63,3 +65,7 @@ plot_histogram(final_knit)
 
 # %%
 fidelity(perf, final_knit)
+#%%
+fidelity(perf, out)
+
+# %%

@@ -1,16 +1,18 @@
-#!/usr/bin/python3
+#!python
 
 import sys
 import argparse
-
+from qvm.cut import cut
+from qvm.knit import merge
+from qvm.bisection import Bisection
 from qiskit import IBMQ
 from benchmarks import *
 from backends import IBMQPU
 from qiskit.compiler import transpile
 from qiskit.visualization import plot_histogram, plot_circuit_layout, plot_coupling_map
-from collections import Counter
-
+from typing import List
 from qiskit.circuit import QuantumCircuit
+from qvm.prob import ProbDistribution
 
 
 def merge_circs(q1: QuantumCircuit, q2: QuantumCircuit) -> QuantumCircuit:
@@ -49,6 +51,24 @@ def split_counts(counts, nbenchmarks):
     return counts_list
 
 
+def bisect_circuit(circuit: QuantumCircuit, cuts: int):
+
+    if cuts < 1:
+        return [circuit]
+
+    passes = Bisection()
+    distcircuit = cut(circuit, passes)
+
+    frags = distcircuit.fragments
+    frags = [distcircuit.fragment_as_circuit(frags[i]) for i in [0, 1]]
+
+    final_frags = []
+    final_frags += bisect_circuit(frags[0], cuts - 1)
+    final_frags += bisect_circuit(frags[1], cuts - 1)
+
+    return final_frags
+
+
 class App:
     benchmarks = []
     nbenchmarks = 0
@@ -74,7 +94,7 @@ class App:
         parser.add_argument("-shots", type=int)
         parser.add_argument("-path", required=False, default="results/")
         parser.add_argument("-rounds", type=int, required=False)
-        parser.add_argument("-cuts", type=int, required=False)
+        parser.add_argument("-cuts", nargs="+", type=int, required=False)
 
         args = parser.parse_args()
 
@@ -92,16 +112,20 @@ class App:
         self.nshots = args.shots
         self.cuts = args.cuts
 
-        if self.cuts != None and len(args.benchmarks) > 1:
+        if self.cuts != None and len(self.cuts) != len(args.benchmarks):
             print(
-                "Working with more than 1 benchmarks and cutting is not yet implemented"
+                "It was selected "
+                + str(len(args.benchmarks))
+                + " benchmarks but was only indicated "
+                + str(len(self.cuts))
+                + " cuts. It needs to be the same cuts as benchmarks"
             )
             exit(1)
 
         self.bench_args = (
             [self.nqbits] if self.rounds == None else [self.nqbits, self.rounds]
         )
-        print(*self.bench_args)
+        # print(*self.bench_args)
 
         for b in args.benchmarks:
             self.benchmarks.append(eval(b)(*self.bench_args))
@@ -129,53 +153,98 @@ class App:
     def run(self):
         circuits = []
 
-        for b in self.benchmarks:
-            circuits.append(b.circuit())
-            # Where we should cut, or maybe outside of the loop, anyway we dont support yet multiple
-            # benchmarks and cutting so here or outside is the same
+        for i, b in enumerate(self.benchmarks):
+            # print(b.circuit())
+            if self.cuts != None:
+                frags = []
+                frags += bisect_circuit(b.circuit(), self.cuts[i])
+                circuits.append(frags)
+            else:
+                circuits.append(b.circuit())
+
+            # print("Final frags ", len(frags))
+            # for i in frags:
+            #    print(i)
 
         prf_counts = []
 
-        for c in circuits:
-            prf_counts.append(perfect_counts(c))
+        # print("Circuits ", len(circuits))
+        # This loops through the benchmarks
+        for c in self.benchmarks:
+            prf_counts.append(perfect_counts(c.circuit()))
 
-        qc = circuits[0]
-        ncircs = len(circuits)
+        # Now merging the fragments of the circuit and the circuits as a whole circuit
 
-        if ncircs > 1:
-            qc = merge_circs(circuits[0], circuits[1])
+        if self.cuts != None:
+            qc = circuits[0][0]
 
-            for i in range(2, ncircs):
-                qc = merge_circs(qc, circuits[i])
+            for i in circuits:
+                for j in i:
+                    qc = merge_circs(qc, j)
+        else:
+            qc = circuits[0]
+
+            for i in circuits:
+                qc = merge_circs(qc, i)
 
         backend = self.backend.backend
         nqbits = self.backend.backend.num_qubits
-        utilization = (self.nqbits * self.nbenchmarks) / nqbits
+        # utilization = (self.nqbits * self.nbenchmarks) / nqbits
+        utilization = qc.num_qubits / nqbits
 
+        print(qc)
+        print(utilization)
         qc = transpile(qc, backend)
         avg_fid = 0
 
-        for i in range(self.nruns):
+        final_counts = []
 
+        for i in range(self.nruns):
             if self.backend.is_simulator:
                 job = backend.run(run_input=qc, shots=self.nshots)
             else:
                 job = backend.run(circuits=qc, shots=self.nshots)
 
             counts = job.result().get_counts()
-            splitted_counts = split_counts(counts, self.nbenchmarks)
+            # print(counts)
+            bench_split_counts = split_counts(counts, self.nbenchmarks)
+            # In this step the split_counts splits the counts per benchmark, however each benchmark can
+            # also be composed of multiple fragments which are split next
 
+            # print(bench_split_counts)
+            # print(bench_split_counts[0])
+            # print(bench_split_counts[1])
+        if self.cuts != None:
+            for idx, j in enumerate(bench_split_counts):
+                frag_counts = split_counts(j, 2 ** (self.cuts[idx]))
+                # print(frag_counts)
+                # print(ProbDistribution.from_counts(frag_counts[i]))
+                frag_probs = [
+                    ProbDistribution.from_counts(frag_counts[w])
+                    for w in range(len(frag_counts))
+                ]
+                final_counts.append(merge(frag_probs).counts())
+                # final_counts.append(merge(frag_counts).counts())
+
+                for i in range(self.nbenchmarks):
+                    plot_histogram(
+                        final_counts[i],
+                        filename=self.filepath + self.filename + str(i),
+                    )
+
+                for i in range(self.nbenchmarks):
+                    avg_fid = avg_fid + fidelity(prf_counts[i], final_counts[i])
+        else:
             for i in range(self.nbenchmarks):
                 plot_histogram(
-                    splitted_counts[i], filename=self.filepath + self.filename + str(i)
+                    bench_split_counts[i],
+                    filename=self.filepath + self.filename + str(i),
                 )
-            # self.backend.backend.coupling_map.draw()
-            # print(len(self.backend.backend.coupling_map))
-            # plot_circuit_layout(qc, self.backend.backend)
             for i in range(self.nbenchmarks):
-                avg_fid = avg_fid + fidelity(prf_counts[i], splitted_counts[i])
+                avg_fid = avg_fid + fidelity(prf_counts[i], bench_split_counts[i])
 
-            # f.write(str(counts) + "\n")
+            print(prf_counts)
+            print(avg_fid)
 
         f = open(self.filepath + self.filename + ".txt", "a")
         avg_fid = avg_fid / (self.nbenchmarks * self.nruns)
