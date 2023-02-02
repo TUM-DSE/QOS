@@ -69,16 +69,17 @@ class App:
         parser = argparse.ArgumentParser()
         parser.add_argument("-backend")
         parser.add_argument("-benchmarks", nargs="+", type=str)
-        parser.add_argument("-bits", type=int)
+        parser.add_argument("-bits", nargs="+", type=int)
         parser.add_argument("-runs", type=int)
         parser.add_argument("-shots", type=int)
         parser.add_argument("-path", required=False, default="results/")
-        parser.add_argument("-rounds", type=int, required=False)
+        parser.add_argument("-rounds", type=int, nargs="+", required=False)
         parser.add_argument("-cuts", type=int, required=False)
 
         args = parser.parse_args()
 
         print(args.bits)
+        print(args.rounds)
         print(args.benchmarks)
         print(args.backend)
         print(args.runs)
@@ -98,15 +99,38 @@ class App:
             )
             exit(1)
 
-        self.bench_args = (
-            [self.nqbits] if self.rounds == None else [self.nqbits, self.rounds]
-        )
-        print(*self.bench_args)
+        # If you select more that one benchmark then you have to indicate the qbits for each benchmark by the order that you
+        # entered the benchmark, for example:
+        # `python main.py -backend FakeTorontoV2 -benchmarks GHZBenchmark GHZBenchmark -bits 2 3 -runs 3 -shots 4000`
+        # If one of the benchmarks requires to indicate the number of rounds then you need to put the same number of round's args as
+        # the number of benchmarks, if the benchmark does not take rounds just put 0, for example:
+        # `python main.py -backend FakeTorontoV2 -benchmarks GHZBenchmark BitCodeBenchmark -bits 2 3 -rounds 0 2 -runs 3 -shots 4000`
+        self.bench_args = [
+            [self.nqbits[i]]
+            if self.rounds == None
+            else [self.nqbits[i]]
+            if self.rounds[i] == 0
+            else [self.nqbits[i], self.rounds[i]]
+            for i in range(len(args.benchmarks))
+        ]
+        # This is a very ugly inline if else statements but it works, basically what it does it:
+        # 1. If there are no rounds that the argument is None and just take the qbits argment
+        # 2. If there are rounds, rounds = 0 means that the bechmark doesnt need rounds so just take the qbits
+        # 3. If the rounds are different that 0 than the benchmark takes rounds that it should be on the bench_args
+        # This `python main.py -backend FakeTorontoV2 -benchmarks GHZBenchmark BitCodeBenchmark -bits 2 3 -rounds 0 2 -runs 3 -shots 4000`
+        # would fill the self.bench_args as [[2], [3, 2]]
 
-        for b in args.benchmarks:
-            self.benchmarks.append(eval(b)(*self.bench_args))
+        # self.bench_args = (
+        #   [self.nqbits] if self.rounds == None else [self.nqbits, self.rounds]
+        # )
+
+        # For same reason enumerate is not working correclty here
+        for idx in range(len(args.benchmarks)):
+            print("fefwef  ", *self.bench_args[idx])
+            self.benchmarks.append(eval(args.benchmarks[idx])(*self.bench_args[idx]))
 
         self.nbenchmarks = len(self.benchmarks)
+
         # self.benchmark = eval(args.benchmark)(*self.bench_args)
         # args.benchmark is a list of the benchmarks inputted as "-benchmark GHZBenchmark HamiltonianSimulationBenchmark" for example
         # now we just call the merge function?
@@ -150,7 +174,7 @@ class App:
 
         backend = self.backend.backend
         nqbits = self.backend.backend.num_qubits
-        utilization = (self.nqbits * self.nbenchmarks) / nqbits
+        utilization = (sum(self.nqbits)) / nqbits
 
         qc = transpile(qc, backend)
         avg_fid = 0

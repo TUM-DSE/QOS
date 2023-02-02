@@ -52,8 +52,7 @@ benchmarks = {
     # "VQEBenchmark": [],
     # "VanillaQAOABenchmark": [],
     "GHZBenchmark": [],
-	#"HamiltonianSimulationBenchmark": [],
-    ],
+    # "HamiltonianSimulationBenchmark": [],
     # "BitCodeBenchmark": [
     #    "-bits 4 -rounds 3",
     #    "-bits 7 -rounds 3",
