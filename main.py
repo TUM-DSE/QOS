@@ -1,8 +1,6 @@
-#!/usr/bin/python3
-
 import sys
 import argparse
-
+import yaml
 from qiskit import IBMQ
 from benchmarks import *
 from backends import IBMQPU
@@ -66,7 +64,12 @@ class App:
     # def __init__(self, backend, benchmark, nqbits, nruns, filepath='', shots=1024):
     def __init__(self, *kwargs):
 
-        parser = argparse.ArgumentParser()
+        with open("config.json", "r") as config:
+            data = yaml.safe_load(config)
+
+            print(data)
+
+            parser = argparse.ArgumentParser()
         parser.add_argument("-backend")
         parser.add_argument("-benchmarks", nargs="+", type=str)
         parser.add_argument("-bits", type=int)
@@ -125,6 +128,9 @@ class App:
             + "Shots"
             + str(self.nshots)
         )
+
+    def config_reader(self):
+        pass
 
     def run(self):
         circuits = []
