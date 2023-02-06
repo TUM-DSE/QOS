@@ -1,44 +1,15 @@
-
 # This is an example of a config file
 
 config:
-    - benchmark: 
-        name: GHZBenchmark
-        cut: true
-        cut_type: bisection
-        cuts: 2
-        frags:
-            - frag:
-                backend: FakeJakartaV2
-                splits: 0.2
-            - frag:
-                backend: FakeTorontoV2
-                splits: 0.8
-
-    - benchmark:
-        name: HamiltonianSimulationBenchmark
-        cut: true
-        cut_type: manual
-        frags:
-            - frag:
-                backend: FakeJakartaV2
-                splits: 0.2
-                qbits: 3
-            - frag:
-                backend: FakeTorontoV2
-                splits: 0.8
-                qbits: 5
-
-
-
-
-
-
-parser.add_argument("-backend")
-parser.add_argument("-benchmarks", nargs="+", type=str)
-parser.add_argument("-bits", type=int)
-parser.add_argument("-runs", type=int)
-parser.add_argument("-shots", type=int)
-parser.add_argument("-path", required=False, default="results/")
-parser.add_argument("-rounds", type=int, required=False)
-parser.add_argument("-cuts", type=int, required=False)
+  path: results/
+  benchmarks:
+    - name: GHZBenchmark
+      nbits: 3
+      rounds:
+      cut: true
+      shots: 4000
+      runs: 3
+      cut_type: bisection
+      cuts: 1
+      frags:
+        - backend: FakeJakartaV2
