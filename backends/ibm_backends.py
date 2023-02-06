@@ -14,10 +14,10 @@ from qiskit.circuit import QuantumCircuit
 class IBMQPU:
     def __init__(
         self, backend_name: str, provider: Optional[AccountProvider] = None
-    ) -> None:        
+    ) -> None:
         if "Fake" in backend_name:
-            if provider is not None:
-                warn("AccountProvider passed but fake backend requested.")
+            # if provider is not None:
+            #    warn("AccountProvider passed but fake backend requested.")
             backend = getattr(FakeAccountProvider, backend_name)()
 
             # Need to do some modifications for compatility with mapomatic if V2
@@ -52,7 +52,7 @@ class IBMQPU:
             )
 
         self.backend = backend
-        
+
         # self._qernels: Dict[int, Qernel] = {}
         self._qid_ctr: int = 0
 
@@ -62,8 +62,8 @@ class IBMQPU:
     #  self._qid_ctr += 1
     # return self._qid_ctr - 1
 
-    #def run(self, qc: QuantumCircuit, shots : int = 1024) -> None:
-        #self.backend.run(qc, shots)
+    # def run(self, qc: QuantumCircuit, shots : int = 1024) -> None:
+    # self.backend.run(qc, shots)
 
     def cost(self, circ: QuantumCircuit) -> float:
         trans_qc = transpile(circuits=circ, backend=self._backend, optimization_level=3)

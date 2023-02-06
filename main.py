@@ -131,6 +131,9 @@ class App:
             else [self.nqbits[i], self.rounds[i]]
             for i in range(len(args.benchmarks))
         ]
+
+        print(self.bench_args)
+
         # This is a very ugly inline if else statements but it works, basically what it does it:
         # 1. If there are no rounds that the argument is None and just take the qbits argment
         # 2. If there are rounds, rounds = 0 means that the bechmark doesnt need rounds so just take the qbits
@@ -142,7 +145,7 @@ class App:
         #   [self.nqbits] if self.rounds == None else [self.nqbits, self.rounds]
         # )
 
-        # For same reason enumerate is not working correclty here
+        # For some reason enumerate is not working correclty here
         for idx in range(len(args.benchmarks)):
             self.benchmarks.append(eval(args.benchmarks[idx])(*self.bench_args[idx]))
 
@@ -150,9 +153,8 @@ class App:
 
         # self.benchmark = eval(args.benchmark)(*self.bench_args)
         # args.benchmark is a list of the benchmarks inputted as "-benchmark GHZBenchmark HamiltonianSimulationBenchmark" for example
-        # now we just call the merge function?
 
-        self.provider = IBMQ.load_account()
+        # self.provider = IBMQ.load_account()
         self.backend = IBMQPU(args.backend, self.provider)
 
         benchmark_names = ""
@@ -171,9 +173,8 @@ class App:
         circuits = []
 
         for b in self.benchmarks:
+            print(b.circuit())
             circuits.append(b.circuit())
-            # Where we should cut, or maybe outside of the loop, anyway we dont support yet multiple
-            # benchmarks and cutting so here or outside is the same
 
         prf_counts = []
 
@@ -189,9 +190,10 @@ class App:
             for i in range(2, ncircs):
                 qc = merge_circs(qc, circuits[i])
 
-                # Problem, we cant have different qbit circuits merged for some reason, i think.
+        print(qc)
 
         backend = self.backend.backend
+        print(backend.name)
         nqbits = self.backend.backend.num_qubits
         utilization = (sum(self.nqbits)) / nqbits
 
@@ -207,6 +209,7 @@ class App:
 
             counts = job.result().get_counts()
             splitted_counts = split_counts(counts, self.nbenchmarks)
+            print(counts)
             print(splitted_counts)
             # splitted_counts = split_counts_bylist(counts, self.nqbits)
             # print(splitted_counts)
@@ -218,6 +221,7 @@ class App:
             # self.backend.backend.coupling_map.draw()
             # print(len(self.backend.backend.coupling_map))
             # plot_circuit_layout(qc, self.backend.backend)
+
             for i in range(self.nbenchmarks):
                 # print(prf_counts[i])
                 # print(splitted_counts[i])
