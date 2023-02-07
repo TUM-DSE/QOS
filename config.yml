@@ -1,0 +1,15 @@
+# This is an example of a config file
+
+config:
+  path: results/
+  benchmarks:
+    - name: GHZBenchmark
+      nbits: 3
+      rounds:
+      cut: true
+      shots: 4000
+      runs: 3
+      cut_type: bisection
+      cuts: 1
+      frags:
+        - backend: FakeJakartaV2

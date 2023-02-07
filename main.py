@@ -1,8 +1,8 @@
-#!/usr/bin/python3
-
 import sys
 import argparse
 import pdb
+import yaml
+import pprint
 from qiskit import IBMQ
 from benchmarks import *
 from backends import IBMQPU
@@ -11,6 +11,15 @@ from qiskit.visualization import plot_histogram, plot_circuit_layout, plot_coupl
 from collections import Counter
 
 from qiskit.circuit import QuantumCircuit
+
+
+class dict2obj(object):
+    def __init__(self, d):
+        for k, v in d.items():
+            if isinstance(k, (list, tuple)):
+                setattr(self, k, [dict2obj(x) if isinstance(x, dict) else x for x in v])
+            else:
+                setattr(self, k, dict2obj(v) if isinstance(v, dict) else v)
 
 
 def merge_circs(q1: QuantumCircuit, q2: QuantumCircuit) -> QuantumCircuit:
@@ -58,43 +67,27 @@ class App:
     filepath = ""
     provider = None
     nruns = 0
-    nqbits = 0
+    nbits = 0
     rounds = 0
     bench_args = ""
 
-    # def __init__(self, backend, benchmark, nqbits, nruns, filepath='', shots=1024):
+    # def __init__(self, backend, benchmark, nbits, nruns, filepath='', shots=1024):
     def __init__(self, *kwargs):
 
-        parser = argparse.ArgumentParser()
-        parser.add_argument("-backend")
-        parser.add_argument("-benchmarks", nargs="+", type=str)
-        parser.add_argument("-bits", nargs="+", type=int)
-        parser.add_argument("-runs", type=int)
-        parser.add_argument("-shots", type=int)
-        parser.add_argument("-path", required=False, default="results/")
-        parser.add_argument("-rounds", type=int, nargs="+", required=False)
-        parser.add_argument("-cuts", type=int, required=False)
+        config = self.config_parser()
+        # pprint.pprint(data)
 
-        args = parser.parse_args()
+        print(config.benchmarks[0].name)
 
-        # print(args.bits)
-        # print(args.rounds)
-        # print(args.benchmarks)
-        # print(args.backend)
-        # print(args.runs)
-        # print(args.path)
+        self.nbits = config.benchmarks[0].nbits
+        self.rounds = config.benchmarks[0].rounds
+        self.nruns = config.benchmarks[0].runs
+        self.filepath = config.path
+        self.nshots = config.benchmarks[0].shots
+        self.cuts = config.benchmarks[0].cuts
+        self.backend = config.benchmarks[0].frags[0].backend
 
-        self.nqbits = args.bits
-        self.rounds = args.rounds
-        self.backend = args.backend
-        self.nruns = args.runs
-        self.filepath = args.path
-        self.nshots = args.shots
-        self.cuts = args.cuts
-
-        # self.nshots = args.shots if args.shots
-
-        if self.cuts != None and len(args.benchmarks) > 1:
+        if self.cuts != None and len(config.benchmarks) > 1:
             print(
                 "Working with more than 1 benchmarks and cutting is not yet implemented"
             )
@@ -129,8 +122,8 @@ class App:
         # )
 
         # For some reason enumerate is not working correclty here
-        for idx in range(len(args.benchmarks)):
-            self.benchmarks.append(eval(args.benchmarks[idx])(*self.bench_args[idx]))
+        for b in config.benchmarks:
+            self.benchmarks.append(eval(b.name)(*self.bench_args[idx]))
 
         self.nbenchmarks = len(self.benchmarks)
 
@@ -138,7 +131,7 @@ class App:
         # args.benchmark is a list of the benchmarks inputted as "-benchmark GHZBenchmark HamiltonianSimulationBenchmark" for example
 
         # self.provider = IBMQ.load_account()
-        self.backend = IBMQPU(args.backend, self.provider)
+        self.backend = IBMQPU(self.backend, self.provider)
 
         benchmark_names = ""
         for b in self.benchmarks:
@@ -147,10 +140,24 @@ class App:
         self.filename = (
             self.backend.backend.name
             + benchmark_names
-            + str(self.nqbits)
+            + str(self.nbits)
             + "Shots"
             + str(self.nshots)
         )
+
+    def config_parser(self):
+        with open("config.yml", "r") as config:
+            data = yaml.safe_load(config)
+
+        data = dict2obj(data)
+
+        for i, j in enumerate(data.config.benchmarks):
+            data.config.benchmarks[i] = dict2obj(j)
+
+            for x, y in enumerate(data.config.benchmarks[i].frags):
+                data.config.benchmarks[i].frags[x] = dict2obj(y)
+
+        return data.config
 
     def run(self):
         circuits = []

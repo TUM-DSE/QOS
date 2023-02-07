@@ -1,0 +1,41 @@
+# This is an example of a config file
+
+config:
+  path: results/
+  benchmarks:
+    - name: GHZBenchmark
+      qbits: 3
+      rounds: 3
+      cut: true
+      shots: 4000
+      runs: 3
+      cut_type: bisection
+      cuts: 1
+      frags:
+        - frag1:
+          backend: FakeJakartaV2
+          split: 0.2
+        - frag1:
+          backend: FakeTorontoV2
+          split: 0.8
+        - frag2:
+          backend: FakeTorontoV2
+          split: 0.8
+        - frag2:
+          backend: FakeJakartaV2
+
+    - name: HamiltonianSimulationBenchmark
+      cut: true
+      cut_type: manual
+      frags:
+        - frag1:
+          backend: FakeJakartaV2
+          split: 0.2
+          qbits: 3
+        - frag1:
+          backend: FakeTorontoV2
+          split: 0.8
+          qbits: 5
+        - frag2:
+          backend: FakeTorontoV2
+          qbits: 5
