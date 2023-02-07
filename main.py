@@ -28,67 +28,21 @@ def merge_circs(q1: QuantumCircuit, q2: QuantumCircuit) -> QuantumCircuit:
     return toReturn
 
 
-def split_counts(counts, nbenchmarks):
-    kl = len(list(counts.keys())[0])
-    kl = int(kl / nbenchmarks)
-    print(kl)
-
-    # pdb.set_trace()
-
-    counts_list = []
-
-    for i in range(0, nbenchmarks):
-        dict = {}
-
-        for (key, value) in counts.items():
-            newKey = key[i * kl : i * kl + kl]
-            dict.update({newKey: 0})
-            for (key2, value2) in counts.items():
-                if newKey == key2[i * kl : i * kl + kl]:
-                    dict[newKey] = dict[newKey] + value2
-
-        counts_list.append(dict)
-
-    return counts_list
-
-
-"""
 def split_counts_bylist(counts, kl):
     counts_list = []
-
-    pdb.set_trace()
 
     for i in range(len(kl)):
         dict = {}
 
         for (key, value) in counts.items():
-            newKey = key[sum(kl[0:i]) : sum(kl[0:i]) + kl[i]]
+            newKey = key[sum(kl) - sum(kl[0 : i + 1]) : sum(kl) - sum(kl[0:i])]
+            if newKey in dict:
+                continue
             dict.update({newKey: 0})
             for (key2, value2) in counts.items():
-                if newKey == key2[sum(kl[0:i]) : sum(kl[0:i]) + kl[i]]:
+                if newKey == key2[sum(kl) - sum(kl[: i + 1]) : sum(kl) - sum(kl[:i])]:
                     dict[newKey] = dict[newKey] + value2
-        counts_list.append(dict)
 
-    return counts_list
-"""
-
-
-def split_counts_bylist(counts, kl):
-    counts_list = []
-
-    # pdb.set_trace()
-
-    for i in range(len(kl)):
-        dict = {}
-
-        relevant_keys = [f"{j:0{(kl[i])}b}".replace("b", "") for j in range(2 ** kl[i])]
-
-        for j in relevant_keys:
-            dict.update({j: 0})
-            for (key, value) in counts.items():
-                if j == key[sum(kl[0:i]) : sum(kl[0:i]) + kl[i]]:
-                    # if j == key[sum(kl) - kl[i] : sum(kl)]:
-                    dict[j] = dict[j] + value
         counts_list.append(dict)
 
     return counts_list
