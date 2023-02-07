@@ -2,7 +2,7 @@
 
 import sys
 import argparse
-
+import pdb
 from qiskit import IBMQ
 from benchmarks import *
 from backends import IBMQPU
@@ -33,6 +33,8 @@ def split_counts(counts, nbenchmarks):
     kl = int(kl / nbenchmarks)
     print(kl)
 
+    # pdb.set_trace()
+
     counts_list = []
 
     for i in range(0, nbenchmarks):
@@ -50,8 +52,11 @@ def split_counts(counts, nbenchmarks):
     return counts_list
 
 
+"""
 def split_counts_bylist(counts, kl):
     counts_list = []
+
+    pdb.set_trace()
 
     for i in range(len(kl)):
         dict = {}
@@ -62,6 +67,28 @@ def split_counts_bylist(counts, kl):
             for (key2, value2) in counts.items():
                 if newKey == key2[sum(kl[0:i]) : sum(kl[0:i]) + kl[i]]:
                     dict[newKey] = dict[newKey] + value2
+        counts_list.append(dict)
+
+    return counts_list
+"""
+
+
+def split_counts_bylist(counts, kl):
+    counts_list = []
+
+    # pdb.set_trace()
+
+    for i in range(len(kl)):
+        dict = {}
+
+        relevant_keys = [f"{j:0{(kl[i])}b}".replace("b", "") for j in range(2 ** kl[i])]
+
+        for j in relevant_keys:
+            dict.update({j: 0})
+            for (key, value) in counts.items():
+                if j == key[sum(kl[0:i]) : sum(kl[0:i]) + kl[i]]:
+                    # if j == key[sum(kl) - kl[i] : sum(kl)]:
+                    dict[j] = dict[j] + value
         counts_list.append(dict)
 
     return counts_list
@@ -110,6 +137,8 @@ class App:
         self.filepath = args.path
         self.nshots = args.shots
         self.cuts = args.cuts
+
+        # self.nshots = args.shots if args.shots
 
         if self.cuts != None and len(args.benchmarks) > 1:
             print(
@@ -181,6 +210,15 @@ class App:
         for c in circuits:
             prf_counts.append(perfect_counts(c))
 
+        for idx, c in enumerate(prf_counts):
+            print("-------------------")
+            plot_histogram(
+                c,
+                filename="results/perfect_counts" + str(idx) + ".png",
+                figsize=(10, 10),
+            )
+        # print(prf_counts)
+
         qc = circuits[0]
         ncircs = len(circuits)
 
@@ -208,15 +246,29 @@ class App:
                 job = backend.run(circuits=qc, shots=self.nshots)
 
             counts = job.result().get_counts()
-            splitted_counts = split_counts(counts, self.nbenchmarks)
-            print(counts)
-            print(splitted_counts)
-            # splitted_counts = split_counts_bylist(counts, self.nqbits)
+            # splitted_counts = split_counts(counts, self.nbenchmarks)
+            # print(counts)
+            # print(splitted_counts)
+            plot_histogram(
+                counts, filename="results/counts" + str(idx) + ".png", figsize=(10, 10)
+            )
+            splitted_counts = split_counts_bylist(counts, self.nqbits)
+            # splitted_counts = split_counts(counts, 12)
+
+            for idx, c in enumerate(splitted_counts):
+                print("-------------------")
+                plot_histogram(
+                    c,
+                    filename="results/split_counts" + str(idx) + ".png",
+                    figsize=(10, 10),
+                )
             # print(splitted_counts)
 
             for i in range(self.nbenchmarks):
                 plot_histogram(
-                    splitted_counts[i], filename=self.filepath + self.filename + str(i)
+                    splitted_counts[i],
+                    filename=self.filepath + self.filename + str(i),
+                    figsize=(10, 10),
                 )
             # self.backend.backend.coupling_map.draw()
             # print(len(self.backend.backend.coupling_map))
