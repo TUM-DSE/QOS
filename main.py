@@ -13,6 +13,7 @@ from qiskit.visualization import plot_histogram, plot_circuit_layout, plot_coupl
 from typing import List
 from qiskit.circuit import QuantumCircuit
 from qvm.prob import ProbDistribution
+import pdb
 
 
 def merge_circs(q1: QuantumCircuit, q2: QuantumCircuit) -> QuantumCircuit:
@@ -30,21 +31,23 @@ def merge_circs(q1: QuantumCircuit, q2: QuantumCircuit) -> QuantumCircuit:
     return toReturn
 
 
-def split_counts(counts, nbenchmarks):
-    kl = len(list(counts.keys())[0])
-    kl = int(kl / nbenchmarks)
-
+def split_counts_bylist(counts, kl):
     counts_list = []
 
-    for i in range(0, nbenchmarks):
+    if len(kl) <= 1:
+        return counts
+
+    for i in range(len(kl)):
         dict = {}
 
         for (key, value) in counts.items():
-            newKey = key[i * kl : i * kl + kl]
+            newKey = key[sum(kl) - sum(kl[0 : i + 1]) : sum(kl) - sum(kl[0:i])]
+            if newKey in dict:
+                continue
 
             dict.update({newKey: 0})
             for (key2, value2) in counts.items():
-                if newKey == key2[i * kl : i * kl + kl]:
+                if newKey == key2[sum(kl) - sum(kl[: i + 1]) : sum(kl) - sum(kl[:i])]:
                     dict[newKey] = dict[newKey] + value2
         counts_list.append(dict)
 
@@ -89,7 +92,8 @@ class App:
         parser = argparse.ArgumentParser()
         parser.add_argument("-backend")
         parser.add_argument("-benchmarks", nargs="+", type=str)
-        parser.add_argument("-bits", type=int)
+        parser.add_argument("-nqbits", nargs="+", type=int)
+        # parser.add_argument("-nqbits", type=int)
         parser.add_argument("-runs", type=int)
         parser.add_argument("-shots", type=int)
         parser.add_argument("-path", required=False, default="results/")
@@ -97,14 +101,14 @@ class App:
         parser.add_argument("-cuts", nargs="+", type=int, required=False)
 
         args = parser.parse_args()
-
-        print(args.bits)
+        print(args.cuts)
+        print(args.nqbits)
         print(args.benchmarks)
         print(args.backend)
         print(args.runs)
         print(args.path)
 
-        self.nqbits = args.bits
+        self.nqbits = args.nqbits
         self.rounds = args.rounds
         self.backend = args.backend
         self.nruns = args.runs
@@ -123,7 +127,7 @@ class App:
             exit(1)
 
         self.bench_args = (
-            [self.nqbits] if self.rounds == None else [self.nqbits, self.rounds]
+            self.nqbits if self.rounds == None else [self.nqbits, self.rounds]
         )
         # print(*self.bench_args)
 
@@ -135,7 +139,7 @@ class App:
         # args.benchmark is a list of the benchmarks inputted as "-benchmark GHZBenchmark HamiltonianSimulationBenchmark" for example
         # now we just call the merge function?
 
-        self.provider = IBMQ.load_account()
+        # self.provider = IBMQ.load_account()
         self.backend = IBMQPU(args.backend, self.provider)
 
         benchmark_names = ""
@@ -162,9 +166,9 @@ class App:
             else:
                 circuits.append(b.circuit())
 
-            # print("Final frags ", len(frags))
-            # for i in frags:
-            #    print(i)
+            print("Final frags ", len(frags))
+            for i in frags:
+                print(i)
 
         prf_counts = []
 
@@ -206,17 +210,27 @@ class App:
                 job = backend.run(circuits=qc, shots=self.nshots)
 
             counts = job.result().get_counts()
-            # print(counts)
-            bench_split_counts = split_counts(counts, self.nbenchmarks)
+            if not isinstance(self.nqbits, list):
+                self.nqbits = [self.nqbits]
+
+            print(self.nqbits)
+
+            bench_split_counts = split_counts_bylist(counts, self.nqbits)
             # In this step the split_counts splits the counts per benchmark, however each benchmark can
             # also be composed of multiple fragments which are split next
 
             # print(bench_split_counts)
             # print(bench_split_counts[0])
             # print(bench_split_counts[1])
+
+        # pdb.set_trace()
         if self.cuts != None:
             for idx, j in enumerate(bench_split_counts):
-                frag_counts = split_counts(j, 2 ** (self.cuts[idx]))
+                frag_qubits = [i.num_qubits for i in circuits[idx]]
+                print(frag_qubits)
+                frag_counts = split_counts_bylist(
+                    j, frag_qubits
+                )  # -----------The problem is here j is in a odd format, maybe its on the ProbDistribution format
                 # print(frag_counts)
                 # print(ProbDistribution.from_counts(frag_counts[i]))
                 frag_probs = [
@@ -245,6 +259,7 @@ class App:
 
             print(prf_counts)
             print(avg_fid)
+        exit(0)
 
         f = open(self.filepath + self.filename + ".txt", "a")
         avg_fid = avg_fid / (self.nbenchmarks * self.nruns)
