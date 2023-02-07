@@ -67,7 +67,7 @@ class App:
     filepath = ""
     provider = None
     nruns = 0
-    nbits = 0
+    nqbits = 0
     rounds = 0
     bench_args = ""
 
@@ -75,23 +75,31 @@ class App:
     def __init__(self, *kwargs):
 
         config = self.config_parser()
+        # pdb.set_trace()
         # pprint.pprint(data)
 
         print(config.benchmarks[0].name)
 
-        self.nbits = config.benchmarks[0].nbits
-        self.rounds = config.benchmarks[0].rounds
-        self.nruns = config.benchmarks[0].runs
+        self.nqbits = [i.nqbits for i in config.benchmarks]
+        self.rounds = [i.rounds for i in config.benchmarks]
+        self.nruns = config.runs
         self.filepath = config.path
-        self.nshots = config.benchmarks[0].shots
-        self.cuts = config.benchmarks[0].cuts
+
+        # For now the number of shots is for the overall application and not specific for each benchmark so no shot splitting is implemented
+        self.nshots = config.nshots
+        # self.nshots = [i.shots for i in config.benchmarks]
+
+        # Cuts are also not implemented yet
+        # self.cuts = [i.cuts for i in config.benchmarks]
+
+        # For now it only supports one backend, at has to be the same for all benchmarks so I get the first one
         self.backend = config.benchmarks[0].frags[0].backend
 
-        if self.cuts != None and len(config.benchmarks) > 1:
-            print(
-                "Working with more than 1 benchmarks and cutting is not yet implemented"
-            )
-            exit(1)
+        # if self.cuts != None and len(config.benchmarks) > 1:
+        #    print(
+        #        "Working with more than 1 benchmarks and cutting is not yet implemented"
+        #    )
+        #    exit(1)
 
         # If you select more that one benchmark then you have to indicate the qbits for each benchmark by the order that you
         # entered the benchmark, for example:
@@ -101,11 +109,11 @@ class App:
         # `python main.py -backend FakeTorontoV2 -benchmarks GHZBenchmark BitCodeBenchmark -bits 2 3 -rounds 0 2 -runs 3 -shots 4000`
         self.bench_args = [
             [self.nqbits[i]]
-            if self.rounds == None
+            if self.rounds[i] == None
             else [self.nqbits[i]]
             if self.rounds[i] == 0
             else [self.nqbits[i], self.rounds[i]]
-            for i in range(len(args.benchmarks))
+            for i in range(len(config.benchmarks))
         ]
 
         print(self.bench_args)
@@ -122,7 +130,7 @@ class App:
         # )
 
         # For some reason enumerate is not working correclty here
-        for b in config.benchmarks:
+        for idx, b in enumerate(config.benchmarks):
             self.benchmarks.append(eval(b.name)(*self.bench_args[idx]))
 
         self.nbenchmarks = len(self.benchmarks)
@@ -140,7 +148,7 @@ class App:
         self.filename = (
             self.backend.backend.name
             + benchmark_names
-            + str(self.nbits)
+            + str(self.nqbits)
             + "Shots"
             + str(self.nshots)
         )

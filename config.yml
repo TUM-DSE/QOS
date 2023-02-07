@@ -2,14 +2,19 @@
 
 config:
   path: results/
+  runs: 1
+  nshots: 4000
   benchmarks:
     - name: GHZBenchmark
-      nbits: 3
+      nqbits: 3
       rounds:
-      cut: true
-      shots: 4000
-      runs: 3
-      cut_type: bisection
-      cuts: 1
+      cut: false
+      
+      frags:
+        - backend: FakeJakartaV2
+    - name: GHZBenchmark
+      nqbits: 3
+      rounds:
+      cut: false
       frags:
         - backend: FakeJakartaV2
