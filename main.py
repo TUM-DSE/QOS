@@ -108,8 +108,7 @@ class App:
         # the number of benchmarks, if the benchmark does not take rounds just put 0, for example:
         # `python main.py -backend FakeTorontoV2 -benchmarks GHZBenchmark BitCodeBenchmark -bits 2 3 -rounds 0 2 -runs 3 -shots 4000`
         self.bench_args = [
-            [self.nqbits[i]]
-            if self.rounds[i] == None
+            [self.nqbits[i]] if self.rounds[i] == None
             else [self.nqbits[i]]
             if self.rounds[i] == 0
             else [self.nqbits[i], self.rounds[i]]
@@ -179,13 +178,13 @@ class App:
         for c in circuits:
             prf_counts.append(perfect_counts(c))
 
-        for idx, c in enumerate(prf_counts):
+        #for idx, c in enumerate(prf_counts):
             #print("-------------------")
-            plot_histogram(
-                c,
-                filename="results/perfect_counts" + str(idx) + ".png",
-                figsize=(10, 10),
-            )
+            #plot_histogram(
+                #c,
+                #filename="results/perfect_counts" + str(idx) + ".png",
+                #figsize=(10, 10),
+            #)
         # print(prf_counts)
 
         qc = circuits[0]
@@ -205,7 +204,7 @@ class App:
         utilization = (sum(self.nqbits)) / nqbits
 
         qc = transpile(qc, backend)
-        avg_fids = []
+        avg_fids = [0] * self.nbenchmarks
 
         for i in range(self.nruns):
 
@@ -218,19 +217,19 @@ class App:
             # splitted_counts = split_counts(counts, self.nbenchmarks)
             # print(counts)
             # print(splitted_counts)
-            plot_histogram(
-                counts, filename="results/counts" + str(idx) + ".png", figsize=(10, 10)
-            )
+            #plot_histogram(
+                #counts, filename="results/counts" + ".png", figsize=(10, 10)
+            #)
             splitted_counts = split_counts_bylist(counts, self.nqbits)
             # splitted_counts = split_counts(counts, 12)
 
-            for idx, c in enumerate(splitted_counts):
+            #for idx, c in enumerate(splitted_counts):
                 #print("-------------------")
-                plot_histogram(
-                    c,
-                    filename="results/split_counts" + str(idx) + ".png",
-                    figsize=(10, 10),
-                )
+                #plot_histogram(
+                    #c,
+                    #filename=self.filepath + self.filename + "_split_counts" + str(idx) + ".png",
+                    #figsize=(10, 10),
+                #)
             # print(splitted_counts)
 
             for i in range(self.nbenchmarks):
@@ -245,13 +244,12 @@ class App:
             for i in range(self.nbenchmarks):
                 # print(prf_counts[i])
                 # print(splitted_counts[i])
-                # print(fidelity(prf_counts[i], splitted_counts[i]))
-                avg_fids.append(fidelity(prf_counts[i], splitted_counts[i]))
+                avg_fids = avg_fids + fidelity(prf_counts[i], splitted_counts[i])
 
             # f.write(str(counts) + "\n")
         
         avg_fid = 0
-        f = open(self.filepath + self.filename + ".txt", "a")
+        f = open(self.filepath + self.filename + ".txt", "w")
         
         for i in range(self.nbenchmarks):
             fid = avg_fids[i] / self.nruns

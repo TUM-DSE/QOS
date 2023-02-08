@@ -1,20 +1,18 @@
-# This is an example of a config file
-
 config:
   path: results/
   runs: 1
   nshots: 4000
   benchmarks:
-    - name: GHZBenchmark
+    - name: PhaseCodeBenchmark
       nqbits: 3
-      rounds:
+      rounds: 3
       cut: false
       
       frags:
-        - backend: FakeJakartaV2
+        - backend: FakeTorontoV2
     - name: GHZBenchmark
       nqbits: 3
       rounds:
       cut: false
       frags:
-        - backend: FakeJakartaV2
+        - backend: FakeTorontoV2

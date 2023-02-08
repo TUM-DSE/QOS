@@ -28,7 +28,7 @@ backends = {
     # "FakeVigoV2": 5,
     # "FakeCasablancaV2": 7,
     # "FakeAlmaden": 7,
-    "FakeJakartaV2": 7,
+    #"FakeJakartaV2": 7,
     # "FakeLagosV2": 7,
     # "FakeMelbourneV2": 14,
     # "FakeGuadalupeV2": 16,
@@ -40,7 +40,7 @@ backends = {
     # "FakeHanoiV2": 27,
     # "FakeParisV2": 27,
     # "FakeSydneyV2": 27,
-    # "FakeTorontoV2": 27,
+     "FakeTorontoV2": 27,
     # "FakeKolkataV2": 27,
     # "FakeMontrealV2": 27,
     # "FakeCambridgeV2": 28,
@@ -48,30 +48,30 @@ backends = {
 }
 
 benchmarks = {
-    # "HamiltonianSimulationBenchmark": [],
-    # "VQEBenchmark": [],
-    # "VanillaQAOABenchmark": [],
-    "GHZBenchmark": [],
-    # "HamiltonianSimulationBenchmark": [],
-    # "BitCodeBenchmark": [
-    #    "-bits 4 -rounds 3",
-    #    "-bits 7 -rounds 3",
-    #    "-bits 12 -rounds 3",
-    #    "-bits 15 -rounds 3",
-    #    "-bits 20 -rounds 3",
-    #    "-bits 27 -rounds 3",
-    # ]
-    ##"PhaseCodeBenchmark": ["-rounds 3"],
+    #"HamiltonianSimulationBenchmark": [],
+    #"VQEBenchmark": [],
+    #"VanillaQAOABenchmark": [],
+    #"GHZBenchmark": [],
+    #"BitCodeBenchmark": ["1"],
+        
+    #    "-rounds 3",
+    #    "-rounds 3",
+    #    "-rounds 3",
+    #    "-rounds 3",
+    #    "-rounds 3",
+    "PhaseCodeBenchmark": ["3"],
     # "MerminBellBenchmark": [],
     # "FermionicSwapQAOABenchmark": [],
 }
 
-runs = 1
-shots = 1024
-qbits = [4]
+runs = 10
+shots = 8000
+qbits = [3]
 # qbits = [0.25, 0.5, 0.75, 1]
 
-run_cmd = "python main.py -backend {} -benchmarks {} -runs {} -shots {} -bits {}"
+#run_cmd = "python main.py -backend {} -benchmarks {} -runs {} -shots {} -bits {}"
+run_cmd = "python main.py"
+
 
 for i, j in backends.items():
     for x, y in benchmarks.items():
@@ -81,11 +81,27 @@ for i, j in backends.items():
         for q in qbits:
             # if q > backends[i]:
             # break
-
-            cmd = run_cmd.format(str(i), str(x), str(runs), str(shots), str(q))
-            for w in y:
-                cmd += " " + w
+            f = open("config.yml", "w")
+            f.write("config:\n")
+            f.write("  path: results/\n")
+            f.write("  runs: " + str(runs) + "\n")
+            f.write("  nshots: " + str(shots) + "\n")
+            f.write("  benchmarks:\n")
+            f.write("    - name: " + x + "\n")
+            f.write("      nqbits: " + str(q) + "\n")
+            if len(y) > 0:
+                f.write("      rounds: " + y[0] + "\n")
+            else:
+                f.write("      rounds:\n")
+            f.write("      cut: false\n")
+            f.write("      frags:\n")
+            f.write("        - backend: " + i + "\n")
+            f.close()
+            
+            #cmd = run_cmd.format(str(i), str(x), str(runs), str(shots), str(q))
+            #for w in y:
+                #cmd += " " + w
             # exit(0)
-            print(cmd)
-            this = subprocess.getoutput(cmd)
-            print(this)
+            #print(cmd)
+            this = subprocess.run(["python", "main.py"])
+            #print(this)
