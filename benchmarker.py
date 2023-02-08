@@ -51,7 +51,7 @@ benchmarks = {
     #"HamiltonianSimulationBenchmark": [],
     #"VQEBenchmark": [],
     #"VanillaQAOABenchmark": [],
-    #"GHZBenchmark": [],
+    "GHZBenchmark": [],
     #"BitCodeBenchmark": ["1"],
         
     #    "-rounds 3",
@@ -59,14 +59,14 @@ benchmarks = {
     #    "-rounds 3",
     #    "-rounds 3",
     #    "-rounds 3",
-    "PhaseCodeBenchmark": ["3"],
+    #"PhaseCodeBenchmark": ["3"],
     # "MerminBellBenchmark": [],
     # "FermionicSwapQAOABenchmark": [],
 }
 
-runs = 10
+runs = 1
 shots = 8000
-qbits = [3]
+qbits = [2, 3, 5, 7, 9]
 # qbits = [0.25, 0.5, 0.75, 1]
 
 #run_cmd = "python main.py -backend {} -benchmarks {} -runs {} -shots {} -bits {}"

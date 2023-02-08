@@ -173,10 +173,10 @@ class App:
             #print(b.circuit())
             circuits.append(b.circuit())
 
-        prf_counts = []
+        #prf_counts = []
 
-        for c in circuits:
-            prf_counts.append(perfect_counts(c))
+        #for c in circuits:
+            #prf_counts.append(perfect_counts(c))
 
         #for idx, c in enumerate(prf_counts):
             #print("-------------------")
@@ -244,7 +244,8 @@ class App:
             for i in range(self.nbenchmarks):
                 # print(prf_counts[i])
                 # print(splitted_counts[i])
-                avg_fids = avg_fids + fidelity(prf_counts[i], splitted_counts[i])
+                #avg_fids = avg_fids + fidelity(prf_counts[i], splitted_counts[i])
+                avg_fids[i] = avg_fids[i] + self.benchmarks[i].score(Counter(splitted_counts[i]))
 
             # f.write(str(counts) + "\n")
         

@@ -1,17 +1,10 @@
 config:
   path: results/
   runs: 1
-  nshots: 4000
+  nshots: 8000
   benchmarks:
-    - name: PhaseCodeBenchmark
-      nqbits: 3
-      rounds: 3
-      cut: false
-      
-      frags:
-        - backend: FakeTorontoV2
     - name: GHZBenchmark
-      nqbits: 3
+      nqbits: 9
       rounds:
       cut: false
       frags:
