@@ -78,7 +78,7 @@ class App:
         # pdb.set_trace()
         # pprint.pprint(data)
 
-        print(config.benchmarks[0].name)
+        #print(config.benchmarks[0].name)
 
         self.nqbits = [i.nqbits for i in config.benchmarks]
         self.rounds = [i.rounds for i in config.benchmarks]
@@ -116,7 +116,7 @@ class App:
             for i in range(len(config.benchmarks))
         ]
 
-        print(self.bench_args)
+        #print(self.bench_args)
 
         # This is a very ugly inline if else statements but it works, basically what it does it:
         # 1. If there are no rounds that the argument is None and just take the qbits argment
@@ -171,7 +171,7 @@ class App:
         circuits = []
 
         for b in self.benchmarks:
-            print(b.circuit())
+            #print(b.circuit())
             circuits.append(b.circuit())
 
         prf_counts = []
@@ -180,7 +180,7 @@ class App:
             prf_counts.append(perfect_counts(c))
 
         for idx, c in enumerate(prf_counts):
-            print("-------------------")
+            #print("-------------------")
             plot_histogram(
                 c,
                 filename="results/perfect_counts" + str(idx) + ".png",
@@ -197,15 +197,15 @@ class App:
             for i in range(2, ncircs):
                 qc = merge_circs(qc, circuits[i])
 
-        print(qc)
+        #print(qc)
 
         backend = self.backend.backend
-        print(backend.name)
+        #print(backend.name)
         nqbits = self.backend.backend.num_qubits
         utilization = (sum(self.nqbits)) / nqbits
 
         qc = transpile(qc, backend)
-        avg_fid = 0
+        avg_fids = []
 
         for i in range(self.nruns):
 
@@ -225,7 +225,7 @@ class App:
             # splitted_counts = split_counts(counts, 12)
 
             for idx, c in enumerate(splitted_counts):
-                print("-------------------")
+                #print("-------------------")
                 plot_histogram(
                     c,
                     filename="results/split_counts" + str(idx) + ".png",
@@ -242,20 +242,28 @@ class App:
             # self.backend.backend.coupling_map.draw()
             # print(len(self.backend.backend.coupling_map))
             # plot_circuit_layout(qc, self.backend.backend)
-
             for i in range(self.nbenchmarks):
                 # print(prf_counts[i])
                 # print(splitted_counts[i])
                 # print(fidelity(prf_counts[i], splitted_counts[i]))
-                avg_fid = avg_fid + fidelity(prf_counts[i], splitted_counts[i])
+                avg_fids.append(fidelity(prf_counts[i], splitted_counts[i]))
 
             # f.write(str(counts) + "\n")
-
+        
+        avg_fid = 0
         f = open(self.filepath + self.filename + ".txt", "a")
-        avg_fid = avg_fid / (self.nbenchmarks * self.nruns)
+        
+        for i in range(self.nbenchmarks):
+            fid = avg_fids[i] / self.nruns
+            f.write(str(fid))
+            f.write("\n")
+            print(fid)
+            avg_fid = avg_fid + fid
+        
+        avg_fid = avg_fid / self.nbenchmarks
         print(avg_fid)
         f.write(str(avg_fid))
-        f.write("\t")
+        f.write("\n")
         f.write(str(utilization))
         f.close()
 
