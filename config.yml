@@ -3,9 +3,9 @@ config:
   runs: 1
   nshots: 8000
   benchmarks:
-    - name: GHZBenchmark
-      nqbits: 9
-      rounds:
+    - name: BitCodeBenchmark
+      nqbits: 3
+      rounds: 1
       cut: false
       frags:
         - backend: FakeTorontoV2

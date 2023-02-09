@@ -67,7 +67,8 @@ class App:
     filepath = ""
     provider = None
     nruns = 0
-    nqbits = 0
+    nqbits = []
+    circuits = []
     rounds = 0
     bench_args = ""
 
@@ -131,9 +132,14 @@ class App:
         # For some reason enumerate is not working correclty here
         for idx, b in enumerate(config.benchmarks):
             self.benchmarks.append(eval(b.name)(*self.bench_args[idx]))
-
+        
         self.nbenchmarks = len(self.benchmarks)
-
+        
+        for b in self.benchmarks:
+            self.circuits.append(b.circuit())
+            
+        for i,c in enumerate(self.circuits):
+            self.nqbits[i] = c.num_qubits
         # self.benchmark = eval(args.benchmark)(*self.bench_args)
         # args.benchmark is a list of the benchmarks inputted as "-benchmark GHZBenchmark HamiltonianSimulationBenchmark" for example
 
@@ -167,12 +173,6 @@ class App:
         return data.config
 
     def run(self):
-        circuits = []
-
-        for b in self.benchmarks:
-            #print(b.circuit())
-            circuits.append(b.circuit())
-
         #prf_counts = []
 
         #for c in circuits:
@@ -187,14 +187,19 @@ class App:
             #)
         # print(prf_counts)
 
-        qc = circuits[0]
-        ncircs = len(circuits)
+        qc = self.circuits[0]
+        #print(qc.num_qubits)
+        #print(qc.num_clbits)
+        #print(qc)
+
+
+        ncircs = len(self.circuits)
 
         if ncircs > 1:
-            qc = merge_circs(circuits[0], circuits[1])
+            qc = merge_circs(self.circuits[0], self.circuits[1])
 
             for i in range(2, ncircs):
-                qc = merge_circs(qc, circuits[i])
+                qc = merge_circs(qc, self.circuits[i])
 
         #print(qc)
 
@@ -215,7 +220,7 @@ class App:
 
             counts = job.result().get_counts()
             # splitted_counts = split_counts(counts, self.nbenchmarks)
-            # print(counts)
+            print(counts)
             # print(splitted_counts)
             #plot_histogram(
                 #counts, filename="results/counts" + ".png", figsize=(10, 10)
