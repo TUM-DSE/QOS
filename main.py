@@ -39,16 +39,20 @@ def merge_circs(q1: QuantumCircuit, q2: QuantumCircuit) -> QuantumCircuit:
 
 def split_counts_bylist(counts, kl):
     counts_list = []
+    counts_copy = {}
+    
+    for (k,v) in counts.items():
+        counts_copy[k.replace(" ", "")] = counts[k]
 
     for i in range(len(kl)):
         dict = {}
 
-        for (key, value) in counts.items():
+        for (key, value) in counts_copy.items():
             newKey = key[sum(kl) - sum(kl[0 : i + 1]) : sum(kl) - sum(kl[0:i])]
             if newKey in dict:
                 continue
             dict.update({newKey: 0})
-            for (key2, value2) in counts.items():
+            for (key2, value2) in counts_copy.items():
                 if newKey == key2[sum(kl) - sum(kl[: i + 1]) : sum(kl) - sum(kl[:i])]:
                     dict[newKey] = dict[newKey] + value2
 
@@ -68,6 +72,7 @@ class App:
     provider = None
     nruns = 0
     nqbits = []
+    total_bits = []
     circuits = []
     rounds = 0
     bench_args = ""
@@ -130,6 +135,7 @@ class App:
         # )
 
         # For some reason enumerate is not working correclty here
+                
         for idx, b in enumerate(config.benchmarks):
             self.benchmarks.append(eval(b.name)(*self.bench_args[idx]))
         
@@ -140,6 +146,13 @@ class App:
             
         for i,c in enumerate(self.circuits):
             self.nqbits[i] = c.num_qubits
+            
+        for i, b in enumerate(self.bench_args):
+            if len(b) > 1:
+                self.total_bits.append(self.nqbits[i] + (b[0] - 1) * b[1])
+            else:
+                self.total_bits.append(self.nqbits[i])
+
         # self.benchmark = eval(args.benchmark)(*self.bench_args)
         # args.benchmark is a list of the benchmarks inputted as "-benchmark GHZBenchmark HamiltonianSimulationBenchmark" for example
 
@@ -220,12 +233,13 @@ class App:
 
             counts = job.result().get_counts()
             # splitted_counts = split_counts(counts, self.nbenchmarks)
-            print(counts)
-            # print(splitted_counts)
+            #print(counts)
+            
             #plot_histogram(
                 #counts, filename="results/counts" + ".png", figsize=(10, 10)
             #)
-            splitted_counts = split_counts_bylist(counts, self.nqbits)
+            splitted_counts = split_counts_bylist(counts, self.total_bits)
+            #print(splitted_counts)
             # splitted_counts = split_counts(counts, 12)
 
             #for idx, c in enumerate(splitted_counts):

@@ -4,8 +4,8 @@ config:
   nshots: 8000
   benchmarks:
     - name: BitCodeBenchmark
-      nqbits: 3
-      rounds: 1
+      nqbits: 4
+      rounds: 5
       cut: false
       frags:
         - backend: FakeTorontoV2
