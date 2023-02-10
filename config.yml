@@ -1,23 +1,10 @@
 config:
   path: results/
-  runs: 1
-  nshots: 8000
+  nshots: 8192
   benchmarks:
-    - name: VQEBenchmark
+    - name: VanillaQAOABenchmark
       nqbits: 3
-      rounds: 
+      rounds:
       cut: false
       frags:
-        - backend: FakeTorontoV2
-    - name: VQEBenchmark
-      nqbits: 3
-      rounds: 
-      cut: false
-      frags:
-        - backend: FakeTorontoV2
-    - name: VQEBenchmark
-      nqbits: 2
-      rounds: 
-      cut: false
-      frags:
-        - backend: FakeTorontoV2
+        - backend: FakeWashingtonV2

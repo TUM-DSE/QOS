@@ -70,7 +70,6 @@ class App:
     filename = ""
     filepath = ""
     provider = None
-    nruns = 0
     nqbits = []
     total_bits = []
     circuits = []
@@ -80,7 +79,7 @@ class App:
     # def __init__(self, backend, benchmark, nbits, nruns, filepath='', shots=1024):
     def __init__(self, *kwargs):
 
-        config = self.config_parser()
+        config = self.config_parser(sys.argv[1])
         # pdb.set_trace()
         # pprint.pprint(data)
 
@@ -88,7 +87,6 @@ class App:
 
         self.nqbits = [i.nqbits for i in config.benchmarks]
         self.rounds = [i.rounds for i in config.benchmarks]
-        self.nruns = config.runs
         self.filepath = config.path
 
         # For now the number of shots is for the overall application and not specific for each benchmark so no shot splitting is implemented
@@ -163,8 +161,8 @@ class App:
         # self.provider = IBMQ.load_account()
         self.backend = IBMQPU(self.backend, self.provider)
 
-        print(self.nqbits)
-        print(self.total_bits)
+        # print(self.nqbits)
+        # print(self.total_bits)
 
         benchmark_names = ""
         for b in self.benchmarks:
@@ -178,8 +176,8 @@ class App:
             + str(self.nshots)
         )
 
-    def config_parser(self):
-        with open("config.yml", "r") as config:
+    def config_parser(self, config_file: str):
+        with open(config_file + ".yml", "r") as config:
             data = yaml.safe_load(config)
 
         data = dict2obj(data)
@@ -213,7 +211,7 @@ class App:
 
         qc = self.circuits[0]
 
-        print(qc)
+        # print(qc)
         # print(qc.num_qubits)
         # print(qc.num_clbits)
         # print(qc)
@@ -226,7 +224,7 @@ class App:
             for i in range(2, ncircs):
                 qc = merge_circs(qc, self.circuits[i])
 
-        print(qc)
+        # print(qc)
 
         backend = self.backend.backend
         # print(backend.name)
@@ -242,7 +240,7 @@ class App:
 
         utilization = utilization / nqbits
 
-        print(utilization)
+        # print(utilization)
         qc = transpile(qc, backend)
         avg_fids = [0] * self.nbenchmarks
 
@@ -314,16 +312,16 @@ class App:
 
         for i in range(self.nbenchmarks):
             fid = avg_fids[i]
-            f.write(str(fid))
-            f.write("\n")
-            print(fid)
+            f.write("Fidelity for " + self.benchmarks[i].name() + ": " + str(fid))
+            f.write("\n\n")
+            # print(fid)
             avg_fid = avg_fid + fid
 
         avg_fid = avg_fid / self.nbenchmarks
         print(avg_fid)
-        f.write(str(avg_fid))
+        f.write("Final fidelity:" + str(avg_fid))
         f.write("\n")
-        f.write(str(utilization))
+        f.write("Utilization:" + str(utilization))
         f.close()
 
 
