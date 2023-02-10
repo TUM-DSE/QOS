@@ -75,11 +75,13 @@ class App:
     circuits = []
     rounds = 0
     bench_args = ""
+    config_file = sys.argv[1]
 
     # def __init__(self, backend, benchmark, nbits, nruns, filepath='', shots=1024):
     def __init__(self, *kwargs):
 
-        config = self.config_parser(sys.argv[1])
+        config = self.config_parser(self.config_file)
+        print("Working on", self.config_file)
         # pdb.set_trace()
         # pprint.pprint(data)
 
@@ -308,20 +310,21 @@ class App:
         # f.write(str(counts) + "\n")
 
         avg_fid = 0
-        f = open(self.filepath + self.filename + ".txt", "w")
+        f = open("results/results.txt", "a")
+        f.write("\n---------------------\n")
+        f.write("\n" + self.filename)
+        f.write("\nConfig_file: \t" + self.config_file)
+        f.write("\nFidelity:")
 
         for i in range(self.nbenchmarks):
             fid = avg_fids[i]
-            f.write("Fidelity for " + self.benchmarks[i].name() + ": " + str(fid))
-            f.write("\n\n")
+            f.write("\n\t" + self.benchmarks[i].name() + ": \t" + str(round(fid, 4)))
             # print(fid)
             avg_fid = avg_fid + fid
 
-        avg_fid = avg_fid / self.nbenchmarks
-        print(avg_fid)
-        f.write("Final fidelity:" + str(avg_fid))
-        f.write("\n")
-        f.write("Utilization:" + str(utilization))
+        avg_fid = round(avg_fid / self.nbenchmarks, 4)
+        f.write("\n\tFinal: \t" + str(avg_fid))
+        f.write("\nUtilization: \t" + str(round(utilization, 3)))
         f.close()
 
 
