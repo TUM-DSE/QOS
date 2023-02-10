@@ -40,8 +40,8 @@ def merge_circs(q1: QuantumCircuit, q2: QuantumCircuit) -> QuantumCircuit:
 def split_counts_bylist(counts, kl):
     counts_list = []
     counts_copy = {}
-    
-    for (k,v) in counts.items():
+
+    for (k, v) in counts.items():
         counts_copy[k.replace(" ", "")] = counts[k]
 
     for i in range(len(kl)):
@@ -84,7 +84,7 @@ class App:
         # pdb.set_trace()
         # pprint.pprint(data)
 
-        #print(config.benchmarks[0].name)
+        # print(config.benchmarks[0].name)
 
         self.nqbits = [i.nqbits for i in config.benchmarks]
         self.rounds = [i.rounds for i in config.benchmarks]
@@ -114,16 +114,17 @@ class App:
         # the number of benchmarks, if the benchmark does not take rounds just put 0, for example:
         # `python main.py -backend FakeTorontoV2 -benchmarks GHZBenchmark BitCodeBenchmark -bits 2 3 -rounds 0 2 -runs 3 -shots 4000`
         self.bench_args = [
-            [self.nqbits[i]] if self.rounds[i] == None
+            [self.nqbits[i]]
+            if self.rounds[i] == None
             else [self.nqbits[i]]
             if self.rounds[i] == 0
             else [self.nqbits[i], self.rounds[i]]
             for i in range(len(config.benchmarks))
         ]
 
-        #print(self.bench_args)
+        # print(self.bench_args)
 
-        # This is a very ugly inline if else statements but it works, basically what it does it:
+        # This is a very ugly inline if else statements but it works, basically what it does is:
         # 1. If there are no rounds that the argument is None and just take the qbits argment
         # 2. If there are rounds, rounds = 0 means that the bechmark doesnt need rounds so just take the qbits
         # 3. If the rounds are different that 0 than the benchmark takes rounds that it should be on the bench_args
@@ -134,22 +135,25 @@ class App:
         #   [self.nqbits] if self.rounds == None else [self.nqbits, self.rounds]
         # )
 
-        # For some reason enumerate is not working correclty here
-                
         for idx, b in enumerate(config.benchmarks):
             self.benchmarks.append(eval(b.name)(*self.bench_args[idx]))
-        
+
         self.nbenchmarks = len(self.benchmarks)
-        
+
         for b in self.benchmarks:
             self.circuits.append(b.circuit())
-            
-        for i,c in enumerate(self.circuits):
-            self.nqbits[i] = c.num_qubits
-            
+
+        for i, c in enumerate(self.circuits):
+            if isinstance(c, list):
+                self.nqbits[i] = [c[0].num_qubits] * 2
+            else:
+                self.nqbits[i] = c.num_qubits
+
         for i, b in enumerate(self.bench_args):
             if len(b) > 1:
                 self.total_bits.append(self.nqbits[i] + (b[0] - 1) * b[1])
+            elif isinstance(self.nqbits[i], list):
+                self.total_bits.append(self.nqbits[i][0] * 2)
             else:
                 self.total_bits.append(self.nqbits[i])
 
@@ -158,6 +162,9 @@ class App:
 
         # self.provider = IBMQ.load_account()
         self.backend = IBMQPU(self.backend, self.provider)
+
+        print(self.nqbits)
+        print(self.total_bits)
 
         benchmark_names = ""
         for b in self.benchmarks:
@@ -186,25 +193,30 @@ class App:
         return data.config
 
     def run(self):
-        #prf_counts = []
+        # prf_counts = []
 
-        #for c in circuits:
-            #prf_counts.append(perfect_counts(c))
+        # for c in circuits:
+        # prf_counts.append(perfect_counts(c))
 
-        #for idx, c in enumerate(prf_counts):
-            #print("-------------------")
-            #plot_histogram(
-                #c,
-                #filename="results/perfect_counts" + str(idx) + ".png",
-                #figsize=(10, 10),
-            #)
+        # for idx, c in enumerate(prf_counts):
+        # print("-------------------")
+        # plot_histogram(
+        # c,
+        # filename="results/perfect_counts" + str(idx) + ".png",
+        # figsize=(10, 10),
+        # )
         # print(prf_counts)
 
-        qc = self.circuits[0]
-        #print(qc.num_qubits)
-        #print(qc.num_clbits)
-        #print(qc)
+        for i, a in enumerate(self.circuits):
+            if isinstance(a, list):
+                self.circuits[i] = merge_circs(a[0], a[1])
 
+        qc = self.circuits[0]
+
+        print(qc)
+        # print(qc.num_qubits)
+        # print(qc.num_clbits)
+        # print(qc)
 
         ncircs = len(self.circuits)
 
@@ -214,70 +226,99 @@ class App:
             for i in range(2, ncircs):
                 qc = merge_circs(qc, self.circuits[i])
 
-        #print(qc)
+        print(qc)
 
         backend = self.backend.backend
-        #print(backend.name)
+        # print(backend.name)
         nqbits = self.backend.backend.num_qubits
-        utilization = (sum(self.nqbits)) / nqbits
+        # pdb.set_trace()
 
+        utilization = 0
+        for i in self.nqbits:
+            if isinstance(i, list):
+                utilization += sum(i)
+            else:
+                utilization += i
+
+        utilization = utilization / nqbits
+
+        print(utilization)
         qc = transpile(qc, backend)
         avg_fids = [0] * self.nbenchmarks
 
-        for i in range(self.nruns):
+        if self.backend.is_simulator:
+            job = backend.run(run_input=qc, shots=self.nshots)
+        else:
+            job = backend.run(circuits=qc, shots=self.nshots)
+        counts = job.result().get_counts()
+        # splitted_counts = split_counts(counts, self.nbenchmarks)
+        # print(counts)
 
-            if self.backend.is_simulator:
-                job = backend.run(run_input=qc, shots=self.nshots)
+        # plot_histogram(
+        # counts, filename="results/counts" + ".png", figsize=(10, 10)
+        # )
+        splitted_counts = split_counts_bylist(counts, self.total_bits)
+
+        for i, a in enumerate(self.nqbits):
+            if isinstance(a, list):
+                splitted_counts[i] = split_counts_bylist(splitted_counts[i], a)
+        # print(splitted_counts)
+        # splitted_counts = split_counts(counts, 12)
+
+        # for idx, c in enumerate(splitted_counts):
+        # print("-------------------")
+        # plot_histogram(
+        # c,
+        # filename=self.filepath + self.filename + "_split_counts" + str(idx) + ".png",
+        # figsize=(10, 10),
+        # )
+        # print(splitted_counts)
+
+        for i in range(self.nbenchmarks):
+
+            if isinstance(splitted_counts[i], list):
+
+                plot_histogram(
+                    splitted_counts[i][0],
+                    filename=self.filepath + self.filename + "part0_" + str(i),
+                    figsize=(10, 10),
+                )
+                plot_histogram(
+                    splitted_counts[i][1],
+                    filename=self.filepath + self.filename + "part1_" + str(i),
+                    figsize=(10, 10),
+                )
             else:
-                job = backend.run(circuits=qc, shots=self.nshots)
-
-            counts = job.result().get_counts()
-            # splitted_counts = split_counts(counts, self.nbenchmarks)
-            #print(counts)
-            
-            #plot_histogram(
-                #counts, filename="results/counts" + ".png", figsize=(10, 10)
-            #)
-            splitted_counts = split_counts_bylist(counts, self.total_bits)
-            #print(splitted_counts)
-            # splitted_counts = split_counts(counts, 12)
-
-            #for idx, c in enumerate(splitted_counts):
-                #print("-------------------")
-                #plot_histogram(
-                    #c,
-                    #filename=self.filepath + self.filename + "_split_counts" + str(idx) + ".png",
-                    #figsize=(10, 10),
-                #)
-            # print(splitted_counts)
-
-            for i in range(self.nbenchmarks):
                 plot_histogram(
                     splitted_counts[i],
                     filename=self.filepath + self.filename + str(i),
                     figsize=(10, 10),
                 )
-            # self.backend.backend.coupling_map.draw()
-            # print(len(self.backend.backend.coupling_map))
-            # plot_circuit_layout(qc, self.backend.backend)
-            for i in range(self.nbenchmarks):
-                # print(prf_counts[i])
-                # print(splitted_counts[i])
-                #avg_fids = avg_fids + fidelity(prf_counts[i], splitted_counts[i])
-                avg_fids[i] = avg_fids[i] + self.benchmarks[i].score(Counter(splitted_counts[i]))
+        # self.backend.backend.coupling_map.draw()
+        # print(len(self.backend.backend.coupling_map))
+        # plot_circuit_layout(qc, self.backend.backend)
+        for i in range(self.nbenchmarks):
+            # print(prf_counts[i])
+            # print(splitted_counts[i])
+            # avg_fids = avg_fids + fidelity(prf_counts[i], splitted_counts[i])
+            if isinstance(splitted_counts[i], list):
+                # tmp_fid = self.benchmarks[i].score(splitted_counts[i])
+                avg_fids[i] += self.benchmarks[i].score(splitted_counts[i])
+                # avg_fids[i] += tmp_fid / 2
+            else:
+                avg_fids[i] += self.benchmarks[i].score(Counter(splitted_counts[i]))
+        # f.write(str(counts) + "\n")
 
-            # f.write(str(counts) + "\n")
-        
         avg_fid = 0
         f = open(self.filepath + self.filename + ".txt", "w")
-        
+
         for i in range(self.nbenchmarks):
-            fid = avg_fids[i] / self.nruns
+            fid = avg_fids[i]
             f.write(str(fid))
             f.write("\n")
             print(fid)
             avg_fid = avg_fid + fid
-        
+
         avg_fid = avg_fid / self.nbenchmarks
         print(avg_fid)
         f.write(str(avg_fid))

@@ -3,9 +3,21 @@ config:
   runs: 1
   nshots: 8000
   benchmarks:
-    - name: BitCodeBenchmark
-      nqbits: 4
-      rounds: 5
+    - name: VQEBenchmark
+      nqbits: 3
+      rounds: 
+      cut: false
+      frags:
+        - backend: FakeTorontoV2
+    - name: VQEBenchmark
+      nqbits: 3
+      rounds: 
+      cut: false
+      frags:
+        - backend: FakeTorontoV2
+    - name: VQEBenchmark
+      nqbits: 2
+      rounds: 
       cut: false
       frags:
         - backend: FakeTorontoV2
