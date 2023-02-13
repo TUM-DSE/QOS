@@ -3,17 +3,9 @@ config:
   nshots: 8192
   static: false
   benchmarks:
-<<<<<<< HEAD
     - name: VanillaQAOABenchmark
-=======
-    - name: GHZBenchmark
->>>>>>> 78e6024dd3f81b124195763da3ddfbedb39c4a30
       nqbits: 16
       rounds:
       cut: false
       frags:
-<<<<<<< HEAD
         - backend: FakeTorontoV2
-=======
-        - backend: FakeTorontoV2
->>>>>>> 78e6024dd3f81b124195763da3ddfbedb39c4a30
