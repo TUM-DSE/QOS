@@ -111,6 +111,7 @@ for i in qbits:
         f = open("configs/config_" + str(id) + ".yml", "w")
         f.write("config:\n")
         f.write("  path: results/\n")
+        f.write("  static: false\n")
         f.write("  nshots: " + str(shots) + "\n")
         f.write("  benchmarks:\n")
         for idx in range(len(i[0])):
