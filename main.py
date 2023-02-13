@@ -243,7 +243,12 @@ class App:
         utilization = utilization / nqbits
 
         # print(utilization)
-        qc = transpile(qc, backend)
+        try:
+            qc = transpile(qc, backend)
+        except:
+            print("Probably the circuit is too large for this backend. Skipping...")
+            exit(0)
+
         avg_fids = [0] * self.nbenchmarks
 
         if self.backend.is_simulator:

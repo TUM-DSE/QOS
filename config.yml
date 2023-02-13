@@ -2,9 +2,9 @@ config:
   path: results/
   nshots: 8192
   benchmarks:
-    - name: VanillaQAOABenchmark
-      nqbits: 3
+    - name: GHZBenchmark
+      nqbits: 16
       rounds:
       cut: false
       frags:
-        - backend: FakeWashingtonV2
+        - backend: FakeTorontoV2

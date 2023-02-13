@@ -38,11 +38,11 @@ backends = {
     # "FakeHanoiV2": 27,
     # "FakeParisV2": 27,
     # "FakeSydneyV2": 27,
-    "FakeTorontoV2": 27,
+    # "FakeTorontoV2": 27,
     # "FakeKolkataV2": 27,
     # "FakeMontrealV2": 27,
     # "FakeCambridgeV2": 28,
-    # "FakeWashingtonV2": 127,
+    "FakeWashingtonV2": 127,
 }
 
 benchmarks = {
@@ -55,13 +55,11 @@ benchmarks = {
 }
 
 shots = 8192
-qbits = [3, 3]
+qbits = [[6, 6, 6]]  # This is for adding other combinations.
 rounds = 3
 # qbits = [0.25, 0.5, 0.75, 1]
 
 id = 0
-
-total_ids = 6 * 6
 
 backend = "FakeTorontoV2"
 
@@ -69,33 +67,47 @@ if sys.argv[1] == "gen":
     # run_cmd = "python main.py -backend {} -benchmarks {} -runs {} -shots {} -bits {}"
     run_cmd = "python main.py"
 
-    for a, b in benchmarks.items():
-        for x, y in benchmarks.items():
-            f = open("configs/config_" + str(id) + ".yml", "w")
-            f.write("config:\n")
-            f.write("  path: results/\n")
-            f.write("  nshots: " + str(shots) + "\n")
-            f.write("  benchmarks:\n")
-            f.write("    - name: " + a + "\n")
-            f.write("      nqbits: " + str(qbits[0]) + "\n")
-            if b == 2:
+
+def unique_combinations(lst, length):
+    def get_combinations(lst, length, start, comb, result):
+        if length == 0:
+            result.append(list(comb))
+            return
+        for i in range(start, len(lst)):
+            comb.append(lst[i])
+            get_combinations(lst, length - 1, i, comb, result)
+            comb.pop()
+
+    result = []
+    get_combinations(lst, length, 0, [], result)
+    return result
+
+
+list_benchmarks = list(benchmarks.keys())
+this = [unique_combinations(list_benchmarks, len(i)) for i in qbits]
+this = [len(i) for i in this]
+total_ids = sum(this)
+
+for i in qbits:
+    combinations = unique_combinations(list_benchmarks, len(i))
+    for j in combinations:
+        f = open("configs/config_" + str(id) + ".yml", "w")
+        f.write("config:\n")
+        f.write("  path: results/\n")
+        f.write("  nshots: " + str(shots) + "\n")
+        f.write("  benchmarks:\n")
+        for idx in range(len(j)):
+            f.write("    - name: " + j[idx] + "\n")
+            f.write("      nqbits: " + str(i[idx]) + "\n")
+            if benchmarks[j[idx]] == 2:
                 f.write("      rounds: " + str(rounds) + "\n")
             else:
                 f.write("      rounds:\n")
             f.write("      cut: false\n")
             f.write("      frags:\n")
             f.write("        - backend: " + backend + "\n")
-            f.write("    - name: " + x + "\n")
-            f.write("      nqbits: " + str(qbits[1]) + "\n")
-            if y == 2:
-                f.write("      rounds: " + str(rounds) + "\n")
-            else:
-                f.write("      rounds:\n")
-            f.write("      cut: false\n")
-            f.write("      frags:\n")
-            f.write("        - backend: " + backend + "\n")
-            f.close()
-            id += 1
+        id += 1
+
 
 if sys.argv[1] == "run":
     for i in range(total_ids):
