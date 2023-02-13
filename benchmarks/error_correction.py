@@ -115,7 +115,7 @@ class BitCodeBenchmark(ErrorCorrectionBenchmark):
         return [circ for circ in circuit_generator][-1]
 
     def name(self):
-        return "BitCodeBenchmark"
+        return "BitCode"
 
 
 class PhaseCodeBenchmark(ErrorCorrectionBenchmark):
@@ -155,4 +155,4 @@ class PhaseCodeBenchmark(ErrorCorrectionBenchmark):
         return next(circuit_generator)
 
     def name(self):
-        return "PhaseCodeBenchmark"
+        return "PhaseCode"

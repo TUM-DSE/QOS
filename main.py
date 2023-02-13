@@ -60,6 +60,15 @@ def split_counts_bylist(counts, kl):
 
     return counts_list
 
+def getCNOTS(c: QuantumCircuit) -> int:
+    ops = c.count_ops()
+    cnots = 0
+    
+    for (key, value) in ops.items():
+            if key == 'cx':
+                cnots = value
+                break
+    return cnots
 
 class App:
     benchmarks = []
@@ -76,6 +85,7 @@ class App:
     rounds = 0
     bench_args = ""
     config_file = sys.argv[1]
+    static = False 
 
     # def __init__(self, backend, benchmark, nbits, nruns, filepath='', shots=1024):
     def __init__(self, *kwargs):
@@ -94,7 +104,7 @@ class App:
         # For now the number of shots is for the overall application and not specific for each benchmark so no shot splitting is implemented
         self.nshots = config.nshots
         # self.nshots = [i.shots for i in config.benchmarks]
-
+        self.static = config.static
         # Cuts are also not implemented yet
         # self.cuts = [i.cuts for i in config.benchmarks]
 
@@ -212,7 +222,6 @@ class App:
                 self.circuits[i] = merge_circs(a[0], a[1])
 
         qc = self.circuits[0]
-
         # print(qc)
         # print(qc.num_qubits)
         # print(qc.num_clbits)
@@ -226,8 +235,13 @@ class App:
             for i in range(2, ncircs):
                 qc = merge_circs(qc, self.circuits[i])
 
-        # print(qc)
-
+        #print(qc)
+        depth_b4 = 0
+        cnot_b4 = 0
+        
+        depth_b4 = qc.depth()
+        cnot_b4 = getCNOTS(qc)
+        
         backend = self.backend.backend
         # print(backend.name)
         nqbits = self.backend.backend.num_qubits
@@ -244,6 +258,19 @@ class App:
 
         # print(utilization)
         qc = transpile(qc, backend)
+        #print(qc)
+        depth_after = 0
+        cnot_after = 0
+        
+        depth_after = qc.depth()
+        cnot_after = getCNOTS(qc)
+        
+        print(depth_b4, "\t", depth_after)
+        print(cnot_b4, "\t", cnot_after)
+        
+        if self.static:
+            exit()
+        
         avg_fids = [0] * self.nbenchmarks
 
         if self.backend.is_simulator:

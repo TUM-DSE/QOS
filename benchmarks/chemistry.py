@@ -103,7 +103,7 @@ class HamiltonianSimulationBenchmark(Benchmark):
         return 1 - abs(mag_ideal - mag_experimental) / 2
 
     def name(self):
-        return "HamiltonianSimulationBenchmark"
+        return "Hamiltonian"
 
 
 class VQEBenchmark(Benchmark):
@@ -240,4 +240,4 @@ class VQEBenchmark(Benchmark):
         )
 
     def name(self):
-        return "VQEBenchmark"
+        return "VQE"

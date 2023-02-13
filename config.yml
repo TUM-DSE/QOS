@@ -1,10 +1,11 @@
 config:
   path: results/
   nshots: 8192
+  static: false
   benchmarks:
     - name: VanillaQAOABenchmark
-      nqbits: 3
+      nqbits: 16
       rounds:
       cut: false
       frags:
-        - backend: FakeWashingtonV2
+        - backend: FakeTorontoV2

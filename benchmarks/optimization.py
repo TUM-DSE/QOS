@@ -39,7 +39,7 @@ class VanillaQAOABenchmark(Benchmark):
         self.params = self._gen_angles()
 
     def name(self):
-        return "VanillaQAOABenchmark"
+        return "QAOA"
 
     def _get_opt_angles(self) -> Tuple[List, float]:
         def f(params: List) -> float:
