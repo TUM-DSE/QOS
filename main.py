@@ -271,6 +271,11 @@ class App:
         if self.static:
             exit()
         
+        try:
+            qc = transpile(qc, backend)
+        except:
+            print("Probably the circuit is too large for this backend. Skipping...")
+            exit(0)
         avg_fids = [0] * self.nbenchmarks
 
         if self.backend.is_simulator:
