@@ -3,8 +3,8 @@ config:
   nshots: 8192
   static: false
   benchmarks:
-    - name: VanillaQAOABenchmark
-      nqbits: 16
+    - name: FermionicSwapQAOABenchmark
+      nqbits: 6
       rounds:
       cut: false
       frags:
