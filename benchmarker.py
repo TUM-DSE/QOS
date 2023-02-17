@@ -52,6 +52,7 @@ benchmarks = {
     "GHZBenchmark": 1,
     "BitCodeBenchmark": 2,
     "PhaseCodeBenchmark": 2,
+    "MerminBellBenchmark": 1,
 }
 
 shots = 8192

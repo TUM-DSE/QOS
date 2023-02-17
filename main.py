@@ -221,7 +221,7 @@ class App:
                 self.circuits[i] = merge_circs(a[0], a[1])
 
         qc = self.circuits[0]
-        # print(qc)
+        #print(qc)
         # print(qc.num_qubits)
         # print(qc.num_clbits)
         # print(qc)
@@ -234,6 +234,7 @@ class App:
             for i in range(2, ncircs):
                 qc = merge_circs(qc, self.circuits[i])
 
+        prf_cnts = perfect_counts(qc)
         #print(qc)
         depth_b4 = 0
         cnot_b4 = 0
@@ -337,6 +338,7 @@ class App:
                 avg_fids[i] += self.benchmarks[i].score(splitted_counts[i])
                 # avg_fids[i] += tmp_fid / 2
             else:
+                print(fidelity(prf_cnts, splitted_counts[i]))
                 avg_fids[i] += self.benchmarks[i].score(Counter(splitted_counts[i]))
         # f.write(str(counts) + "\n")
 
