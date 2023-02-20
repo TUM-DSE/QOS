@@ -236,7 +236,7 @@ class MerminBellBenchmark(Benchmark):
         }
 
         measurement_circuit = self._get_measurement_circuit().get_circuit()
-
+        #print(measurement_circuit.data)
         expect_val = 0.0
         for mermin_coef, mermin_pauli in self.mermin_operator:
             # Iterate through the operations in the measurement circuit and conjugate with the
@@ -244,28 +244,47 @@ class MerminBellBenchmark(Benchmark):
             measure_pauli = [p for p in mermin_pauli]
             parity = 1
             
-            ops = measurement_circuit.count_ops()
+            #ops = measurement_circuit.count_ops()
+            ops = measurement_circuit.data
+           
+            #for (k,v) in ops.items():
+                #for op in measurement_circuit.get_instructions(k):
+                    #print(op[0])
+            
+            for i, op in enumerate(ops):
+                if op[0].name == "measure" or op[0].name == "barrier":
+                    continue
+                    
+                qubits = []
+                qubits.append(op[1][0].index)
+                
+                if len(op[1]) > 1: 
+                    qubits.append(op[1][1].index)
 
-            for (k,v) in ops.items():
-                for op in measurement_circuit.get_instructions(k):
-                    if op.operation.name == "measure" or op.operation.name == "barrier":
-                        continue
+                substr = [measure_pauli[qubit] for qubit in qubits]
+                #print(op[0].name, substr)
+                conjugated_substr = conjugation_rules[op[0].name]["".join(substr)]
 
-                    substr = [measure_pauli[qubit.index] for qubit in op.qubits]
-                    conjugated_substr = conjugation_rules[op.operation.name]["".join(substr)]
+                if conjugated_substr[0] == "-":
+                    parity = -1 * parity
+                    conjugated_substr = conjugated_substr[1:]
 
-                    if conjugated_substr[0] == "-":
-                        parity = -1 * parity
-                        conjugated_substr = conjugated_substr[1:]
-
-                    for qubit, pauli in zip(op.qubits, conjugated_substr):
-                        measure_pauli[qubit.index] = pauli
+                for qubit, pauli in zip(qubits, conjugated_substr):
+                    measure_pauli[qubit] = pauli
 
             measurement_qubits = [i for i, pauli in enumerate(measure_pauli) if pauli == "Z"]
             measurement_coef = parity
 
             numerator = 0.0
+            
+            counts_copy = Counter()
+            
             for bitstr, count in counts.items():
+                new_bitstr = bitstr[::-1]
+                counts_copy[new_bitstr] = count
+
+
+            for bitstr, count in counts_copy.items():
                 parity = 1
                 for qb in measurement_qubits:
                     if bitstr[qb] == "1":  # Qubit order is big endian
@@ -273,7 +292,7 @@ class MerminBellBenchmark(Benchmark):
 
                 numerator += mermin_coef * measurement_coef * parity * count
 
-            expect_val += numerator / sum(list(counts.values()))
+            expect_val += numerator / sum(list(counts_copy.values()))
 
         return (expect_val + 2 ** (self.num_qubits - 1)) / 2**self.num_qubits
         

@@ -4,7 +4,7 @@ config:
   static: false
   benchmarks:
     - name: MerminBellBenchmark
-      nqbits: 8
+      nqbits: 7
       rounds:
       cut: false
       frags:
