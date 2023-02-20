@@ -12,7 +12,6 @@ from collections import Counter
 
 from qiskit.circuit import QuantumCircuit
 
-
 class dict2obj(object):
     def __init__(self, d):
         for k, v in d.items():
