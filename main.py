@@ -345,7 +345,7 @@ class App:
                 avg_fids[i] += self.benchmarks[i].score(splitted_counts[i])
                 # avg_fids[i] += tmp_fid / 2
             else:
-                print(fidelity(prf_cnts, splitted_counts[i]))
+                #print(fidelity(prf_cnts, splitted_counts[i]))
                 avg_fids[i] += self.benchmarks[i].score(Counter(splitted_counts[i]))
         # f.write(str(counts) + "\n")
 
