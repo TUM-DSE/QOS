@@ -344,13 +344,14 @@ class FermionicSwapQAOABenchmark(Benchmark):
         # Reverse bitstring ordering due to SWAP network
         #raw_probs = _get_ideal_counts(self.circuit())
         ideal_counts = _get_ideal_counts(self.circuit())
-        #ideal_counts = collections.Counter(
-        #    {bitstring[::-1]: probability for bitstring, probability in raw_probs.items()}
-        #)
+        ideal_counts = collections.Counter(
+            {bitstring: probability for bitstring, probability in ideal_counts.items()}
+        )
+        plot_histogram(ideal_counts,filename="ideal.png",figsize=(10, 10))
         total_shots = sum(counts.values())
         # Reverse the order of the bitstrings due to the fermionic swap ansatz
         experimental_counts = collections.Counter(
-            {k[::-1]: v / total_shots for k, v in counts.items()}
+            {k: v / total_shots for k, v in counts.items()}
         )
 
         ideal_value = self._get_expectation_value_from_probs(ideal_counts)

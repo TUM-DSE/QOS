@@ -5,6 +5,8 @@ from collections import Counter
 import numpy as np
 import json
 
+from math import log2
+
 from qiskit import QuantumCircuit
 from qiskit.quantum_info import hellinger_fidelity
 from qiskit.providers.aer import StatevectorSimulator
@@ -235,3 +237,19 @@ def average_runtime(statistics: List[ExecutionStatistic]) -> float:
 
 def min_max_runtime(statistics: List[ExecutionStatistic]) -> Tuple[float, float]:
     return min(s.run_time() for s in statistics), max(s.run_time() for s in statistics)
+
+def swap_big_little_endian(counts: Dict) -> Dict:
+    itera = ["{0:b}".format(i).zfill(int(log2(len(counts)))) for i in range(len(counts))]
+
+    skip = []
+
+    for i in itera:
+        if i not in skip:
+            tmp = counts[i[::-1]]
+            counts[i[::-1]] = counts[i]
+            counts[i] = tmp
+            skip.append(i)
+            skip.append(i[::-1])
+
+
+    return counts
