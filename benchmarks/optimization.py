@@ -347,7 +347,6 @@ class FermionicSwapQAOABenchmark(Benchmark):
         ideal_counts = collections.Counter(
             {bitstring: probability for bitstring, probability in ideal_counts.items()}
         )
-        plot_histogram(ideal_counts,filename="ideal.png",figsize=(10, 10))
         total_shots = sum(counts.values())
         # Reverse the order of the bitstrings due to the fermionic swap ansatz
         experimental_counts = collections.Counter(

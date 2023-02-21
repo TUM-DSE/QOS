@@ -3,9 +3,13 @@ config:
   nshots: 8192
   static: false
   benchmarks:
-    - name: MerminBellBenchmark
+    - name: VQEBenchmark
       nqbits: 8
       rounds:
+      nlayers: 2
+      time_step:
+      total_time:
+      inital_state:
       cut: false
       frags:
         - backend: FakeTorontoV2

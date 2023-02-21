@@ -28,7 +28,38 @@ container and work directly on the container since the file are set be shared be
 ## README.md
 This file
 
-# Feature Description
 
+# Benchmark Arguments
 
+## FermionicSwapQAOABenchmark
+- number of qbits (`nqbits`)
+
+## VanillaQAOABenchmark
+- number of qbits (`nqbits`)
+
+## GHZBenchmark
+- number of qbits (`nqbits`)
+
+## MerminBellBenchmark
+- number of qbits (`nqbits`)
+
+## VQEBenchmark
+- number of qbits (`nqbits`)
+- number of layers (`nlayers`)
+    Apparent change: The circuit becomes longer (same number of qbits, still outputs two circuits but each circuit is almost `nlayers` times as large)
+
+## HamiltonianSimulationBenchmark
+- number of qbits (`nqbits`)
+- time step (`time_step`)
+- total time (`total_time`)
+
+## BitCodeBenchmark
+- number of qbits (`nqbits`)
+- rounds (`rounds`)
+- initial state (`initial_state`)
+
+## PhaseCodeBenchmark
+- number of qbits (`nqbits`)
+- rounds (`rounds`)
+- initial state (`initial_state`)
 

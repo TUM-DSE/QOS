@@ -98,6 +98,10 @@ class App:
 
         self.nqbits = [i.nqbits for i in config.benchmarks]
         self.rounds = [i.rounds for i in config.benchmarks]
+        self.nlayers = [i.nlayers for i in config.benchmarks]
+        self.time_step = [i.rounds for i in config.benchmarks]
+        self.total_time = [i.rounds for i in config.benchmarks]
+        self.inital_state = [i.rounds for i in config.benchmarks]
         self.filepath = config.path
 
         # For now the number of shots is for the overall application and not specific for each benchmark so no shot splitting is implemented
@@ -121,16 +125,15 @@ class App:
         # `python main.py -backend FakeTorontoV2 -benchmarks GHZBenchmark GHZBenchmark -bits 2 3 -runs 3 -shots 4000`
         # If one of the benchmarks requires to indicate the number of rounds then you need to put the same number of round's args as
         # the number of benchmarks, if the benchmark does not take rounds just put 0, for example:
-        # `python main.py -backend FakeTorontoV2 -benchmarks GHZBenchmark BitCodeBenchmark -bits 2 3 -rounds 0 2 -runs 3 -shots 4000`
-        self.bench_args = [
-            [self.nqbits[i]]
-            if self.rounds[i] == None
-            else [self.nqbits[i]]
-            if self.rounds[i] == 0
-            else [self.nqbits[i], self.rounds[i]]
-            for i in range(len(config.benchmarks))
-        ]
+        # `python main.py -backend FakeTorontoV2 -benchmarks GHZBenchmark BitCodeBenchmark -bits 2 3 -rounds 0 2 -runs 3 -shots 4000
+        
+        self.bench_args = []
 
+        for i in range(len(config.benchmarks)):
+            bench_args = [self.nqbits[i], self.rounds[i], self.nlayers[i], self.time_step[i], self.total_time[i], self.inital_state[i]]
+            self.bench_args.append(list(filter(lambda x:x!=None, bench_args)))
+            
+        print(self.bench_args)
         # print(self.bench_args)
 
         # This is a very ugly inline if else statements but it works, basically what it does is:
@@ -158,10 +161,14 @@ class App:
             else:
                 self.nqbits[i] = c.num_qubits
 
+        print(self.circuits)
+        print(self.circuits[0][0].draw())
+        #pdb.set_trace()
+
         for i, b in enumerate(self.bench_args):
-            if len(b) > 1:
+            if self.rounds[i] != None: # This means that the benchmark is of the type ErrorCorrection.
                 self.total_bits.append(self.nqbits[i] + (b[0] - 1) * b[1])
-            elif isinstance(self.nqbits[i], list):
+            elif isinstance(self.nqbits[i], list): #This means that this benchmark has more than one circuit which only happens on VQE
                 self.total_bits.append(self.nqbits[i][0] * 2)
             else:
                 self.total_bits.append(self.nqbits[i])
