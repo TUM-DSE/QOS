@@ -3,10 +3,10 @@ config:
   nshots: 8192
   static: false
   benchmarks:
-    - name: VQEBenchmark
-      nqbits: 8
-      rounds:
-      nlayers: 2
+    - name: BitCodeBenchmark
+      nqbits: 4
+      rounds: 2
+      nlayers:
       time_step:
       total_time:
       inital_state:

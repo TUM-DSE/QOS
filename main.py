@@ -99,9 +99,9 @@ class App:
         self.nqbits = [i.nqbits for i in config.benchmarks]
         self.rounds = [i.rounds for i in config.benchmarks]
         self.nlayers = [i.nlayers for i in config.benchmarks]
-        self.time_step = [i.rounds for i in config.benchmarks]
-        self.total_time = [i.rounds for i in config.benchmarks]
-        self.inital_state = [i.rounds for i in config.benchmarks]
+        self.time_step = [i.time_step for i in config.benchmarks]
+        self.total_time = [i.total_time for i in config.benchmarks]
+        self.inital_state = [i.inital_state for i in config.benchmarks]
         self.filepath = config.path
 
         # For now the number of shots is for the overall application and not specific for each benchmark so no shot splitting is implemented
@@ -129,8 +129,10 @@ class App:
         
         self.bench_args = []
 
+
         for i in range(len(config.benchmarks)):
             bench_args = [self.nqbits[i], self.rounds[i], self.nlayers[i], self.time_step[i], self.total_time[i], self.inital_state[i]]
+            print(bench_args)
             self.bench_args.append(list(filter(lambda x:x!=None, bench_args)))
             
         print(self.bench_args)
@@ -148,7 +150,10 @@ class App:
         # )
 
         for idx, b in enumerate(config.benchmarks):
-            self.benchmarks.append(eval(b.name)(*self.bench_args[idx]))
+            try:
+                self.benchmarks.append(eval(b.name)(*self.bench_args[idx]))
+            except:
+                print("[ERROR] - Probably there is too many or too little arguments for one the benchmark. Check the README for the mandatory and optional arguments for each benchmark.")
 
         self.nbenchmarks = len(self.benchmarks)
 
@@ -161,8 +166,8 @@ class App:
             else:
                 self.nqbits[i] = c.num_qubits
 
-        print(self.circuits)
-        print(self.circuits[0][0].draw())
+        print(self.circuits[0])
+        #print(self.circuits[0][0].draw())
         #pdb.set_trace()
 
         for i, b in enumerate(self.bench_args):

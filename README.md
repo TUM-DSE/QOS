@@ -30,36 +30,38 @@ This file
 
 
 # Benchmark Arguments
+Arg* - Means that the argument is not optional
 
 ## FermionicSwapQAOABenchmark
-- number of qbits (`nqbits`)
+- number of qbits (`nqbits`)*
 
 ## VanillaQAOABenchmark
-- number of qbits (`nqbits`)
+- number of qbits (`nqbits`)*
 
 ## GHZBenchmark
-- number of qbits (`nqbits`)
+- number of qbits (`nqbits`)*
 
 ## MerminBellBenchmark
-- number of qbits (`nqbits`)
+- number of qbits (`nqbits`)*
 
 ## VQEBenchmark
-- number of qbits (`nqbits`)
+- number of qbits (`nqbits`)*
 - number of layers (`nlayers`)
     Apparent change: The circuit becomes longer (same number of qbits, still outputs two circuits but each circuit is almost `nlayers` times as large)
 
 ## HamiltonianSimulationBenchmark
-- number of qbits (`nqbits`)
+- number of qbits (`nqbits`)*
 - time step (`time_step`)
 - total time (`total_time`)
+    Apparent change: The time step needs to be changed in conjuntion with the total time. The circuit is copied and concatenated, with measurement only in the end, `total_time//time_step` times
 
 ## BitCodeBenchmark
-- number of qbits (`nqbits`)
-- rounds (`rounds`)
+- number of qbits (`nqbits`)*
+- rounds (`rounds`)*
 - initial state (`initial_state`)
 
 ## PhaseCodeBenchmark
-- number of qbits (`nqbits`)
-- rounds (`rounds`)
+- number of qbits (`nqbits`)*
+- rounds (`rounds`)*
 - initial state (`initial_state`)
 

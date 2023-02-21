@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from collections import Counter
 import numpy as np
 import json
-
+import pdb
 from math import log2
 
 from qiskit import QuantumCircuit
@@ -46,6 +46,7 @@ def perfect_counts(original_circuit: QuantumCircuit) -> Dict[str, int]:
     cnt = (
         StatevectorSimulator().run(original_circuit, shots=50000).result().get_counts()
     )
+    pdb.set_trace()
     return {k.replace(" ", ""): v for k, v in cnt.items()}
 
 
