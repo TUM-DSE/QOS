@@ -101,7 +101,7 @@ class App:
         self.nlayers = [i.nlayers for i in config.benchmarks]
         self.time_step = [i.time_step for i in config.benchmarks]
         self.total_time = [i.total_time for i in config.benchmarks]
-        self.inital_state = [i.inital_state for i in config.benchmarks]
+        self.initial_state = [i.initial_state for i in config.benchmarks]
         self.filepath = config.path
 
         # For now the number of shots is for the overall application and not specific for each benchmark so no shot splitting is implemented
@@ -129,9 +129,8 @@ class App:
         
         self.bench_args = []
 
-
         for i in range(len(config.benchmarks)):
-            bench_args = [self.nqbits[i], self.rounds[i], self.nlayers[i], self.time_step[i], self.total_time[i], self.inital_state[i]]
+            bench_args = [self.nqbits[i], self.rounds[i], self.nlayers[i], self.time_step[i], self.total_time[i], self.initial_state[i]]
             print(bench_args)
             self.bench_args.append(list(filter(lambda x:x!=None, bench_args)))
             
@@ -149,11 +148,11 @@ class App:
         #   [self.nqbits] if self.rounds == None else [self.nqbits, self.rounds]
         # )
 
+
+        #If you get an error here either you are inputting more or less arguments that the benchmark needs or the initial_state does not have the
+        # same number of initial values as the number of inputted qbits (Error correction)
         for idx, b in enumerate(config.benchmarks):
-            try:
-                self.benchmarks.append(eval(b.name)(*self.bench_args[idx]))
-            except:
-                print("[ERROR] - Probably there is too many or too little arguments for one the benchmark. Check the README for the mandatory and optional arguments for each benchmark.")
+            self.benchmarks.append(eval(b.name)(*self.bench_args[idx]))
 
         self.nbenchmarks = len(self.benchmarks)
 
@@ -166,7 +165,7 @@ class App:
             else:
                 self.nqbits[i] = c.num_qubits
 
-        print(self.circuits[0])
+        #print(self.circuits[0])
         #print(self.circuits[0][0].draw())
         #pdb.set_trace()
 
@@ -228,6 +227,8 @@ class App:
         # )
         # print(prf_counts)
 
+        #pdb.set_trace()
+
         for i, a in enumerate(self.circuits):
             if isinstance(a, list):
                 self.circuits[i] = merge_circs(a[0], a[1])
@@ -246,7 +247,7 @@ class App:
             for i in range(2, ncircs):
                 qc = merge_circs(qc, self.circuits[i])
 
-        prf_cnts = perfect_counts(qc)
+        #prf_cnts = perfect_counts(qc)
         #print(qc)
         depth_b4 = 0
         cnot_b4 = 0

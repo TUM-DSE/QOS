@@ -3,9 +3,9 @@ config:
   nshots: 8192
   static: false
   benchmarks:
-    - name: BitCodeBenchmark
+    - name: PhaseCodeBenchmark
       nqbits: 4
-      rounds: 2
+      rounds: 1
       nlayers:
       time_step:
       total_time:
