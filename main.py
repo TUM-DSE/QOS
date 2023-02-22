@@ -246,7 +246,7 @@ class App:
             for i in range(2, ncircs):
                 qc = merge_circs(qc, self.circuits[i])
 
-        prf_cnts = perfect_counts(qc)
+        #prf_cnts = perfect_counts(qc)
         #print(qc)
         depth_b4 = 0
         cnot_b4 = 0
