@@ -53,10 +53,11 @@ benchmarks = {
     "BitCodeBenchmark": 2,
     "PhaseCodeBenchmark": 2,
     "MerminBellBenchmark": 1,
+    "FermionicSwapQAOABenchmark": 1,
 }
 
 shots = 8192
-qbits = [[6, 6, 6]]  # This is for adding other combinations.
+qbits = [[4, 4]]  # This is for adding other combinations.
 rounds = 3
 # qbits = [0.25, 0.5, 0.75, 1]
 
@@ -95,11 +96,16 @@ for i in qbits:
         f = open("configs/config_" + str(id) + ".yml", "w")
         f.write("config:\n")
         f.write("  path: results/\n")
+        f.write("  static: false\n")
         f.write("  nshots: " + str(shots) + "\n")
         f.write("  benchmarks:\n")
         for idx in range(len(j)):
             f.write("    - name: " + j[idx] + "\n")
             f.write("      nqbits: " + str(i[idx]) + "\n")
+            f.write("      nlayers: " + "\n")
+            f.write("      time_step: " + "\n")
+            f.write("      total_time: " + "\n")
+            f.write("      initial_state: " + "\n")
             if benchmarks[j[idx]] == 2:
                 f.write("      rounds: " + str(rounds) + "\n")
             else:

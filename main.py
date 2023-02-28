@@ -9,6 +9,8 @@ from backends import IBMQPU
 from qiskit.compiler import transpile
 from qiskit.visualization import plot_histogram, plot_circuit_layout, plot_coupling_map
 from collections import Counter
+import csv
+import os.path
 
 from qiskit.circuit import QuantumCircuit
 
@@ -356,23 +358,44 @@ class App:
         # f.write(str(counts) + "\n")
 
         avg_fid = 0
-        f = open("results/results.txt", "a")
-        f.write("\n---------------------\n")
-        f.write("\n" + self.filename)
-        f.write("\nConfig_file: \t" + self.config_file)
-        f.write("\nFidelity:")
 
-        for i in range(self.nbenchmarks):
-            fid = avg_fids[i]
-            f.write("\n\t" + self.benchmarks[i].name() + ": \t" + str(round(fid, 4)))
-            # print(fid)
-            avg_fid = avg_fid + fid
+        csv_headers = ['bench1', 'bench2', 'bench1_fid', 'bench2_fid', 'avg_fid', 'utilization', 'config_file']
+        #data_example = ['Bench1Name', 'Bench2Name', 'Bench1FID', 'Bench2FID', 90.5, 0.75, 'Config1']
 
-        avg_fid = round(avg_fid / self.nbenchmarks, 4)
-        f.write("\n\tFinal: \t" + str(avg_fid))
-        f.write("\nUtilization: \t" + str(round(utilization, 3)))
-        f.close()
+        file_exists = os.path.isfile('results/results.csv')
 
+        with open("results/results.csv", mode="a", newline="") as csvfile:
+            writer = csv.writer(csvfile)
+
+            if not file_exists:
+                writer.writerow(csv_headers)
+
+            data = []
+            data.append(self.benchmarks[0].name())
+            data.append(self.benchmarks[1].name())
+            
+            for i in range(self.nbenchmarks):
+                data.append(avg_fids[i])
+
+            data.append(str(round(sum(avg_fids)/self.nbenchmarks,2)))
+            data.append(str(round(utilization,3)))
+
+            data.append(self.config_file)
+
+            writer.writerow(data)
+            # This is ugly to have to lines with the same information just with the benchmarks swapped, but it is easier to process
+            data = []
+            data.append(self.benchmarks[1].name())
+            data.append(self.benchmarks[0].name())
+            
+            for i in range(self.nbenchmarks):
+                data.append(avg_fids[-(i+1)])
+            data.append(str(round(sum(avg_fids)/self.nbenchmarks,2)))
+            data.append(str(round(utilization,3)))
+
+            data.append(self.config_file)
+
+            writer.writerow(data)
 
 app = App(sys.argv)
 app.run()
