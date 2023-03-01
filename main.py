@@ -9,6 +9,8 @@ from backends import IBMQPU
 from qiskit.compiler import transpile
 from qiskit.visualization import plot_histogram, plot_circuit_layout, plot_coupling_map
 from collections import Counter
+import csv
+import os.path
 
 from qiskit.circuit import QuantumCircuit
 
@@ -101,7 +103,7 @@ class App:
         self.nlayers = [i.nlayers for i in config.benchmarks]
         self.time_step = [i.time_step for i in config.benchmarks]
         self.total_time = [i.total_time for i in config.benchmarks]
-        self.inital_state = [i.inital_state for i in config.benchmarks]
+        self.initial_state = [i.initial_state for i in config.benchmarks]
         self.filepath = config.path
 
         # For now the number of shots is for the overall application and not specific for each benchmark so no shot splitting is implemented
@@ -129,9 +131,8 @@ class App:
         
         self.bench_args = []
 
-
         for i in range(len(config.benchmarks)):
-            bench_args = [self.nqbits[i], self.rounds[i], self.nlayers[i], self.time_step[i], self.total_time[i], self.inital_state[i]]
+            bench_args = [self.nqbits[i], self.rounds[i], self.nlayers[i], self.time_step[i], self.total_time[i], self.initial_state[i]]
             print(bench_args)
             self.bench_args.append(list(filter(lambda x:x!=None, bench_args)))
             
@@ -149,11 +150,11 @@ class App:
         #   [self.nqbits] if self.rounds == None else [self.nqbits, self.rounds]
         # )
 
+
+        #If you get an error here either you are inputting more or less arguments that the benchmark needs or the initial_state does not have the
+        # same number of initial values as the number of inputted qbits (Error correction)
         for idx, b in enumerate(config.benchmarks):
-            try:
-                self.benchmarks.append(eval(b.name)(*self.bench_args[idx]))
-            except:
-                print("[ERROR] - Probably there is too many or too little arguments for one the benchmark. Check the README for the mandatory and optional arguments for each benchmark.")
+            self.benchmarks.append(eval(b.name)(*self.bench_args[idx]))
 
         self.nbenchmarks = len(self.benchmarks)
 
@@ -166,7 +167,7 @@ class App:
             else:
                 self.nqbits[i] = c.num_qubits
 
-        print(self.circuits[0])
+        #print(self.circuits[0])
         #print(self.circuits[0][0].draw())
         #pdb.set_trace()
 
@@ -227,6 +228,8 @@ class App:
         # figsize=(10, 10),
         # )
         # print(prf_counts)
+
+        #pdb.set_trace()
 
         for i, a in enumerate(self.circuits):
             if isinstance(a, list):
@@ -355,23 +358,44 @@ class App:
         # f.write(str(counts) + "\n")
 
         avg_fid = 0
-        f = open("results/results.txt", "a")
-        f.write("\n---------------------\n")
-        f.write("\n" + self.filename)
-        f.write("\nConfig_file: \t" + self.config_file)
-        f.write("\nFidelity:")
 
-        for i in range(self.nbenchmarks):
-            fid = avg_fids[i]
-            f.write("\n\t" + self.benchmarks[i].name() + ": \t" + str(round(fid, 4)))
-            # print(fid)
-            avg_fid = avg_fid + fid
+        csv_headers = ['bench1', 'bench2', 'bench1_fid', 'bench2_fid', 'avg_fid', 'utilization', 'config_file']
+        #data_example = ['Bench1Name', 'Bench2Name', 'Bench1FID', 'Bench2FID', 90.5, 0.75, 'Config1']
 
-        avg_fid = round(avg_fid / self.nbenchmarks, 4)
-        f.write("\n\tFinal: \t" + str(avg_fid))
-        f.write("\nUtilization: \t" + str(round(utilization, 3)))
-        f.close()
+        file_exists = os.path.isfile('results/results.csv')
 
+        with open("results/results.csv", mode="a", newline="") as csvfile:
+            writer = csv.writer(csvfile)
+
+            if not file_exists:
+                writer.writerow(csv_headers)
+
+            data = []
+            data.append(self.benchmarks[0].name())
+            data.append(self.benchmarks[1].name())
+            
+            for i in range(self.nbenchmarks):
+                data.append(avg_fids[i])
+
+            data.append(str(round(sum(avg_fids)/self.nbenchmarks,2)))
+            data.append(str(round(utilization,3)))
+
+            data.append(self.config_file)
+
+            writer.writerow(data)
+            # This is ugly to have to lines with the same information just with the benchmarks swapped, but it is easier to process
+            data = []
+            data.append(self.benchmarks[1].name())
+            data.append(self.benchmarks[0].name())
+            
+            for i in range(self.nbenchmarks):
+                data.append(avg_fids[-(i+1)])
+            data.append(str(round(sum(avg_fids)/self.nbenchmarks,2)))
+            data.append(str(round(utilization,3)))
+
+            data.append(self.config_file)
+
+            writer.writerow(data)
 
 app = App(sys.argv)
 app.run()
