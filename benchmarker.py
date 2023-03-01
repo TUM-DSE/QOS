@@ -58,7 +58,7 @@ benchmarks = {
 
 shots = 8192
 qbits = [[6, 6]]  # This is for adding other combinations.
-rounds = 3
+rounds = 1
 runs = 5
 # qbits = [0.25, 0.5, 0.75, 1]
 
@@ -120,7 +120,6 @@ for i in qbits:
             f.write("        - backend: " + backend + "\n")
         id += 1
 
-exit()
 if sys.argv[1] == "run":
     for i in range(total_ids):
         this = subprocess.run(["python3", "main.py", "configs/config_" + str(i)])

@@ -408,14 +408,15 @@ class App:
                 data.append(self.benchmarks[i].name())
                 data.append(self.nqbits[i])
                 data.append(fids[i])
-                data.append(self.backend.backend.name)
+                
             
             #for i in range(self.nbenchmarks):
                 #data.append(avg_fids[i])
 
             data.append(str(round(sum(fids)/self.nbenchmarks,2)))
             data.append(str(round(utilization,3)))
-
+            
+            data.append(self.backend.backend.name)
             data.append(self.config_file)
 
             writer.writerow(data)
@@ -426,14 +427,14 @@ class App:
                 data.append(self.benchmarks[i].name())
                 data.append(self.nqbits[i])
                 data.append(fids[i])
-                data.append(self.backend.backend.name)
             
             #for i in range(self.nbenchmarks):
                 #data.append(avg_fids[-(i+1)])
                 
             data.append(str(round(sum(fids)/self.nbenchmarks,2)))
             data.append(str(round(utilization,3)))
-
+            
+            data.append(self.backend.backend.name)
             data.append(self.config_file)
 
             writer.writerow(data)
