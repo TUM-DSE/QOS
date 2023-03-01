@@ -57,9 +57,9 @@ benchmarks = {
 }
 
 shots = 8192
-qbits = [[2, 2]]  # This is for adding other combinations.
+qbits = [[6, 6]]  # This is for adding other combinations.
 rounds = 1
-runs = 3
+runs = 5
 # qbits = [0.25, 0.5, 0.75, 1]
 
 id = 0
