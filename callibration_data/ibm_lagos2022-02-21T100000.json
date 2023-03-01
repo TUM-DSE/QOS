@@ -1,0 +1,1390 @@
+{
+    "backend_name": "ibm_lagos",
+    "backend_version": "1.0.23",
+    "last_update_date": "2022-02-21T09:24:29+01:00",
+    "qubits": [
+        [
+            {
+                "date": "2022-02-21T08:16:31+01:00",
+                "name": "T1",
+                "unit": "us",
+                "value": 184.4948755514848
+            },
+            {
+                "date": "2022-02-21T07:04:31+01:00",
+                "name": "T2",
+                "unit": "us",
+                "value": 47.16696741639105
+            },
+            {
+                "date": "2022-02-21T09:24:29+01:00",
+                "name": "frequency",
+                "unit": "GHz",
+                "value": 5.235183925562042
+            },
+            {
+                "date": "2022-02-21T09:24:29+01:00",
+                "name": "anharmonicity",
+                "unit": "GHz",
+                "value": -0.33986713855915607
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "readout_error",
+                "unit": "",
+                "value": 0.01089999999999991
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "prob_meas0_prep1",
+                "unit": "",
+                "value": 0.0124
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "prob_meas1_prep0",
+                "unit": "",
+                "value": 0.009399999999999964
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "readout_length",
+                "unit": "ns",
+                "value": 704
+            }
+        ],
+        [
+            {
+                "date": "2022-02-21T08:27:20+01:00",
+                "name": "T1",
+                "unit": "us",
+                "value": 112.79457943967871
+            },
+            {
+                "date": "2022-02-21T07:08:37+01:00",
+                "name": "T2",
+                "unit": "us",
+                "value": 98.77752722689048
+            },
+            {
+                "date": "2022-02-21T09:24:29+01:00",
+                "name": "frequency",
+                "unit": "GHz",
+                "value": 5.099598647161352
+            },
+            {
+                "date": "2022-02-21T09:24:29+01:00",
+                "name": "anharmonicity",
+                "unit": "GHz",
+                "value": -0.3432484042938357
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "readout_error",
+                "unit": "",
+                "value": 0.008399999999999963
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "prob_meas0_prep1",
+                "unit": "",
+                "value": 0.0102
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "prob_meas1_prep0",
+                "unit": "",
+                "value": 0.00660000000000005
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "readout_length",
+                "unit": "ns",
+                "value": 704
+            }
+        ],
+        [
+            {
+                "date": "2022-02-21T08:16:31+01:00",
+                "name": "T1",
+                "unit": "us",
+                "value": 121.0260376643472
+            },
+            {
+                "date": "2022-02-21T07:04:31+01:00",
+                "name": "T2",
+                "unit": "us",
+                "value": 166.19902017516944
+            },
+            {
+                "date": "2022-02-21T09:24:29+01:00",
+                "name": "frequency",
+                "unit": "GHz",
+                "value": 5.188361951669331
+            },
+            {
+                "date": "2022-02-21T09:24:29+01:00",
+                "name": "anharmonicity",
+                "unit": "GHz",
+                "value": -0.3419316690031256
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "readout_error",
+                "unit": "",
+                "value": 0.010699999999999932
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "prob_meas0_prep1",
+                "unit": "",
+                "value": 0.0102
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "prob_meas1_prep0",
+                "unit": "",
+                "value": 0.011199999999999988
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "readout_length",
+                "unit": "ns",
+                "value": 704
+            }
+        ],
+        [
+            {
+                "date": "2022-02-21T08:16:31+01:00",
+                "name": "T1",
+                "unit": "us",
+                "value": 148.5669165869764
+            },
+            {
+                "date": "2022-02-21T07:04:31+01:00",
+                "name": "T2",
+                "unit": "us",
+                "value": 110.44036533786567
+            },
+            {
+                "date": "2022-02-21T09:24:29+01:00",
+                "name": "frequency",
+                "unit": "GHz",
+                "value": 4.987479748639269
+            },
+            {
+                "date": "2022-02-21T09:24:29+01:00",
+                "name": "anharmonicity",
+                "unit": "GHz",
+                "value": -0.3452928861203798
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "readout_error",
+                "unit": "",
+                "value": 0.01770000000000005
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "prob_meas0_prep1",
+                "unit": "",
+                "value": 0.0122
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "prob_meas1_prep0",
+                "unit": "",
+                "value": 0.0232
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "readout_length",
+                "unit": "ns",
+                "value": 704
+            }
+        ],
+        [
+            {
+                "date": "2022-02-21T08:16:31+01:00",
+                "name": "T1",
+                "unit": "us",
+                "value": 146.28967319536582
+            },
+            {
+                "date": "2022-02-21T07:04:31+01:00",
+                "name": "T2",
+                "unit": "us",
+                "value": 49.66614138340507
+            },
+            {
+                "date": "2022-02-21T09:24:29+01:00",
+                "name": "frequency",
+                "unit": "GHz",
+                "value": 5.285337243533292
+            },
+            {
+                "date": "2022-02-21T09:24:29+01:00",
+                "name": "anharmonicity",
+                "unit": "GHz",
+                "value": -0.3392342674107948
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "readout_error",
+                "unit": "",
+                "value": 0.011700000000000044
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "prob_meas0_prep1",
+                "unit": "",
+                "value": 0.009600000000000053
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "prob_meas1_prep0",
+                "unit": "",
+                "value": 0.0138
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "readout_length",
+                "unit": "ns",
+                "value": 704
+            }
+        ],
+        [
+            {
+                "date": "2022-02-21T08:27:20+01:00",
+                "name": "T1",
+                "unit": "us",
+                "value": 149.5214154013952
+            },
+            {
+                "date": "2022-02-21T07:08:37+01:00",
+                "name": "T2",
+                "unit": "us",
+                "value": 84.25926315736736
+            },
+            {
+                "date": "2022-02-21T09:24:29+01:00",
+                "name": "frequency",
+                "unit": "GHz",
+                "value": 5.176130492343965
+            },
+            {
+                "date": "2022-02-21T09:24:29+01:00",
+                "name": "anharmonicity",
+                "unit": "GHz",
+                "value": -0.34079297245074963
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "readout_error",
+                "unit": "",
+                "value": 0.01090000000000002
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "prob_meas0_prep1",
+                "unit": "",
+                "value": 0.0132
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "prob_meas1_prep0",
+                "unit": "",
+                "value": 0.008600000000000052
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "readout_length",
+                "unit": "ns",
+                "value": 704
+            }
+        ],
+        [
+            {
+                "date": "2022-02-21T05:50:22+01:00",
+                "name": "T1",
+                "unit": "us",
+                "value": 143.45411164068648
+            },
+            {
+                "date": "2022-02-21T07:04:31+01:00",
+                "name": "T2",
+                "unit": "us",
+                "value": 92.06566937582694
+            },
+            {
+                "date": "2022-02-21T09:24:29+01:00",
+                "name": "frequency",
+                "unit": "GHz",
+                "value": 5.06392951845948
+            },
+            {
+                "date": "2022-02-21T09:24:29+01:00",
+                "name": "anharmonicity",
+                "unit": "GHz",
+                "value": -0.34275836537159754
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "readout_error",
+                "unit": "",
+                "value": 0.011199999999999988
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "prob_meas0_prep1",
+                "unit": "",
+                "value": 0.0098
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "prob_meas1_prep0",
+                "unit": "",
+                "value": 0.012599999999999945
+            },
+            {
+                "date": "2022-02-21T06:55:47+01:00",
+                "name": "readout_length",
+                "unit": "ns",
+                "value": 704
+            }
+        ]
+    ],
+    "gates": [
+        {
+            "qubits": [
+                0
+            ],
+            "gate": "id",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:14:58+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.0001595556857835652
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 35.55555555555556
+                }
+            ],
+            "name": "id0"
+        },
+        {
+            "qubits": [
+                1
+            ],
+            "gate": "id",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:20:12+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.00023008294576979955
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 35.55555555555556
+                }
+            ],
+            "name": "id1"
+        },
+        {
+            "qubits": [
+                2
+            ],
+            "gate": "id",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:14:58+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.0001668369870985557
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 35.55555555555556
+                }
+            ],
+            "name": "id2"
+        },
+        {
+            "qubits": [
+                3
+            ],
+            "gate": "id",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:14:58+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.0001926739222403201
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 35.55555555555556
+                }
+            ],
+            "name": "id3"
+        },
+        {
+            "qubits": [
+                4
+            ],
+            "gate": "id",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:14:58+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.0001972317635792837
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 35.55555555555556
+                }
+            ],
+            "name": "id4"
+        },
+        {
+            "qubits": [
+                5
+            ],
+            "gate": "id",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:20:12+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.0002250279461301513
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 35.55555555555556
+                }
+            ],
+            "name": "id5"
+        },
+        {
+            "qubits": [
+                6
+            ],
+            "gate": "id",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:14:58+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.00033249703106482027
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 35.55555555555556
+                }
+            ],
+            "name": "id6"
+        },
+        {
+            "qubits": [
+                0
+            ],
+            "gate": "rz",
+            "parameters": [
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 0
+                }
+            ],
+            "name": "rz0"
+        },
+        {
+            "qubits": [
+                1
+            ],
+            "gate": "rz",
+            "parameters": [
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 0
+                }
+            ],
+            "name": "rz1"
+        },
+        {
+            "qubits": [
+                2
+            ],
+            "gate": "rz",
+            "parameters": [
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 0
+                }
+            ],
+            "name": "rz2"
+        },
+        {
+            "qubits": [
+                3
+            ],
+            "gate": "rz",
+            "parameters": [
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 0
+                }
+            ],
+            "name": "rz3"
+        },
+        {
+            "qubits": [
+                4
+            ],
+            "gate": "rz",
+            "parameters": [
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 0
+                }
+            ],
+            "name": "rz4"
+        },
+        {
+            "qubits": [
+                5
+            ],
+            "gate": "rz",
+            "parameters": [
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 0
+                }
+            ],
+            "name": "rz5"
+        },
+        {
+            "qubits": [
+                6
+            ],
+            "gate": "rz",
+            "parameters": [
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 0
+                }
+            ],
+            "name": "rz6"
+        },
+        {
+            "qubits": [
+                0
+            ],
+            "gate": "sx",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:14:58+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.0001595556857835652
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 35.55555555555556
+                }
+            ],
+            "name": "sx0"
+        },
+        {
+            "qubits": [
+                1
+            ],
+            "gate": "sx",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:20:12+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.00023008294576979955
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 35.55555555555556
+                }
+            ],
+            "name": "sx1"
+        },
+        {
+            "qubits": [
+                2
+            ],
+            "gate": "sx",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:14:58+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.0001668369870985557
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 35.55555555555556
+                }
+            ],
+            "name": "sx2"
+        },
+        {
+            "qubits": [
+                3
+            ],
+            "gate": "sx",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:14:58+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.0001926739222403201
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 35.55555555555556
+                }
+            ],
+            "name": "sx3"
+        },
+        {
+            "qubits": [
+                4
+            ],
+            "gate": "sx",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:14:58+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.0001972317635792837
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 35.55555555555556
+                }
+            ],
+            "name": "sx4"
+        },
+        {
+            "qubits": [
+                5
+            ],
+            "gate": "sx",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:20:12+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.0002250279461301513
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 35.55555555555556
+                }
+            ],
+            "name": "sx5"
+        },
+        {
+            "qubits": [
+                6
+            ],
+            "gate": "sx",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:14:58+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.00033249703106482027
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 35.55555555555556
+                }
+            ],
+            "name": "sx6"
+        },
+        {
+            "qubits": [
+                0
+            ],
+            "gate": "x",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:14:58+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.0001595556857835652
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 35.55555555555556
+                }
+            ],
+            "name": "x0"
+        },
+        {
+            "qubits": [
+                1
+            ],
+            "gate": "x",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:20:12+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.00023008294576979955
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 35.55555555555556
+                }
+            ],
+            "name": "x1"
+        },
+        {
+            "qubits": [
+                2
+            ],
+            "gate": "x",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:14:58+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.0001668369870985557
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 35.55555555555556
+                }
+            ],
+            "name": "x2"
+        },
+        {
+            "qubits": [
+                3
+            ],
+            "gate": "x",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:14:58+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.0001926739222403201
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 35.55555555555556
+                }
+            ],
+            "name": "x3"
+        },
+        {
+            "qubits": [
+                4
+            ],
+            "gate": "x",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:14:58+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.0001972317635792837
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 35.55555555555556
+                }
+            ],
+            "name": "x4"
+        },
+        {
+            "qubits": [
+                5
+            ],
+            "gate": "x",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:20:12+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.0002250279461301513
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 35.55555555555556
+                }
+            ],
+            "name": "x5"
+        },
+        {
+            "qubits": [
+                6
+            ],
+            "gate": "x",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:14:58+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.00033249703106482027
+                },
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 35.55555555555556
+                }
+            ],
+            "name": "x6"
+        },
+        {
+            "qubits": [
+                5,
+                4
+            ],
+            "gate": "cx",
+            "parameters": [
+                {
+                    "date": "2022-02-21T08:17:15+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.0050390553386306935
+                },
+                {
+                    "date": "2022-02-18T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 327.1111111111111
+                }
+            ],
+            "name": "cx5_4"
+        },
+        {
+            "qubits": [
+                4,
+                5
+            ],
+            "gate": "cx",
+            "parameters": [
+                {
+                    "date": "2022-02-21T08:17:15+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.0050390553386306935
+                },
+                {
+                    "date": "2022-02-18T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 362.66666666666663
+                }
+            ],
+            "name": "cx4_5"
+        },
+        {
+            "qubits": [
+                3,
+                1
+            ],
+            "gate": "cx",
+            "parameters": [
+                {
+                    "date": "2022-02-21T08:10:24+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.006911604324504161
+                },
+                {
+                    "date": "2022-02-18T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 298.66666666666663
+                }
+            ],
+            "name": "cx3_1"
+        },
+        {
+            "qubits": [
+                1,
+                3
+            ],
+            "gate": "cx",
+            "parameters": [
+                {
+                    "date": "2022-02-21T08:10:24+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.006911604324504161
+                },
+                {
+                    "date": "2022-02-18T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 334.22222222222223
+                }
+            ],
+            "name": "cx1_3"
+        },
+        {
+            "qubits": [
+                5,
+                6
+            ],
+            "gate": "cx",
+            "parameters": [
+                {
+                    "date": "2022-02-21T08:01:07+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.007536823924964853
+                },
+                {
+                    "date": "2022-02-18T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 256
+                }
+            ],
+            "name": "cx5_6"
+        },
+        {
+            "qubits": [
+                6,
+                5
+            ],
+            "gate": "cx",
+            "parameters": [
+                {
+                    "date": "2022-02-21T08:01:07+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.007536823924964853
+                },
+                {
+                    "date": "2022-02-18T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 291.55555555555554
+                }
+            ],
+            "name": "cx6_5"
+        },
+        {
+            "qubits": [
+                5,
+                3
+            ],
+            "gate": "cx",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:51:51+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.01085819247289116
+                },
+                {
+                    "date": "2022-02-18T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 298.66666666666663
+                }
+            ],
+            "name": "cx5_3"
+        },
+        {
+            "qubits": [
+                3,
+                5
+            ],
+            "gate": "cx",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:51:51+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.01085819247289116
+                },
+                {
+                    "date": "2022-02-18T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 334.22222222222223
+                }
+            ],
+            "name": "cx3_5"
+        },
+        {
+            "qubits": [
+                2,
+                1
+            ],
+            "gate": "cx",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:42:14+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.004824502081525739
+                },
+                {
+                    "date": "2022-02-18T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 291.55555555555554
+                }
+            ],
+            "name": "cx2_1"
+        },
+        {
+            "qubits": [
+                1,
+                2
+            ],
+            "gate": "cx",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:42:14+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.004824502081525739
+                },
+                {
+                    "date": "2022-02-18T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 327.1111111111111
+                }
+            ],
+            "name": "cx1_2"
+        },
+        {
+            "qubits": [
+                0,
+                1
+            ],
+            "gate": "cx",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:32:58+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.006521593437679496
+                },
+                {
+                    "date": "2022-02-18T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 305.77777777777777
+                }
+            ],
+            "name": "cx0_1"
+        },
+        {
+            "qubits": [
+                1,
+                0
+            ],
+            "gate": "cx",
+            "parameters": [
+                {
+                    "date": "2022-02-21T07:32:58+01:00",
+                    "name": "gate_error",
+                    "unit": "",
+                    "value": 0.006521593437679496
+                },
+                {
+                    "date": "2022-02-18T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 341.3333333333333
+                }
+            ],
+            "name": "cx1_0"
+        },
+        {
+            "qubits": [
+                0
+            ],
+            "gate": "reset",
+            "parameters": [
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 1002.6666666666666
+                }
+            ],
+            "name": "reset0"
+        },
+        {
+            "qubits": [
+                1
+            ],
+            "gate": "reset",
+            "parameters": [
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 1002.6666666666666
+                }
+            ],
+            "name": "reset1"
+        },
+        {
+            "qubits": [
+                2
+            ],
+            "gate": "reset",
+            "parameters": [
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 995.5555555555555
+                }
+            ],
+            "name": "reset2"
+        },
+        {
+            "qubits": [
+                3
+            ],
+            "gate": "reset",
+            "parameters": [
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 988.4444444444443
+                }
+            ],
+            "name": "reset3"
+        },
+        {
+            "qubits": [
+                4
+            ],
+            "gate": "reset",
+            "parameters": [
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 1002.6666666666666
+                }
+            ],
+            "name": "reset4"
+        },
+        {
+            "qubits": [
+                5
+            ],
+            "gate": "reset",
+            "parameters": [
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 1002.6666666666666
+                }
+            ],
+            "name": "reset5"
+        },
+        {
+            "qubits": [
+                6
+            ],
+            "gate": "reset",
+            "parameters": [
+                {
+                    "date": "2022-02-21T09:24:29+01:00",
+                    "name": "gate_length",
+                    "unit": "ns",
+                    "value": 988.4444444444443
+                }
+            ],
+            "name": "reset6"
+        }
+    ],
+    "general": [
+        {
+            "date": "2022-02-21T09:24:29+01:00",
+            "name": "jq_01",
+            "unit": "GHz",
+            "value": 0.0017239661070310697
+        },
+        {
+            "date": "2022-02-21T09:24:29+01:00",
+            "name": "zz_01",
+            "unit": "GHz",
+            "value": -4.1551259389276154e-05
+        },
+        {
+            "date": "2022-02-21T09:24:29+01:00",
+            "name": "jq_12",
+            "unit": "GHz",
+            "value": 0.003306427365570105
+        },
+        {
+            "date": "2022-02-21T09:24:29+01:00",
+            "name": "zz_12",
+            "unit": "GHz",
+            "value": -0.00013691896518548322
+        },
+        {
+            "date": "2022-02-21T09:24:29+01:00",
+            "name": "jq_45",
+            "unit": "GHz",
+            "value": 0.0033964931013144256
+        },
+        {
+            "date": "2022-02-21T09:24:29+01:00",
+            "name": "zz_45",
+            "unit": "GHz",
+            "value": -0.00015134337521539932
+        },
+        {
+            "date": "2022-02-21T09:24:29+01:00",
+            "name": "jq_56",
+            "unit": "GHz",
+            "value": 0.0032394441256406383
+        },
+        {
+            "date": "2022-02-21T09:24:29+01:00",
+            "name": "zz_56",
+            "unit": "GHz",
+            "value": -0.0001381127844927418
+        },
+        {
+            "date": "2022-02-21T09:24:29+01:00",
+            "name": "jq_13",
+            "unit": "GHz",
+            "value": 0.003219077603102807
+        },
+        {
+            "date": "2022-02-21T09:24:29+01:00",
+            "name": "zz_13",
+            "unit": "GHz",
+            "value": -0.00013509145307819546
+        },
+        {
+            "date": "2022-02-21T09:24:29+01:00",
+            "name": "jq_35",
+            "unit": "GHz",
+            "value": 0.0023455196332844842
+        },
+        {
+            "date": "2022-02-21T09:24:29+01:00",
+            "name": "zz_35",
+            "unit": "GHz",
+            "value": -9.35336850076191e-05
+        }
+    ]
+}
