@@ -15,7 +15,7 @@ data = data[1:]
 
 # Get the unique values of bench1 and bench2
 bench1_values = list(set([row[0] for row in data]))
-bench2_values = list(set([row[1] for row in data]))
+bench2_values = list(set([row[3] for row in data]))
 
 # Create a 2D array to store the bench1_fid values
 fid_values = np.zeros((len(bench1_values), len(bench2_values)))
@@ -23,13 +23,14 @@ fid_values = np.zeros((len(bench1_values), len(bench2_values)))
 # Fill the 2D array with the bench1_fid values from the data
 for row in data:
     bench1_index = bench1_values.index(row[0])
-    bench2_index = bench2_values.index(row[1])
+    bench2_index = bench2_values.index(row[3])
     fid_values[bench1_index, bench2_index] = float(row[2])
 
+#pdb.set_trace()
 for row in data:
     bench1_index = bench1_values.index(row[0])
-    bench2_index = bench2_values.index(row[1])
-    fid_values[bench2_index, bench1_index] = float(row[3])
+    bench2_index = bench2_values.index(row[3])
+    fid_values[bench2_index, bench1_index] = float(row[5])
 
 get_avgs = [sum(i)/len(bench1_values) for i in fid_values]
 print(get_avgs)
@@ -44,7 +45,6 @@ bench2_values = np.array(bench2_values)[indices_order]
 fid_values = fid_values[indices_order]
 print(bench1_values)
 print(fid_values)
-#pdb.set_trace()
 
 for i in range(len(fid_values)):
     fid_values[i] = fid_values[i][indices_order]
