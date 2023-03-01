@@ -57,8 +57,9 @@ benchmarks = {
 }
 
 shots = 8192
-qbits = [[4, 4]]  # This is for adding other combinations.
+qbits = [[6, 6]]  # This is for adding other combinations.
 rounds = 3
+runs = 5
 # qbits = [0.25, 0.5, 0.75, 1]
 
 id = 0
@@ -98,10 +99,14 @@ for i in qbits:
         f.write("  path: results/\n")
         f.write("  static: false\n")
         f.write("  nshots: " + str(shots) + "\n")
+        f.write("  nruns: " + str(runs) + "\n")
         f.write("  benchmarks:\n")
         for idx in range(len(j)):
             f.write("    - name: " + j[idx] + "\n")
-            f.write("      nqbits: " + str(i[idx]) + "\n")
+            if j[idx] == "VQEBenchmark" or j[idx] == "BitCodeBenchmark" or j[idx] == "PhaseCodeBenchmark":
+                f.write("      nqbits: " + str(int(i[idx] / 2)) + "\n")
+            else:
+                f.write("      nqbits: " + str(i[idx]) + "\n")
             f.write("      nlayers: " + "\n")
             f.write("      time_step: " + "\n")
             f.write("      total_time: " + "\n")
@@ -115,7 +120,7 @@ for i in qbits:
             f.write("        - backend: " + backend + "\n")
         id += 1
 
-
+exit()
 if sys.argv[1] == "run":
     for i in range(total_ids):
         this = subprocess.run(["python3", "main.py", "configs/config_" + str(i)])

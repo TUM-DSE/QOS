@@ -77,6 +77,7 @@ class App:
     args = []
     backend: IBMQ = None
     nshots = 0
+    nruns = 0
     filename = ""
     filepath = ""
     provider = None
@@ -108,6 +109,7 @@ class App:
 
         # For now the number of shots is for the overall application and not specific for each benchmark so no shot splitting is implemented
         self.nshots = config.nshots
+        self.nruns = config.nruns
         # self.nshots = [i.shots for i in config.benchmarks]
         self.static = config.static
         # Cuts are also not implemented yet
@@ -133,10 +135,10 @@ class App:
 
         for i in range(len(config.benchmarks)):
             bench_args = [self.nqbits[i], self.rounds[i], self.nlayers[i], self.time_step[i], self.total_time[i], self.initial_state[i]]
-            print(bench_args)
+            #print(bench_args)
             self.bench_args.append(list(filter(lambda x:x!=None, bench_args)))
             
-        print(self.bench_args)
+        #print(self.bench_args)
         # print(self.bench_args)
 
         # This is a very ugly inline if else statements but it works, basically what it does is:
@@ -160,13 +162,14 @@ class App:
 
         for b in self.benchmarks:
             self.circuits.append(b.circuit())
-
+        
         for i, c in enumerate(self.circuits):
             if isinstance(c, list):
                 self.nqbits[i] = [c[0].num_qubits] * 2
             else:
                 self.nqbits[i] = c.num_qubits
 
+        #print(self.benchmarks)
         #print(self.circuits[0])
         #print(self.circuits[0][0].draw())
         #pdb.set_trace()
@@ -272,94 +275,123 @@ class App:
         utilization = utilization / nqbits
 
         # print(utilization)
+ 
 
-        try:
-            qc = transpile(qc, backend)
-        except:
-            print("Probably the circuit is too large for this backend. Skipping...")
-            exit(0)
-        #print(qc)
-        depth_after = 0
-        cnot_after = 0
-        
-        depth_after = qc.depth()
-        cnot_after = getCNOTS(qc)
-        
-        print(depth_b4, "\t", depth_after)
-        print(cnot_b4, "\t", cnot_after)
-        
-        if self.static:
-            exit()
-
-        avg_fids = [0] * self.nbenchmarks
-
-        if self.backend.is_simulator:
-            job = backend.run(run_input=qc, shots=self.nshots)
-        else:
-            job = backend.run(circuits=qc, shots=self.nshots)
-        counts = job.result().get_counts()
-        # splitted_counts = split_counts(counts, self.nbenchmarks)
-        # print(counts)
-
-        # plot_histogram(
-        # counts, filename="results/counts" + ".png", figsize=(10, 10)
-        # )
-        splitted_counts = split_counts_bylist(counts, self.total_bits)
-
-        for i, a in enumerate(self.nqbits):
-            if isinstance(a, list):
-                splitted_counts[i] = split_counts_bylist(splitted_counts[i], a)
-        # print(splitted_counts)
-        # splitted_counts = split_counts(counts, 12)
-
-        # for idx, c in enumerate(splitted_counts):
-        # print("-------------------")
-        # plot_histogram(
-        # c,
-        # filename=self.filepath + self.filename + "_split_counts" + str(idx) + ".png",
-        # figsize=(10, 10),
-        # )
-        # print(splitted_counts)
+        median_fids = [] * self.nbenchmarks
 
         for i in range(self.nbenchmarks):
+            median_fids.append([0] * self.nruns)
+ 
+        for k in range(self.nruns):
+            try:
+                qc = transpile(qc, backend)
+            except:
+                print("Probably the circuit is too large for this backend. Skipping...")
+                exit(0)
+            #print(qc)
+            depth_after = 0
+            cnot_after = 0
+            
+            depth_after = qc.depth()
+            cnot_after = getCNOTS(qc)
+            
+            #print(depth_b4, "\t", depth_after)
+            #print(cnot_b4, "\t", cnot_after)
+            
+            if self.static:
+                exit()
 
-            if isinstance(splitted_counts[i], list):
-
-                plot_histogram(
-                    splitted_counts[i][0],
-                    filename=self.filepath + self.filename + "part0_" + str(i),
-                    figsize=(10, 10),
-                )
-                plot_histogram(
-                    splitted_counts[i][1],
-                    filename=self.filepath + self.filename + "part1_" + str(i),
-                    figsize=(10, 10),
-                )
+            if self.backend.is_simulator:
+                job = backend.run(run_input=qc, shots=self.nshots)
             else:
-                plot_histogram(
-                    splitted_counts[i],
-                    filename=self.filepath + self.filename + str(i),
-                    figsize=(10, 10),
-                )
-        # self.backend.backend.coupling_map.draw()
-        # print(len(self.backend.backend.coupling_map))
-        # plot_circuit_layout(qc, self.backend.backend)
+                job = backend.run(circuits=qc, shots=self.nshots)
+            counts = job.result().get_counts()
+            # splitted_counts = split_counts(counts, self.nbenchmarks)
+            # print(counts)
+
+            # plot_histogram(
+            # counts, filename="results/counts" + ".png", figsize=(10, 10)
+            # )
+            splitted_counts = split_counts_bylist(counts, self.total_bits)
+
+            for i, a in enumerate(self.nqbits):
+                if isinstance(a, list):
+                    splitted_counts[i] = split_counts_bylist(splitted_counts[i], a)
+            # print(splitted_counts)
+            # splitted_counts = split_counts(counts, 12)
+
+            # for idx, c in enumerate(splitted_counts):
+            # print("-------------------")
+            # plot_histogram(
+            # c,
+            # filename=self.filepath + self.filename + "_split_counts" + str(idx) + ".png",
+            # figsize=(10, 10),
+            # )
+            # print(splitted_counts)
+
+            for i in range(self.nbenchmarks):
+
+                if isinstance(splitted_counts[i], list):
+
+                    plot_histogram(
+                        splitted_counts[i][0],
+                        filename=self.filepath + self.filename + "part0_" + str(i),
+                        figsize=(10, 10),
+                    )
+                    plot_histogram(
+                        splitted_counts[i][1],
+                        filename=self.filepath + self.filename + "part1_" + str(i),
+                        figsize=(10, 10),
+                    )
+                else:
+                    plot_histogram(
+                        splitted_counts[i],
+                        filename=self.filepath + self.filename + str(i),
+                        figsize=(10, 10),
+                    )
+            # self.backend.backend.coupling_map.draw()
+            # print(len(self.backend.backend.coupling_map))
+            # plot_circuit_layout(qc, self.backend.backend)
+            for i in range(self.nbenchmarks):
+                # print(prf_counts[i])
+                # print(splitted_counts[i])
+                # avg_fids = avg_fids + fidelity(prf_counts[i], splitted_counts[i])
+                if isinstance(splitted_counts[i], list):
+                    # tmp_fid = self.benchmarks[i].score(splitted_counts[i])
+                    median_fids[i][k] += self.benchmarks[i].score(splitted_counts[i])
+                    # avg_fids[i] += tmp_fid / 2
+                else:
+                    #print(fidelity(prf_cnts, splitted_counts[i]))
+                    median_fids[i][k] += self.benchmarks[i].score(Counter(splitted_counts[i]))
+            # f.write(str(counts) + "\n")
+
+        
+        fids = []
+
+        
         for i in range(self.nbenchmarks):
-            # print(prf_counts[i])
-            # print(splitted_counts[i])
-            # avg_fids = avg_fids + fidelity(prf_counts[i], splitted_counts[i])
-            if isinstance(splitted_counts[i], list):
-                # tmp_fid = self.benchmarks[i].score(splitted_counts[i])
-                avg_fids[i] += self.benchmarks[i].score(splitted_counts[i])
-                # avg_fids[i] += tmp_fid / 2
-            else:
-                #print(fidelity(prf_cnts, splitted_counts[i]))
-                avg_fids[i] += self.benchmarks[i].score(Counter(splitted_counts[i]))
-        # f.write(str(counts) + "\n")
-
+            median_fids[i].sort()
+        
+        for i in range(self.nbenchmarks):
+            fids.append(median_fids[i][int(self.nruns / 2)])
+            
         avg_fid = 0
+           
+        csv_headers = []
+        
+        for i in range(self.nbenchmarks):
+            csv_headers.append("bench" + str(i + 1))
+            csv_headers.append("bench" + str(i + 1) + "_qbits")
+            csv_headers.append("bench" + str(i + 1) + "_fid")            
+            
+        #for i in range(self.nbenchmarks):
+            #csv_headers.append("bench" + str(i + 1) + "_fid")
+        
+        csv_headers.append('median_fid')
+        csv_headers.append('utilization')
+        csv_headers.append('backend')
+        csv_headers.append('config_file')
 
-        csv_headers = ['bench1', 'bench2', 'bench1_fid', 'bench2_fid', 'avg_fid', 'utilization', 'config_file']
         #data_example = ['Bench1Name', 'Bench2Name', 'Bench1FID', 'Bench2FID', 90.5, 0.75, 'Config1']
 
         file_exists = os.path.isfile('results/results.csv')
@@ -371,13 +403,17 @@ class App:
                 writer.writerow(csv_headers)
 
             data = []
-            data.append(self.benchmarks[0].name())
-            data.append(self.benchmarks[1].name())
             
             for i in range(self.nbenchmarks):
-                data.append(avg_fids[i])
+                data.append(self.benchmarks[i].name())
+                data.append(self.nqbits[i])
+                data.append(fids[i])
+                data.append(self.backend.backend.name)
+            
+            #for i in range(self.nbenchmarks):
+                #data.append(avg_fids[i])
 
-            data.append(str(round(sum(avg_fids)/self.nbenchmarks,2)))
+            data.append(str(round(sum(fids)/self.nbenchmarks,2)))
             data.append(str(round(utilization,3)))
 
             data.append(self.config_file)
@@ -385,12 +421,17 @@ class App:
             writer.writerow(data)
             # This is ugly to have to lines with the same information just with the benchmarks swapped, but it is easier to process
             data = []
-            data.append(self.benchmarks[1].name())
-            data.append(self.benchmarks[0].name())
             
-            for i in range(self.nbenchmarks):
-                data.append(avg_fids[-(i+1)])
-            data.append(str(round(sum(avg_fids)/self.nbenchmarks,2)))
+            for i in range(self.nbenchmarks - 1, -1, -1):
+                data.append(self.benchmarks[i].name())
+                data.append(self.nqbits[i])
+                data.append(fids[i])
+                data.append(self.backend.backend.name)
+            
+            #for i in range(self.nbenchmarks):
+                #data.append(avg_fids[-(i+1)])
+                
+            data.append(str(round(sum(fids)/self.nbenchmarks,2)))
             data.append(str(round(utilization,3)))
 
             data.append(self.config_file)
