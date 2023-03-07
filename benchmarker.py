@@ -57,9 +57,9 @@ benchmarks = {
 }
 
 shots = 8192
-qbits = [[6, 6]]  # This is for adding other combinations.
+qbits = [[16]]  # This is for adding other combinations.
 rounds = 1
-runs = 5
+runs = 1
 # qbits = [0.25, 0.5, 0.75, 1]
 
 id = 0
@@ -90,6 +90,7 @@ list_benchmarks = list(benchmarks.keys())
 this = [unique_combinations(list_benchmarks, len(i)) for i in qbits]
 this = [len(i) for i in this]
 total_ids = sum(this)
+static = True
 
 for i in qbits:
     combinations = unique_combinations(list_benchmarks, len(i))
@@ -97,7 +98,7 @@ for i in qbits:
         f = open("configs/config_" + str(id) + ".yml", "w")
         f.write("config:\n")
         f.write("  path: results/\n")
-        f.write("  static: false\n")
+        f.write("  static: " + str(static) +"\n")
         f.write("  nshots: " + str(shots) + "\n")
         f.write("  nruns: " + str(runs) + "\n")
         f.write("  benchmarks:\n")
@@ -124,3 +125,8 @@ for i in qbits:
 if sys.argv[1] == "run":
     for i in range(total_ids):
         this = subprocess.run(["python3", "main.py", "configs/config_" + str(i)])
+
+# create another input option to clean all files inside the configs folder
+if sys.argv[1] == "clean":
+    for i in range(total_ids):
+        os.remove("configs/config_" + str(i) + ".yml")

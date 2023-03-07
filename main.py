@@ -276,7 +276,6 @@ class App:
 
         # print(utilization)
  
-
         median_fids = [] * self.nbenchmarks
 
         for i in range(self.nbenchmarks):
@@ -295,10 +294,55 @@ class App:
             depth_after = qc.depth()
             cnot_after = getCNOTS(qc)
             
-            #print(depth_b4, "\t", depth_after)
-            #print(cnot_b4, "\t", cnot_after)
-            
             if self.static:
+                csv_headers = []
+        
+                for i in range(self.nbenchmarks):
+                    csv_headers.append("bench" + str(i) + "_name")
+                    csv_headers.append("bench" + "_qbits")
+                #append to headers the depth and cnot before and after transpilation
+                csv_headers.append("depth_before")
+                csv_headers.append("depth_after")
+                csv_headers.append("cnot_before")
+                csv_headers.append("cnot_after")
+                csv_headers.append('utilization')
+                csv_headers.append('backend')
+                csv_headers.append('config_file')
+
+                #write rows with the information on the headers
+                file_exists = os.path.isfile('results/results.csv')
+
+                with open("results/results.csv", mode="a", newline="") as csvfile:
+
+                    writer = csv.writer(csvfile)
+                    
+                    if not file_exists:
+                        writer.writerow(csv_headers)
+                    
+                    row = []
+                    
+                    for i in range(self.nbenchmarks):
+                        #write benchmark name and qbits
+                        row.append(self.benchmarks[i].name())
+                        
+                        #check if nqbits is a list, if yes just append the first element if not append the whole list
+                        if isinstance(self.nqbits[i], list):
+                            row.append(self.nqbits[i][0])
+                        else:
+                            row.append(self.nqbits[i])
+
+                    #write depths and cnts before and after transpilation
+                    #merge the following rows into a single one
+                    row.append(depth_b4)
+                    row.append(depth_after)
+                    row.append(cnot_b4)
+                    row.append(cnot_after)
+                    row.append(utilization)
+                    row.append(self.backend.backend.name)
+                    row.append(self.config_file)
+                    
+                    writer.writerow(row)
+                    csvfile.close()
                 exit()
 
             if self.backend.is_simulator:
