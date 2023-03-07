@@ -12,7 +12,7 @@ if sys.argv[1] == "static":
     
     csv_reader = csv.reader(csv_file)
     headers = next(csv_reader)  # Skip the header row
-    data = [[row[0], int(row[1]), float(row[7])-float(row[6])] for row in csv_reader]
+    data = [[row[0], int(row[1]), float(row[5])-float(row[4])] for row in csv_reader]
 
     # Create the bar chart
     fig, ax = plt.subplots()
@@ -27,7 +27,38 @@ if sys.argv[1] == "static":
     ax.set_ylabel('Difference')
     ax.set_title('Difference between CNOT counts')
     ax.set_xticks(index)
-    ax.set_xticklabels([f"{row[0]}-{row[1]}" for row in data])
+
+    # Switch case for the following benchmark names
+    # Hamiltonian = Ham
+    # VQE = VQE
+    # BitCode = Bit
+    # PhaseCode = Phase
+    # QAOA = QAOA
+    # Mermin = Bell
+    # GHZ = GHZ
+    # Fermionic = Fermi
+    labels = []
+
+    for row in data:
+        if row[0] == 'Hamiltonian':
+            labels.append("Ham")
+        elif row[0] == 'VQE':
+            labels.append("VQE")
+        elif row[0] == 'BitCode':
+            labels.append("Bit")
+        elif row[0] == 'PhaseCode':
+            labels.append("Phase")
+        elif row[0] == 'QAOA':
+            labels.append("QAOA")
+        elif row[0] == 'MerminBell':
+            labels.append("Bell")
+        elif row[0] == 'GHZ':
+            labels.append("GHZ")
+        elif row[0] == 'FermionicQAOA':
+            labels.append("Fermi")
+
+    ax.set_xticklabels(labels)
+    
 
     # Display the chart
     plt.savefig('results/bar_chart.png', dpi=300, bbox_inches='tight')

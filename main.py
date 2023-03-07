@@ -94,6 +94,8 @@ class App:
 
         config = self.config_parser(self.config_file)
         print("Working on", self.config_file)
+        #print all the config file parameters
+
         # pdb.set_trace()
         # pprint.pprint(data)
 
@@ -207,6 +209,11 @@ class App:
         with open(config_file + ".yml", "r") as config:
             data = yaml.safe_load(config)
 
+        # Print the data dictionary
+        print(data)
+        print('\n')
+
+        
         data = dict2obj(data)
 
         for i, j in enumerate(data.config.benchmarks):
