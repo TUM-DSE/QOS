@@ -5,9 +5,96 @@ import numpy as np
 import pdb
 import sys
 
+def specific_bench_qbits(bench:str, qbits:int) -> int:
+    
+    if bench == "GHZ":
+        return qbits
+    elif bench == "BitCode":
+        return qbits-1
+    elif bench == "PhaseCode":
+        return qbits-1
+    elif bench == "MerminBell":
+        return qbits
+    elif bench == "FermionicQAOA":
+        return qbits
+    elif bench == "VQE":
+        return qbits//2
+    elif bench == "QAOA":
+        return qbits
+    elif bench == "Hamiltonian":
+        return qbits
+    else:
+        return 0
+
 # create an input argv option for the word static
 if sys.argv[1] == "static":
 
+    # Load data from CSV into a numpy array
+    with open('results/results.csv') as csvfile:
+        reader = csv.DictReader(csvfile)
+        data = [row for row in reader]
+
+    #pdb.set_trace()
+
+    # Get unique benchmark names and qubit counts
+    bench_names = np.unique([row['bench0_name'] for row in data])
+    #qubit_counts = np.unique([row['bench_qbits'] for row in data])
+    
+    #Create a numpy array from argv 2
+    qubit_counts = np.array(sys.argv[2].split(','), dtype=int)
+
+    # Create a matrix to hold the heatmap data
+    heatmap_data = np.zeros((len(qubit_counts), len(bench_names)))
+
+    # Loop over the data and populate the heatmap matrix
+    for i, bench_name in enumerate(bench_names):
+        for j, qubit_count in enumerate(qubit_counts):
+            # Get the subset of data for the current benchmark and qubit count
+            subset = [row for row in data if row['bench0_name'] == bench_name and int(row['bench_qbits']) == specific_bench_qbits(bench_name, qubit_count)]
+            # Compute the difference between cnot_before and cnot_after
+            cnot_diff = np.mean([int(row['cnot_after']) - int(row['cnot_before']) for row in subset])
+            # Store the average cnot difference in the heatmap matrix
+            heatmap_data[j, i] = cnot_diff
+
+    # Set up the heatmap figure
+    fig, ax = plt.subplots(figsize=(8,6))
+
+    # Plot the heatmap
+    im = ax.imshow(heatmap_data,  cmap='RdYlGn_r')
+
+    # Add colorbar
+    cbar = ax.figure.colorbar(im, ax=ax)
+
+    # Set axis labels and tick labels
+    ax.set_xticks(np.arange(len(bench_names)))
+    ax.set_yticks(np.arange(len(qubit_counts)))
+    ax.set_xticklabels(bench_names)
+    ax.set_yticklabels(qubit_counts)
+
+    # Rotate x-axis tick labels
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+             rotation_mode="anchor")
+
+    # Loop over data dimensions and create text annotations
+    for i in range(len(qubit_counts)):
+        for j in range(len(bench_names)):
+            text = ax.text(j, i, "{:.1f}".format(heatmap_data[i, j]),
+                           ha="center", va="center", color="w")
+
+    # Set plot title and axis labels
+    ax.set_title("CNOT Difference Before and After Transpilation")
+    ax.set_xlabel("Benchmark Name")
+    ax.set_ylabel("Benchmark qubit size")
+
+    # Display the heatmap
+    plt.rcParams['savefig.dpi'] = 256
+    plt.tight_layout()
+    # Save the heatmap to a file
+    plt.savefig("results/heatmap.png")
+
+
+
+    '''
     csv_file = open('results/results.csv', 'r')
     
     csv_reader = csv.reader(csv_file)
@@ -63,6 +150,7 @@ if sys.argv[1] == "static":
     # Display the chart
     plt.savefig('results/bar_chart.png', dpi=300, bbox_inches='tight')
     csv_file.close()
+    '''
 
 else:
 
