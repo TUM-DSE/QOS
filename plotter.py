@@ -26,7 +26,8 @@ def specific_bench_qbits(bench:str, qbits:int) -> int:
     else:
         return 0
 
-# create an input argv option for the word static
+# Creates an output heapmap of the static transpilation cnot difference for each benchmark and qubit count
+# For this the csv has to be in the following format: "bench_name,bench_qbits,depth_before,depth_after,cnot_before,cnot_after,utilization,backend,config_file"
 if sys.argv[1] == "static":
 
     # Load data from CSV into a numpy array
@@ -37,7 +38,7 @@ if sys.argv[1] == "static":
     #pdb.set_trace()
 
     # Get unique benchmark names and qubit counts
-    bench_names = np.unique([row['bench0_name'] for row in data])
+    bench_names = np.unique([row['bench_name'] for row in data])
     #qubit_counts = np.unique([row['bench_qbits'] for row in data])
     
     #Create a numpy array from argv 2
@@ -50,7 +51,7 @@ if sys.argv[1] == "static":
     for i, bench_name in enumerate(bench_names):
         for j, qubit_count in enumerate(qubit_counts):
             # Get the subset of data for the current benchmark and qubit count
-            subset = [row for row in data if row['bench0_name'] == bench_name and int(row['bench_qbits']) == specific_bench_qbits(bench_name, qubit_count)]
+            subset = [row for row in data if row['bench_name'] == bench_name and int(row['bench_qbits']) == specific_bench_qbits(bench_name, qubit_count)]
             # Compute the difference between cnot_before and cnot_after
             cnot_diff = np.mean([int(row['cnot_after']) - int(row['cnot_before']) for row in subset])
             # Store the average cnot difference in the heatmap matrix
@@ -92,67 +93,84 @@ if sys.argv[1] == "static":
     # Save the heatmap to a file
     plt.savefig("results/heatmap.png")
 
+# Creates an output triangle heapmap of the median score results of the combinations of benchmarks
+# For this the csv has to be in the following format: "bench1,bench1_qbits,bench1_fid,bench2,bench2_qbits,bench2_fid,median_fid,utilization,backend,config_file"
+if sys.argv[1] == "medians":
 
+    file = open('results/results.csv', 'r')
+    reader = csv.reader(file)
+    data = list(reader)
 
-    '''
-    csv_file = open('results/results.csv', 'r')
-    
-    csv_reader = csv.reader(csv_file)
-    headers = next(csv_reader)  # Skip the header row
-    data = [[row[0], int(row[1]), float(row[5])-float(row[4])] for row in csv_reader]
+    # Get the header row and remove it from the data
+    header = data[0]
+    data = data[1:]
+    # Get the unique values of bench1 and bench2
+    bench1_values = list(set([row[0] for row in data]))
+    bench2_values = list(set([row[3] for row in data]))
 
-    # Create the bar chart
-    fig, ax = plt.subplots()
-    index = range(len(data))
-    bar_width = 0.8
-    opacity = 0.8
-    rects1 = ax.bar(index, [x[2] for x in data], bar_width,
-                    alpha=opacity, color='b')
+    # Create a 2D array to store the bench1_fid values
+    fid_values = np.zeros((len(bench1_values), len(bench2_values)))
 
-    # Add labels, titles, and legend
-    ax.set_xlabel('Benchmark')
-    ax.set_ylabel('Difference')
-    ax.set_title('Difference between CNOT counts')
-    ax.set_xticks(index)
-
-    # Switch case for the following benchmark names
-    # Hamiltonian = Ham
-    # VQE = VQE
-    # BitCode = Bit
-    # PhaseCode = Phase
-    # QAOA = QAOA
-    # Mermin = Bell
-    # GHZ = GHZ
-    # Fermionic = Fermi
-    labels = []
-
+    # Fill the 2D array with the bench1_fid values from the data
     for row in data:
-        if row[0] == 'Hamiltonian':
-            labels.append("Ham")
-        elif row[0] == 'VQE':
-            labels.append("VQE")
-        elif row[0] == 'BitCode':
-            labels.append("Bit")
-        elif row[0] == 'PhaseCode':
-            labels.append("Phase")
-        elif row[0] == 'QAOA':
-            labels.append("QAOA")
-        elif row[0] == 'MerminBell':
-            labels.append("Bell")
-        elif row[0] == 'GHZ':
-            labels.append("GHZ")
-        elif row[0] == 'FermionicQAOA':
-            labels.append("Fermi")
+        bench1_index = bench1_values.index(row[0])
+        bench2_index = bench2_values.index(row[3])
+        fid_values[bench1_index, bench2_index] = float(row[6])
 
-    ax.set_xticklabels(labels)
-    
+    get_avgs = [sum(i)/len(bench1_values) for i in fid_values]
 
-    # Display the chart
-    plt.savefig('results/bar_chart.png', dpi=300, bbox_inches='tight')
-    csv_file.close()
-    '''
+    indices_order = np.argsort(get_avgs)
+    bench1_values = np.array(bench1_values)[indices_order]
+    bench2_values = np.array(bench2_values)[indices_order]
 
-else:
+    fid_values = fid_values[indices_order]
+
+    for i in range(len(fid_values)):
+        fid_values[i] = fid_values[i][indices_order]
+
+    # Only plot the lower triangle of the heatmap
+    mask = np.triu(len(bench1_values)*[len(bench2_values)*[1]], k=1)
+
+    fig, ax = plt.subplots()
+
+    triangle = np.ma.array(fid_values, mask=mask) # mask out the lower triangle
+    cmap = plt.cm.get_cmap('jet', 10) # jet doesn't have white color
+    cmap.set_bad('w') # default value is 'k'
+
+    #triangle = triangle[::-1]
+    pdb.set_trace()
+
+    im = ax.imshow(triangle, cmap='RdYlGn')
+    #im = ax.imshow(fid_values, cmap='RdYlGn')
+
+    # Set the x and y axis labels and tick labels
+    ax.set_xticks(np.arange(len(bench2_values)))
+    ax.set_yticks(np.arange(len(bench1_values)))
+    ax.set_yticklabels(bench1_values)
+    ax.set_xticklabels(bench2_values)
+
+    # Rotate the x axis tick labels for readability
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
+
+    # Add a colorbar to the heatmap
+    cbar = ax.figure.colorbar(im, ax=ax)
+    # Set the title of the heatmap
+    ax.set_title("Median score values")
+    plt.rcParams['savefig.dpi'] = 256
+    plt.tight_layout()
+    # Save the heatmap to a file
+    plt.savefig("results/heatmap.png")
+    file.close()
+
+# Creates an output complete heapmap of the independent score results of the combinations of benchmarks, the independent score is of the benchmark on the left (vertical axis)
+#   A B C D
+# A - - - -
+# B - - 3 -
+# C - - - -
+# D - - - -
+# In this example, the independent score of B when combined with C is 3
+# For this the csv has to be in the following format: "bench1,bench1_qbits,bench1_fid,bench2,bench2_qbits,bench2_fid,median_fid,utilization,backend,config_file"
+if sys.argv[1] == "independent":
 
     file = open('results/results.csv', 'r')
     reader = csv.reader(file)
@@ -224,7 +242,7 @@ else:
     # Add a colorbar to the heatmap
     cbar = ax.figure.colorbar(im, ax=ax)
     # Set the title of the heatmap
-    ax.set_title("Average fidelity values")
+    ax.set_title("Median  values")
     plt.rcParams['savefig.dpi'] = 256
     plt.tight_layout()
     # Save the heatmap to a file
