@@ -6,6 +6,20 @@ import subprocess
 import csv
 import math
 
+def unique_combinations(lst, length):
+    def get_combinations(lst, length, start, comb, result):
+        if length == 0:
+            result.append(list(comb))
+            return
+        for i in range(start, len(lst)):
+            comb.append(lst[i])
+            get_combinations(lst, length - 1, i, comb, result)
+            comb.pop()
+
+    result = []
+    get_combinations(lst, length, 0, [], result)
+    return result
+
 # Source
 # IBMQ resource page: https://quantum-computing.ibm.com/services/resources?tab=systems
 # More fake backends at: https://qiskit.org/documentation/apidoc/providers_fake_provider.html
@@ -57,70 +71,61 @@ benchmarks = {
 }
 
 shots = 8192
-qbits = [[6, 6]]  # This is for adding other combinations.
+qbits = [[4], [8]]  # This is for adding other combinations.
 rounds = 1
-runs = 5
+runs = 1
 # qbits = [0.25, 0.5, 0.75, 1]
 
 id = 0
 
 backend = "FakeTorontoV2"
 
-if sys.argv[1] == "gen":
-    # run_cmd = "python main.py -backend {} -benchmarks {} -runs {} -shots {} -bits {}"
-    run_cmd = "python main.py"
-
-
-def unique_combinations(lst, length):
-    def get_combinations(lst, length, start, comb, result):
-        if length == 0:
-            result.append(list(comb))
-            return
-        for i in range(start, len(lst)):
-            comb.append(lst[i])
-            get_combinations(lst, length - 1, i, comb, result)
-            comb.pop()
-
-    result = []
-    get_combinations(lst, length, 0, [], result)
-    return result
-
-
 list_benchmarks = list(benchmarks.keys())
 this = [unique_combinations(list_benchmarks, len(i)) for i in qbits]
 this = [len(i) for i in this]
 total_ids = sum(this)
 
-for i in qbits:
-    combinations = unique_combinations(list_benchmarks, len(i))
-    for j in combinations:
-        f = open("configs/config_" + str(id) + ".yml", "w")
-        f.write("config:\n")
-        f.write("  path: results/\n")
-        f.write("  static: false\n")
-        f.write("  nshots: " + str(shots) + "\n")
-        f.write("  nruns: " + str(runs) + "\n")
-        f.write("  benchmarks:\n")
-        for idx in range(len(j)):
-            f.write("    - name: " + j[idx] + "\n")
-            if j[idx] == "VQEBenchmark" or j[idx] == "BitCodeBenchmark" or j[idx] == "PhaseCodeBenchmark":
-                f.write("      nqbits: " + str(int(i[idx] / 2)) + "\n")
-            else:
-                f.write("      nqbits: " + str(i[idx]) + "\n")
-            f.write("      nlayers: " + "\n")
-            f.write("      time_step: " + "\n")
-            f.write("      total_time: " + "\n")
-            f.write("      initial_state: " + "\n")
-            if benchmarks[j[idx]] == 2:
-                f.write("      rounds: " + str(rounds) + "\n")
-            else:
-                f.write("      rounds:\n")
-            f.write("      cut: false\n")
-            f.write("      frags:\n")
-            f.write("        - backend: " + backend + "\n")
-        id += 1
+if sys.argv[1] == "gen":
+    # run_cmd = "python main.py -backend {} -benchmarks {} -runs {} -shots {} -bits {}"
+    run_cmd = "python main.py"
+    print("Running", total_ids)
+    static = True
+
+    for i in qbits:
+        combinations = unique_combinations(list_benchmarks, len(i))
+        for j in combinations:
+            f = open("configs/config_" + str(id) + ".yml", "w")
+            f.write("config:\n")
+            f.write("  path: results/\n")
+            f.write("  static: " + str(static) +"\n")
+            f.write("  nshots: " + str(shots) + "\n")
+            f.write("  nruns: " + str(runs) + "\n")
+            f.write("  benchmarks:\n")
+            for idx in range(len(j)):
+                f.write("    - name: " + j[idx] + "\n")
+                if j[idx] == "VQEBenchmark" or j[idx] == "BitCodeBenchmark" or j[idx] == "PhaseCodeBenchmark":
+                    f.write("      nqbits: " + str(int(i[idx] / 2)) + "\n")
+                else:
+                    f.write("      nqbits: " + str(i[idx]) + "\n")
+                f.write("      nlayers: " + "\n")
+                f.write("      time_step: " + "\n")
+                f.write("      total_time: " + "\n")
+                f.write("      initial_state: " + "\n")
+                if benchmarks[j[idx]] == 2:
+                    f.write("      rounds: " + str(rounds) + "\n")
+                else:
+                    f.write("      rounds:\n")
+                f.write("      cut: false\n")
+                f.write("      frags:\n")
+                f.write("        - backend: " + backend + "\n")
+            id += 1
 
 #exit()
 if sys.argv[1] == "run":
     for i in range(total_ids):
         this = subprocess.run(["python3", "main.py", "configs/config_" + str(i)])
+
+# create another input option to clean all files inside the configs folder
+if sys.argv[1] == "clean":
+    for i in range(total_ids):
+        os.remove("configs/config_" + str(i) + ".yml")
