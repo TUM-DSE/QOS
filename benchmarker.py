@@ -71,14 +71,14 @@ benchmarks = {
 }
 
 shots = 8192
-qbits = [[4], [8]]  # This is for adding other combinations.
+qbits = [[12]]  # This is for adding other combinations.
 rounds = 1
 runs = 1
 # qbits = [0.25, 0.5, 0.75, 1]
 
 id = 0
 
-backend = "FakeTorontoV2"
+backend = "FakeGuadalupeV2"
 
 list_benchmarks = list(benchmarks.keys())
 this = [unique_combinations(list_benchmarks, len(i)) for i in qbits]

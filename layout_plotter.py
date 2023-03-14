@@ -7,11 +7,13 @@ from qiskit import IBMQ
 from benchmarks import *
 from backends import IBMQPU
 from qiskit.compiler import transpile
-from qiskit.visualization import plot_histogram, plot_circuit_layout, plot_coupling_map
+from qiskit.visualization import plot_histogram, plot_circuit_layout, plot_coupling_map, plot_error_map
 from collections import Counter
 from qiskit.transpiler import Layout
 import csv
 import os.path
+import matplotlib.pyplot as plt
+import matplotlib
 
 from qiskit.circuit import QuantumCircuit
 
@@ -22,17 +24,12 @@ class dict2obj(object):
                 setattr(self, k, [dict2obj(x) if isinstance(x, dict) else x for x in v])
             else:
                 setattr(self, k, dict2obj(v) if isinstance(v, dict) else v)
-
-def layout_to_qubit_coordinates(layout):
-    """
-    Converts a layout to a list of qubit coordinates.
-    Args:
-        layout (Layout): The layout to convert.
-    Returns:
-        list: A list of qubit coordinates.
-    """
-    layout.input_qubit_mapping.keys()
     
+def fig2rgb_array(fig):
+    fig.canvas.draw()
+    buf = fig.canvas.tostring_rgb()
+    ncols, nrows = fig.canvas.get_width_height()
+    return np.frombuffer(buf, dtype=np.uint8).reshape(nrows, ncols, 3)
 
 
 def merge_circs(q1: QuantumCircuit, q2: QuantumCircuit) -> QuantumCircuit:
@@ -104,8 +101,8 @@ class App:
     # def __init__(self, backend, benchmark, nbits, nruns, filepath='', shots=1024):
     def __init__(self, *kwargs):
 
-        config = self.config_parser(self.config_file)
         print("Working on", self.config_file)
+        config = self.config_parser(self.config_file)
         #print all the config file parameters
 
         # pdb.set_trace()
@@ -299,9 +296,13 @@ class App:
 
         for i in range(self.nbenchmarks):
             median_fids.append([0] * self.nruns)
+
+        
+        #pdb.set_trace()
  
         for k in range(self.nruns):
             try:
+                qc_not_transpiled = qc
                 qc = transpile(qc, backend)
             except:
                 print("Probably the circuit is too large for this backend. Skipping...")
@@ -362,154 +363,54 @@ class App:
                     
                     writer.writerow(row)
 
-                    pdb.set_trace()
-                    this = layout_to_qubit_coordinates(qc._layout)
+                    fig, ax = plt.subplots(3, 3, figsize=(20, 15))
+                    #fig, ax = plt.subplots(3, 3)
 
+                    self.circuits[0].draw(output='mpl', ax=ax[2][0])
+                    self.circuits[1].draw(output='mpl', ax=ax[2][1])
+                    qc_not_transpiled.draw(output='mpl', ax=ax[2][2])
 
-                    plot_coupling_map(num_qubits=self.backend.backend.num_qubits, coupling_map=this, filename="results/coupling_map" + ".png", figsize=(10, 10))
+                    for i, circ in enumerate(self.circuits):
+                        tmp = transpile(circ, self.backend.backend)
+                        subfigure = plot_circuit_layout(tmp, self.backend.backend)
+                        #subfigure.tight_layout()
+                        foo = fig2rgb_array(subfigure)
+                        ax[1][i].imshow(foo)
+                        ax[1][i].set_axis_off()
+                        ax[1][i].set_title("Independent "+ self.benchmarks[i].name()+ " with " + str(self.total_bits[i]) + " qubits mapping")
 
+                    #this = layout_to_qubit_coordinates(qc._layout)
+                    #Set figure axis to off
 
+                    subfigure = plot_circuit_layout(qc, self.backend.backend)
+                    subfigure.tight_layout()
+                    foo = fig2rgb_array(subfigure)
+                    ax[1][2].imshow(foo)
+                    ax[1][2].set_axis_off()
+                    ax[1][2].set_title("Merged mapping")
+                    
+                    subfigure = plot_error_map(self.backend.backend)
+                    subfigure.tight_layout()
+                    foo = fig2rgb_array(subfigure)
+                    ax[0][1].imshow(foo)
+                    ax[0][1].set_axis_off()
+
+                    ax[0][0].set_axis_off()
+                    ax[0][2].set_axis_off()
+
+                    fig.tight_layout()
+
+                    #Hide axis
+
+                    #new_axs = fig.add_subplot(111)
+
+                    #new_axs.imshow(fig_bin)
+
+                    fig.savefig("results/circuit_layout" + ".png", dpi=1024)
+
+                    #plot_coupling_map(num_qubits=self.backend.backend.num_qubits, qubit_coordinaties=this, filename="results/coupling_map" + ".png", figsize=(10, 10))
 
                     csvfile.close()
-                exit()
-
-            if self.backend.is_simulator:
-                job = backend.run(run_input=qc, shots=self.nshots)
-            else:
-                job = backend.run(circuits=qc, shots=self.nshots)
-            counts = job.result().get_counts()
-            # splitted_counts = split_counts(counts, self.nbenchmarks)
-            # print(counts)
-
-            # plot_histogram(
-            # counts, filename="results/counts" + ".png", figsize=(10, 10)
-            # )
-            splitted_counts = split_counts_bylist(counts, self.total_bits)
-
-            for i, a in enumerate(self.nqbits):
-                if isinstance(a, list):
-                    splitted_counts[i] = split_counts_bylist(splitted_counts[i], a)
-            # print(splitted_counts)
-            # splitted_counts = split_counts(counts, 12)
-
-            # for idx, c in enumerate(splitted_counts):
-            # print("-------------------")
-            # plot_histogram(
-            # c,
-            # filename=self.filepath + self.filename + "_split_counts" + str(idx) + ".png",
-            # figsize=(10, 10),
-            # )
-            # print(splitted_counts)
-
-            for i in range(self.nbenchmarks):
-
-                if isinstance(splitted_counts[i], list):
-
-                    plot_histogram(
-                        splitted_counts[i][0],
-                        filename=self.filepath + self.filename + "part0_" + str(i),
-                        figsize=(10, 10),
-                    )
-                    plot_histogram(
-                        splitted_counts[i][1],
-                        filename=self.filepath + self.filename + "part1_" + str(i),
-                        figsize=(10, 10),
-                    )
-                else:
-                    plot_histogram(
-                        splitted_counts[i],
-                        filename=self.filepath + self.filename + str(i),
-                        figsize=(10, 10),
-                    )
-            # self.backend.backend.coupling_map.draw()
-            # print(len(self.backend.backend.coupling_map))
-            # plot_circuit_layout(qc, self.backend.backend)
-            for i in range(self.nbenchmarks):
-                # print(prf_counts[i])
-                # print(splitted_counts[i])
-                # avg_fids = avg_fids + fidelity(prf_counts[i], splitted_counts[i])
-                if isinstance(splitted_counts[i], list):
-                    # tmp_fid = self.benchmarks[i].score(splitted_counts[i])
-                    median_fids[i][k] += self.benchmarks[i].score(splitted_counts[i])
-                    # avg_fids[i] += tmp_fid / 2
-                else:
-                    #print(fidelity(prf_cnts, splitted_counts[i]))
-                    median_fids[i][k] += self.benchmarks[i].score(Counter(splitted_counts[i]))
-            # f.write(str(counts) + "\n")
-
-        
-        fids = []
-
-        
-        for i in range(self.nbenchmarks):
-            median_fids[i].sort()
-        
-        for i in range(self.nbenchmarks):
-            fids.append(median_fids[i][int(self.nruns / 2)])
-            
-        avg_fid = 0
-           
-        csv_headers = []
-        
-        for i in range(self.nbenchmarks):
-            csv_headers.append("bench" + str(i + 1))
-            csv_headers.append("bench" + str(i + 1) + "_qbits")
-            csv_headers.append("bench" + str(i + 1) + "_fid")            
-            
-        #for i in range(self.nbenchmarks):
-            #csv_headers.append("bench" + str(i + 1) + "_fid")
-        
-        csv_headers.append('median_fid')
-        csv_headers.append('utilization')
-        csv_headers.append('backend')
-        csv_headers.append('config_file')
-
-        #data_example = ['Bench1Name', 'Bench2Name', 'Bench1FID', 'Bench2FID', 90.5, 0.75, 'Config1']
-
-        file_exists = os.path.isfile('results/results.csv')
-
-        with open("results/results.csv", mode="a", newline="") as csvfile:
-            writer = csv.writer(csvfile)
-
-            if not file_exists:
-                writer.writerow(csv_headers)
-
-            data = []
-            
-            for i in range(self.nbenchmarks):
-                data.append(self.benchmarks[i].name())
-                data.append(self.nqbits[i])
-                data.append(fids[i])
-                
-            
-            #for i in range(self.nbenchmarks):
-                #data.append(avg_fids[i])
-
-            data.append(str(round(sum(fids)/self.nbenchmarks,2)))
-            data.append(str(round(utilization,3)))
-            
-            data.append(self.backend.backend.name)
-            data.append(self.config_file)
-
-            writer.writerow(data)
-            # This is ugly to have to lines with the same information just with the benchmarks swapped, but it is easier to process
-            data = []
-            
-            for i in range(self.nbenchmarks - 1, -1, -1):
-                data.append(self.benchmarks[i].name())
-                data.append(self.nqbits[i])
-                data.append(fids[i])
-            
-            #for i in range(self.nbenchmarks):
-                #data.append(avg_fids[-(i+1)])
-                
-            data.append(str(round(sum(fids)/self.nbenchmarks,2)))
-            data.append(str(round(utilization,3)))
-            
-            data.append(self.backend.backend.name)
-            data.append(self.config_file)
-
-            writer.writerow(data)
 
 app = App(sys.argv)
 app.run()

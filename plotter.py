@@ -1,5 +1,6 @@
 import csv
 import matplotlib.pyplot as plt
+import matplotlib
 import matplotlib.cm as cm
 import numpy as np
 import pdb
@@ -10,9 +11,9 @@ def specific_bench_qbits(bench:str, qbits:int) -> int:
     if bench == "GHZ":
         return qbits
     elif bench == "BitCode":
-        return qbits-1
+        return qbits//2
     elif bench == "PhaseCode":
-        return qbits-1
+        return qbits//2
     elif bench == "MerminBell":
         return qbits
     elif bench == "FermionicQAOA":
@@ -28,6 +29,8 @@ def specific_bench_qbits(bench:str, qbits:int) -> int:
 
 # Creates an output heapmap of the static transpilation cnot difference for each benchmark and qubit count
 # For this the csv has to be in the following format: "bench_name,bench_qbits,depth_before,depth_after,cnot_before,cnot_after,utilization,backend,config_file"
+# To call the static plot it expects the following command line arguments: "static" qubit_count_1,qubit_count_2,...,qubit_count_n
+# Where the qubits counts are the different counts that will be plotted on the x-axis, and every benchmark needs to have run for each qubit count, otherwise it will fail
 if sys.argv[1] == "static":
 
     # Load data from CSV into a numpy array
@@ -35,7 +38,6 @@ if sys.argv[1] == "static":
         reader = csv.DictReader(csvfile)
         data = [row for row in reader]
 
-    #pdb.set_trace()
 
     # Get unique benchmark names and qubit counts
     bench_names = np.unique([row['bench_name'] for row in data])
@@ -51,7 +53,7 @@ if sys.argv[1] == "static":
     for i, bench_name in enumerate(bench_names):
         for j, qubit_count in enumerate(qubit_counts):
             # Get the subset of data for the current benchmark and qubit count
-            subset = [row for row in data if row['bench_name'] == bench_name and int(row['bench_qbits']) == specific_bench_qbits(bench_name, qubit_count)]
+            subset = [row for row in data if row['bench_name'] == bench_name and int(row['bench_qbits']) == qubit_count]
             # Compute the difference between cnot_before and cnot_after
             cnot_diff = np.mean([int(row['cnot_after']) - int(row['cnot_before']) for row in subset])
             # Store the average cnot difference in the heatmap matrix
@@ -60,8 +62,28 @@ if sys.argv[1] == "static":
     # Set up the heatmap figure
     fig, ax = plt.subplots(figsize=(8,6))
 
+    pdb.set_trace()
+
+    #Swap the bench_name MerminBell to the end of the list
+    bench_names = np.delete(bench_names, bench_names.tolist().index('MerminBell'))
+    bench_names = np.append(bench_names, 'MerminBell')
+
+    tmp = heatmap_data[:, 4]
+    heatmap_data = np.concatenate((heatmap_data[:,0:4], heatmap_data[:,5:]), axis=1)
+    heatmap_data = np.hstack((heatmap_data, tmp.reshape(-1,1)))
+
+    #Reverse the order of the qubit counts
+    qubit_counts = qubit_counts[::-1]
+
+    heatmap_data = heatmap_data[::-1]
+    
+    heatmap_data =np.ma.masked_where(heatmap_data<0, heatmap_data)
+
+    current_cmap = matplotlib.cm.get_cmap()
+    current_cmap.set_bad(color='blue')
+
     # Plot the heatmap
-    im = ax.imshow(heatmap_data,  cmap='RdYlGn_r')
+    im = ax.imshow(heatmap_data, cmap='RdYlGn_r')
 
     # Add colorbar
     cbar = ax.figure.colorbar(im, ax=ax)
@@ -71,6 +93,11 @@ if sys.argv[1] == "static":
     ax.set_yticks(np.arange(len(qubit_counts)))
     ax.set_xticklabels(bench_names)
     ax.set_yticklabels(qubit_counts)
+
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(False)
 
     # Rotate x-axis tick labels
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
@@ -134,12 +161,11 @@ if sys.argv[1] == "medians":
     fig, ax = plt.subplots()
 
     triangle = np.ma.array(fid_values, mask=mask) # mask out the lower triangle
-    cmap = plt.cm.get_cmap('jet', 10) # jet doesn't have white color
+    cmap = matplotlib.cm.get_cmap('jet', 10) # jet doesn't have white color
     cmap.set_bad('w') # default value is 'k'
 
     #triangle = triangle[::-1]
-    pdb.set_trace()
-
+#    pdb.set_trace()
     im = ax.imshow(triangle, cmap='RdYlGn')
     #im = ax.imshow(fid_values, cmap='RdYlGn')
 
