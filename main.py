@@ -11,6 +11,7 @@ from qiskit.visualization import plot_histogram, plot_circuit_layout, plot_coupl
 from collections import Counter
 import csv
 import os.path
+import time 
 
 from qiskit.circuit import QuantumCircuit
 
@@ -239,6 +240,7 @@ class App:
                 self.circuits[i] = merge_circs(a[0], a[1])
 
         qc = self.circuits[0]
+
         #print(qc)
         # print(qc.num_qubits)
         # print(qc.num_clbits)
@@ -284,19 +286,22 @@ class App:
  
         for k in range(self.nruns):
             try:
-                qc = transpile(qc, backend)
-            except:
+                #qc = transpile(qc, backend, optimization_level=3, scheduling_method='as_late_as_possible')
+               qc = transpile(qc, backend, optimization_level=3)
+            except e:
                 print("Probably the circuit is too large for this backend. Skipping...")
+                traceback.print_exc()
                 exit(0)
-            #print(qc)
+            print(qc)
+            
             depth_after = 0
             cnot_after = 0
             
             depth_after = qc.depth()
             cnot_after = getCNOTS(qc)
             
-            #print(depth_b4, "\t", depth_after)
-            #print(cnot_b4, "\t", cnot_after)
+            print(depth_b4, "\t", depth_after)
+            print(cnot_b4, "\t", cnot_after)
             
             if self.static:
                 exit()
@@ -307,7 +312,7 @@ class App:
                 job = backend.run(circuits=qc, shots=self.nshots)
             counts = job.result().get_counts()
             # splitted_counts = split_counts(counts, self.nbenchmarks)
-            # print(counts)
+            #print(counts)
 
             # plot_histogram(
             # counts, filename="results/counts" + ".png", figsize=(10, 10)
@@ -362,12 +367,15 @@ class App:
                     # avg_fids[i] += tmp_fid / 2
                 else:
                     #print(fidelity(prf_cnts, splitted_counts[i]))
+                    #median_fids[i][k] += self.benchmarks[i].score(Counter(splitted_counts[i]))
                     median_fids[i][k] += self.benchmarks[i].score(Counter(splitted_counts[i]))
+                    #print(splitted_counts[i])
+
             # f.write(str(counts) + "\n")
 
         
         fids = []
-
+        print(median_fids)
         
         for i in range(self.nbenchmarks):
             median_fids[i].sort()

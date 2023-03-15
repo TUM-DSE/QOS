@@ -42,7 +42,7 @@ backends = {
     # "FakeKolkataV2": 27,
     # "FakeMontrealV2": 27,
     # "FakeCambridgeV2": 28,
-    "FakeWashingtonV2": 127,
+    #"FakeWashingtonV2": 127,
 }
 
 benchmarks = {
@@ -57,7 +57,7 @@ benchmarks = {
 }
 
 shots = 8192
-qbits = [[6, 6]]  # This is for adding other combinations.
+qbits = [[3], [5], [7], [9], [11]]  # This is for adding other combinations.
 rounds = 1
 runs = 5
 # qbits = [0.25, 0.5, 0.75, 1]
@@ -92,8 +92,9 @@ this = [len(i) for i in this]
 total_ids = sum(this)
 
 for i in qbits:
-    combinations = unique_combinations(list_benchmarks, len(i))
-    for j in combinations:
+    for j in list_benchmarks:
+        #combinations = unique_combinations(list_benchmarks, len(i))
+        #for j in combinations:
         f = open("configs/config_" + str(id) + ".yml", "w")
         f.write("config:\n")
         f.write("  path: results/\n")
@@ -101,9 +102,11 @@ for i in qbits:
         f.write("  nshots: " + str(shots) + "\n")
         f.write("  nruns: " + str(runs) + "\n")
         f.write("  benchmarks:\n")
-        for idx in range(len(j)):
-            f.write("    - name: " + j[idx] + "\n")
-            if j[idx] == "VQEBenchmark" or j[idx] == "BitCodeBenchmark" or j[idx] == "PhaseCodeBenchmark":
+        for idx in range(len(i)):
+            f.write("    - name: " + j + "\n")
+            if j == "BitCodeBenchmark" or j == "PhaseCodeBenchmark":
+                f.write("      nqbits: " + str(math.ceil(i[idx] / 2)) + "\n")
+            elif j == "VQEBenchmark":
                 f.write("      nqbits: " + str(int(i[idx] / 2)) + "\n")
             else:
                 f.write("      nqbits: " + str(i[idx]) + "\n")
@@ -111,16 +114,17 @@ for i in qbits:
             f.write("      time_step: " + "\n")
             f.write("      total_time: " + "\n")
             f.write("      initial_state: " + "\n")
-            if benchmarks[j[idx]] == 2:
+            if benchmarks[j] == 2:
                 f.write("      rounds: " + str(rounds) + "\n")
             else:
                 f.write("      rounds:\n")
             f.write("      cut: false\n")
             f.write("      frags:\n")
             f.write("        - backend: " + backend + "\n")
+        f.close()
         id += 1
 
 #exit()
 if sys.argv[1] == "run":
-    for i in range(total_ids):
+    for i in range(len(qbits) * len(list_benchmarks)):
         this = subprocess.run(["python3", "main.py", "configs/config_" + str(i)])

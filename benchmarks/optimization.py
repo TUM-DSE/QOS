@@ -103,8 +103,10 @@ class VanillaQAOABenchmark(Benchmark):
 
     def _get_energy_for_bitstring(self, bitstring: str) -> float:
         energy = 0
+        new_bitstring = bitstring[::-1]
+        
         for i, j, weight in self.hamiltonian:
-            if bitstring[i] == bitstring[j]:
+            if new_bitstring[i] == new_bitstring[j]:
                 energy -= weight  # if edge is UNCUT, weight counts against objective
             else:
                 energy += weight  # if edge is CUT, weight counts towards objective
@@ -136,6 +138,7 @@ class VanillaQAOABenchmark(Benchmark):
         assert isinstance(counts, Counter)
 
         ideal_counts = _get_ideal_counts(self.circuit())
+        #print(ideal_counts)
         total_shots = sum(counts.values())
         experimental_counts = Counter({k: v / total_shots for k, v in counts.items()})
 
