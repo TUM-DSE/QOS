@@ -6,6 +6,29 @@ import numpy as np
 import pdb
 import sys
 
+
+def solo_bench_fids(bench):
+
+    if(bench=="GHZ"):
+        return 0.5025266677910565
+    elif(bench=="BitCode"):
+        return 0.825927734375
+    elif(bench=="PhaseCode"):
+        return 0.7598876953125
+    elif(bench=="MerminBell"):
+        return 0.50030517578125
+    elif(bench=="FermionicQAOA"):
+        return 0.505304590260032
+    elif(bench=="VQE"):
+        return 0.7773398465968973
+    elif(bench=="QAOA"):
+        return 0.5335251059179429
+    elif(bench=="Hamiltonian"):
+        return 0.9519031523754778
+    else:
+        return 0
+
+
 def specific_bench_qbits(bench:str, qbits:int) -> int:
     
     if bench == "GHZ":
@@ -212,17 +235,18 @@ if sys.argv[1] == "independent":
     # Create a 2D array to store the bench1_fid values
     fid_values = np.zeros((len(bench1_values), len(bench2_values)))
 
+
     # Fill the 2D array with the bench1_fid values from the data
     for row in data:
         bench1_index = bench1_values.index(row[0])
         bench2_index = bench2_values.index(row[3])
-        fid_values[bench1_index, bench2_index] = float(row[2])
+        fid_values[bench1_index, bench2_index] = float(row[2])-solo_bench_fids(row[0])
 
     #pdb.set_trace()
     for row in data:
         bench1_index = bench1_values.index(row[0])
         bench2_index = bench2_values.index(row[3])
-        fid_values[bench2_index, bench1_index] = float(row[5])
+        fid_values[bench2_index, bench1_index] = float(row[5])-solo_bench_fids(row[3])
 
     get_avgs = [sum(i)/len(bench1_values) for i in fid_values]
     print(get_avgs)
