@@ -1,26 +1,16 @@
 config:
   path: results/
   nshots: 8192
-  nruns: 3
+  nruns: 7
   static: false
   benchmarks:
-    - name: BitCodeBenchmark
-      nqbits: 3
-      rounds: 1
+    - name: HamiltonianSimulationBenchmark
+      nqbits: 7
+      rounds:
       nlayers:
       time_step:
       total_time:
       initial_state:
       cut: false
       frags:
-        - backend: FakeGuadalupeV2
-    - name: BitCodeBenchmark
-      nqbits: 3
-      rounds: 5
-      nlayers:
-      time_step:
-      total_time:
-      initial_state:
-      cut: false
-      frags:
-        - backend: FakeGuadalupeV2
+        - backend: FakeSingaporeV2

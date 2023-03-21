@@ -264,9 +264,12 @@ class App:
         # print(qc.num_qubits)
         # print(qc.num_clbits)
         # print(qc)
-
+                   
         ncircs = len(self.circuits)
-
+    
+        for q in self.circuits:
+            print(q.depth())
+        
         if ncircs > 1:
             qc = merge_circs(self.circuits[0], self.circuits[1])
 
@@ -310,7 +313,7 @@ class App:
                 print("Probably the circuit is too large for this backend. Skipping...")
                 traceback.print_exc()
                 exit(0)
-            print(qc)
+            #print(qc)
             
             depth_after = 0
             cnot_after = 0
@@ -370,7 +373,7 @@ class App:
                     
                     writer.writerow(row)
 
-                    pdb.set_trace()
+                    #pdb.set_trace()
                     this = layout_to_qubit_coordinates(qc._layout)
 
 

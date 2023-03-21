@@ -66,10 +66,10 @@ def plot_line(data, filename):
     plt.plot(x, y)
 
     # Add labels and title to the plot
-    plt.xlabel('Callibration day')
-    plt.ylabel('Benchmark score')
-    plt.title('GHZ score on IBMQ Lagos across 300 days')
-
+    plt.xlabel('Callibration Day')
+    plt.ylabel('Fidelity Score')
+    #plt.title('GHZ score on IBMQ Lagos across 300 days')
+    plt.axhline(np.median(y), color='green', linewidth=2)
     # Add text to the plot showing the maximum differences
     plt.text(0.01, 0.95, "Max single-day difference: {:.2f}".format(diff_consecutive),
              transform=plt.gca().transAxes)
@@ -101,11 +101,29 @@ def plot_bar_chart(filename, title, xlabel, ylabel):
     # show plot
     plt.savefig('plot.png', dpi=300, bbox_inches="tight")
     
+    
+def plot_data(filename):
+    data = {}
+    with open(filename) as f:
+        for line in f:
+            name, values = line.strip().split(';')
+            print(values)
+            data[name] = list(map(int, values.split(',')))
+
+    means = [np.mean(data[name]) for name in data]
+    stds = [np.std(data[name]) for name in data]
+
+    fig, ax = plt.subplots()
+    ax.bar(data.keys(), means, yerr=stds, align='center', alpha=0.5, ecolor='black', capsize=10)
+    ax.set_xlabel('IBMQ Backend')
+    ax.set_ylabel('Fidelity Score')
+    #ax.set_title('GHZ fidelity score across IBMQ Backends')
+    plt.savefig('plot.png', dpi=300, bbox_inches="tight")
 #plot_bar_chart('results.txt', 'GHZ score across IBMQ Backends', 'IBMQ Backend', 'Benchmark Score')
 
 
 def plot_benchmarks():
-    bar_labels = ["3", "5", "7", "9", "11"]
+    bar_labels = ["3q", "55", "7q", "9q", "11q"]
     group_labels = ["Hamiltonian", "VQE", "VanillaQAOA", "GHZ", "BitCode", "PhaseCode", "FermionicQAOA", "MerminBell"]
     scores = {
     "3" : [0.9688343047,0.9922644065,0.7519531344,0.7744149943,0.9364013672,0.6741943359,0.5746459961,0.6619485715], 
@@ -128,14 +146,16 @@ def plot_benchmarks():
         multiplier += 1
 
     ax.set_xlabel("Benchmarks")
-    ax.set_ylabel("Benchmark Score")
+    ax.set_ylabel("Fidelity Score")
     ax.set_xticks(x + 2 * width, group_labels, rotation=90)
     # Add title and legend
-    ax.set_title("Benchmark score with increasing number of qubits")
+    #ax.set_title("Benchmark score with increasing number of qubits")
     ax.legend()
         
     plt.savefig('plot.png', dpi=300, bbox_inches="tight")
     
-plot_benchmarks()
+    
+data = read_data('results.txt')
+plot_line(data, "temporal_heterogeneity.png")
 #data = read_data('results.txt')
 #plot_line(data, 'plot.png')

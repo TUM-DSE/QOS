@@ -12,7 +12,7 @@ class ErrorCorrectionBenchmark(Benchmark, abc.ABC):
     def __init__(
         self,
         num_data_qubits: int,
-        num_correction_measurement_rounds: int,
+        num_correction_measurement_rounds: int = 1,
         initial_state: Optional[List[int]] = None,
     ):
         self.num_data_qubits = num_data_qubits
@@ -55,6 +55,7 @@ class ErrorCorrectionBenchmark(Benchmark, abc.ABC):
         experimental_dist = {
             bitstr: shots / total_shots for bitstr, shots in counts.items()
         }
+
         return hellinger_fidelity(ideal_dist, experimental_dist)
 
     def name(self):
