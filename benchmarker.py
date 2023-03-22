@@ -75,7 +75,7 @@ shots = 8192
 qbits = [[3], [5], [7], [9], [11]]  # This is for adding other combinations.
 
 rounds = 1
-runs = 1
+runs = 5
 # qbits = [0.25, 0.5, 0.75, 1]
 
 id = 0
