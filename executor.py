@@ -15,7 +15,6 @@ def move_and_rename_file(src_path, dst_dir, new_name):
     shutil.copy2(src_path, dst_path)
 
 
-
 def iterate_files_in_directory(dir_path):    
     bench = VanillaQAOABenchmark(7)
     qc = bench.circuit()
