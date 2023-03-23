@@ -153,9 +153,11 @@ class Compiler:
     provider = None
     props: BackendProperties = None
 
-    def __init__(self) -> None:
+    def __init__(self, backend) -> None:
 
-        data = self.fetch_properties()
+        # data = self.fetch_properties()
+        self.backend = backend
+        data = self.fetch_properties(backend)
 
         gates = data["gates"]
         qubits = data["qubits"]
@@ -163,7 +165,7 @@ class Compiler:
 
         self.props = BackendProperties()
 
-        pdb.set_trace()
+        # pdb.set_trace()
 
         # Loading qubits
         for i in range(len(qubits)):
@@ -268,8 +270,13 @@ class Compiler:
                 )
             )
 
-    def fetch_properties(self):
-        url = "https://api.quantum-computing.ibm.com/api/Backends/ibmq_belem/properties"
+    def fetch_properties(self, backend):
+        # url = "https://api.quantum-computing.ibm.com/api/Backends//properties"
+        url = (
+            "https://api.quantum-computing.ibm.com/api/Backends/"
+            + backend
+            + "/properties"
+        )
 
         response = requests.get(url)
 
@@ -284,6 +291,59 @@ class Compiler:
             print("Error:", response.status_code)
             return None
 
+    def avg_t1(self):
+        return np.mean([q.t1 for q in self.props.qubits])
+
+    def avg_t2(self):
+        return np.mean([q.t2 for q in self.props.qubits])
+
+    def avg_frequency(self):
+        return np.mean([q.frequency for q in self.props.qubits])
+
+    def avg_readout_error(self):
+        return np.mean([q.readout_error for q in self.props.qubits])
+
+    def avg_probm0p1(self):
+        return np.mean([q.prob_m0p1 for q in self.props.qubits])
+
+    def avg_probm1p0(self):
+        return np.mean([q.prob_m1p0 for q in self.props.qubits])
+
+    def avg_readout_length(self):
+        return np.mean([q.readout_length for q in self.props.qubits])
+
+    def avg_anharmonicity(self):
+        return np.mean([q.anharmonicity for q in self.props.qubits])
+
+    def avg_id_gate_error(self, gate):
+        return np.mean([q.id_gate.error for q in self.props.qubits])
+
+    def avg_id_gate_length(self, gate):
+        return np.mean([q.id_gate.length for q in self.props.qubits])
+
+    def avg_x_gate_error(self, gate):
+        return np.mean([q.x_gate.error for q in self.props.qubits])
+
+    def avg_x_gate_length(self, gate):
+        return np.mean([q.x_gate.length for q in self.props.qubits])
+
+    def avg_sx_gate_error(self, gate):
+        return np.mean([q.sx_gate.error for q in self.props.qubits])
+
+    def avg_sx_gate_length(self, gate):
+        return np.mean([q.sx_gate.length for q in self.props.qubits])
+
+    def avg_rz_gate_error(self, gate):
+        return np.mean([q.rz_gate.error for q in self.props.qubits])
+
+    def avg_rz_gate_length(self, gate):
+        return np.mean([q.rz_gate.length for q in self.props.qubits])
+
+    def avg_reset_gate_length(self, gate):
+        return np.mean([q.reset_gate.length for q in self.props.qubits])
+
 
 app = Compiler()
+
+pdb.set_trace()
 # app.run()
