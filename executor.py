@@ -1,11 +1,15 @@
-from qiskit import QuantumCircuit, transpile
+from qiskit import QuantumCircuit, transpile, IBMQ, Aer
 from qiskit.quantum_info import hellinger_fidelity
 import os
 import shutil
 from qiskit.providers.fake_provider import *
+from qiskit.providers.ibmq import AccountProvider
 import matplotlib.pyplot as plt
 from benchmarks import *
 from collections import Counter
+from qiskit.providers.ibmq.managed import IBMQJobManager
+from qiskit_aer.noise import NoiseModel
+from benchmarks._utils import _get_ideal_counts
 #from ._utils import perfect_counts, fidelity
 
 def move_and_rename_file(src_path, dst_dir, new_name):
@@ -144,12 +148,18 @@ def execute_benchmarks():
         "FermionicSwapQAOA"
     ]
     
-    backend = FakeGuadalupeV2()
     
-    qbits = [3, 5, 7, 9]
+    provider = IBMQ.load_account()    
+    backend = provider.get_backend("ibmq_qasm_simulator")
+    
+    fake_backend = FakeTorontoV2()
+    job_manager = IBMQJobManager()
+    
+    qbits = [5, 11, 17, 23, 27]
     #qbits = [2, 3]
     
     fids = {}
+    circs = []
     
     for q in qbits:
         key = str(q) + "q"
@@ -166,21 +176,26 @@ def execute_benchmarks():
                 bench = eval(b + "Benchmark")(q)
             
             qc = bench.circuit()
-            cqc = transpile(qc, backend)
+            cqc = transpile(qc, fake_backend, optimization_level=3)
             
-            for i in range(5):  
-                result = backend.run(cqc, shots=8192).result()
-                counts = result.get_counts()
-                counts_copy = {}
-                               
+            #for i in range(5): 
+            qc = bench.circuit()
+            cqc = transpile(qc, fake_backend)
+            
+            job_manager.run(circs, backend, shots=8192)
+            
+            result = backend.run(cqc, shots=8192).result()
+            counts = result.get_counts()
+            counts_copy = {}
+                           
+            
+            if isinstance(counts, list):
+                fids[key][b].append(bench.score(counts))
+            else:
+                for (k, v) in counts.items():
+                    counts_copy[k.replace(" ", "")] = v
                 
-                if isinstance(counts, list):
-                    fids[key][b].append(bench.score(counts))
-                else:
-                    for (k, v) in counts.items():
-                        counts_copy[k.replace(" ", "")] = v
-                    
-                    fids[key][b].append(bench.score(Counter(counts_copy)))
+                fids[key][b].append(bench.score(Counter(counts_copy)))
 
                      
     #means = { q : [np.median(fids[b]) for b in fids[qbits]] for qbits in fids}
@@ -217,4 +232,61 @@ def execute_benchmarks():
         
     plt.savefig('plot.png', dpi=300, bbox_inches="tight")
     
-execute_benchmarks()
+
+def test_qasm_smilator():
+    try:
+        provider = IBMQ.load_account()
+    except e:
+        print(e)
+        
+    backend = provider.get_backend("ibmq_qasm_simulator")
+    
+    fake_backend = FakeTorontoV2()
+    
+    
+    bench = VanillaQAOABenchmark(5)
+    
+    qc = bench.circuit()
+    
+    cqc = transpile(qc, fake_backend, optimization_level=3)
+    
+    noise_model = NoiseModel.from_backend(fake_backend)
+    
+    job = backend.run(cqc, shots=8192, noise_model=noise_model)
+    
+    results = job.result()
+    counts = results.get_counts()
+    
+    #fid = hellinger_fidelity(perf_counts, counts)
+    print(bench.score(Counter(counts)))
+
+#test_qasm_smilator()
+#execute_benchmarks()
+
+def perfect_counts(original_circuit: QuantumCircuit):
+    provider = IBMQ.load_account()
+    backend = provider.get_backend("simulator_statevector")
+        
+    cnt = (
+        backend.run(original_circuit, shots=20000).result().get_counts()
+    )
+    #pdb.set_trace()
+    return {k.replace(" ", ""): v for k, v in cnt.items()}
+    
+def test_counts():
+    bench = VanillaQAOABenchmark(12)
+    qc = bench.circuit()
+    
+    counts1 = _get_ideal_counts(qc)
+    counts2 = Counter(perfect_counts(qc))
+    
+    #print(counts1)
+    #print(counts2)
+    perf_counts = {"0000000000" : 10000, "1111111111": 10000}
+    
+    fid1 = hellinger_fidelity(perf_counts, counts1)
+    fid2 = hellinger_fidelity(perf_counts, counts2)
+    
+    print(fid1, fid2)
+    
+test_qasm_smilator()

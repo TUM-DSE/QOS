@@ -7,7 +7,7 @@ import json
 import pdb
 from math import log2
 
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, IBMQ
 from qiskit.quantum_info import hellinger_fidelity
 from qiskit.providers.aer import StatevectorSimulator
 from qiskit.quantum_info import Statevector
@@ -15,14 +15,23 @@ from qiskit.quantum_info import Statevector
 
 def _get_ideal_counts(circuit: QuantumCircuit) -> Counter:
     ideal_counts = {}
-    sv = Statevector.from_label("0" * circuit.num_qubits)
-    circuit_no_meas = circuit.remove_final_measurements(inplace=False)
-    sv = sv.evolve(circuit_no_meas)
 
-    for i, amplitude in enumerate(sv):
-        bitstring = f"{i:>0{circuit.num_qubits}b}"
-        probability = np.abs(amplitude) ** 2
-        ideal_counts[bitstring] = probability
+    if circuit.num_qubits < 11:
+        sv = Statevector.from_label("0" * circuit.num_qubits)
+        circuit_no_meas = circuit.remove_final_measurements(inplace=False)
+        sv = sv.evolve(circuit_no_meas)
+
+        for i, amplitude in enumerate(sv):
+            bitstring = f"{i:>0{circuit.num_qubits}b}"
+            probability = np.abs(amplitude) ** 2
+            ideal_counts[bitstring] = probability
+    else:
+        provider = IBMQ.load_account()
+        backend = provider.get_backend("simulator_statevector")
+        
+        ideal_counts = (
+            backend.run(circuit, shots=20000).result().get_counts()
+        )
     return Counter(ideal_counts)
 
 
