@@ -4,7 +4,7 @@ config:
   nruns: 7
   static: false
   benchmarks:
-    - name: HamiltonianSimulationBenchmark
+    - name: GHZBenchmark
       nqbits: 7
       rounds:
       nlayers:
@@ -13,4 +13,4 @@ config:
       initial_state:
       cut: false
       frags:
-        - backend: FakeSingaporeV2
+        - backend: FakeOslo

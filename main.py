@@ -400,10 +400,10 @@ class App:
                 exit()
 
             if self.backend.is_simulator:
-                backend_noise = NoiseModel.from_backend(backend)
-                simulator = self.provider.get_backend("ibmq_qasm_simulator")
-                job = simulator.run(qc, shots=self.nshots, noise_model=backend_noise)
-                # job = backend.run(run_input=qc, shots=self.nshots)
+                # backend_noise = NoiseModel.from_backend(backend)
+                # simulator = self.provider.get_backend("ibmq_qasm_simulator")
+                # job = simulator.run(qc, shots=self.nshots, noise_model=backend_noise)
+                job = backend.run(run_input=qc, shots=self.nshots)
             else:
                 job = backend.run(circuits=qc, shots=self.nshots)
             counts = job.result().get_counts()
