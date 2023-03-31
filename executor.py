@@ -2,12 +2,17 @@ from qiskit import QuantumCircuit, transpile, IBMQ, Aer
 from qiskit.quantum_info import hellinger_fidelity
 import os
 import shutil
+from datetime import datetime
 from qiskit.providers.fake_provider import *
 from qiskit.providers.ibmq import AccountProvider
 import matplotlib.pyplot as plt
 from benchmarks import *
 from collections import Counter
+import mapomatic as mm
+import json
+from types import MethodType
 from qiskit.providers.ibmq.managed import IBMQJobManager
+from qiskit.providers.models import BackendConfiguration
 from qiskit_aer.noise import NoiseModel
 from benchmarks._utils import _get_ideal_counts
 #from ._utils import perfect_counts, fidelity
@@ -15,7 +20,47 @@ from qiskit_aer.noise import NoiseModel
 
 # from ._utils import perfect_counts, fidelity
 
+def datetime_to_str(obj):
+    """Helper function to convert datetime objects to strings"""
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    raise TypeError(f"{type(obj)} not serializable")
 
+def convert_dict_to_json(d, file_path):
+    """Recursively convert a dictionary with datetime objects to a JSON file"""
+    # Recursively convert nested dictionaries
+    for key, value in d.items():
+        if isinstance(value, dict):
+            convert_dict_to_json(value, file_path)
+
+    # Convert datetime objects to strings using helper function
+    d_str = json.dumps(d, default=datetime_to_str, indent=4)
+
+    # Write JSON string to file
+    with open(file_path, 'w') as f:
+        f.write(d_str)
+        
+def get_callibration_data(machinename):  
+    provider = IBMQ.load_account()
+    backends = provider.backends()
+    backend = provider.get_backend(machinename)
+    
+    ranges = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    
+    
+    for i,m in enumerate(ranges):
+
+        for j in range(1, m+1):
+            t = datetime(day=j, month=i+1, year=2022, hour=10)
+
+            properties = backend.properties(datetime=t)
+            
+            if properties is None:
+                continue
+                
+            properties = properties.to_dict()
+
+            convert_dict_to_json(properties, "callibration_data/" + machinename + datetime_to_str(t) + ".json")
 
 def move_and_rename_file(src_path, dst_dir, new_name):
     dst_path = os.path.join(dst_dir, new_name)
@@ -24,39 +69,71 @@ def move_and_rename_file(src_path, dst_dir, new_name):
     shutil.copy2(src_path, dst_path)
 
 
-def iterate_files_in_directory(dir_path):
-    bench = VanillaQAOABenchmark(7)
-    qc = bench.circuit()
+def iterate_files_in_directory():
+    provider = IBMQ.load_account()
+    benches = [GHZBenchmark(7), VanillaQAOABenchmark(7), FermionicSwapQAOABenchmark(7), HamiltonianSimulationBenchmark(7), BitCodeBenchmark(4), PhaseCodeBenchmark(4), MerminBellBenchmark(7)]
+    qcs = [bench.circuit() for bench in benches]
+    
+    #ranges = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    ranges = [31, 31, 30, 31, 30, 31]
+    
+    backend_names = ["ibm_perth", "ibm_lagos", "ibm_nairobi", "ibm_oslo", "ibmq_jakarta"]
+    #backend_names = ["ibm_lagos", "ibm_nairobi", "ibmq_jakarta"]
+    city_names = ["perth", "lagos", "nairobi", "oslo", "jakarta"]
+    #city_names = ["lagos", "nairobi", "jakarta"]
+    fake_backend_names = ["FakePerth", "FakeLagosV2", "FakeNairobiV2", "FakeOslo", "FakeJakartaV2"]
+    #fake_backend_names = ["FakeLagos", "FakeNairobi", "FakeJakarta"]
+    backends = []
+    backend = None
+    print(backend_names)
+    
+    for i,m in enumerate(ranges):
+        for j in range(1, m+1):
+            t = datetime(day=j, month=i+1, year=2022, hour=10)
 
-    for filename in os.listdir(dir_path):
-        # Construct the full path to the file by joining the directory path and the filename
-        file_path = os.path.join(dir_path, filename)
-        # print(file_path)
-
-        # Check if the path is a file (as opposed to a directory or a symlink)
-        if os.path.isfile(file_path):
-            move_and_rename_file(
-                file_path,
-                "/mnt/c/Users/giort/Documents/GitHub/ME/lib/python3.9/site-packages/qiskit/test/mock/backends/lagos",
-                "props_lagos.json",
-            )
-
-            backend = FakeLagosV2()
+            date = datetime_to_str(t)
             fids = []
+            
+            for k, b in enumerate(backend_names):
+                filename =b + date + ".json"
+                file_path = os.path.join("callibration_data/" + b, filename)
 
-            for i in range(5):
-                qc = transpile(qc, backend)
+                if os.path.isfile(file_path):
+                    move_and_rename_file(file_path,
+                    "/mnt/c/Users/giort/Documents/GitHub/ME/lib/python3.9/site-packages/qiskit/providers/fake_provider/backends/" + city_names[k],
+                    "props_" + city_names[k] + ".json")
+                    
+                #backends.append(eval(fake_backend_names[k])())
+                backend = eval(fake_backend_names[k])()
+                """
+                trans_qcs = [transpile(qc, backends[0], optimization_level=3) for qc in qcs]
+                #print(trans_qcs)
+                small_qcs = [mm.deflate_circuit(trans_qc) for trans_qc in trans_qcs]
+                
+                bests = [mm.best_overall_layout(small_qc, backends) for small_qc in small_qcs]
+                
+                machines = [best[1] for best in bests]
+                """
+                fids.append([])
+                
+                for i in range(5):
+                    trans_qc = transpile(qcs[4], backend)
 
-                result = backend.run(qc, shots=8192).result()
-                counts = result.get_counts()
-                # avg_fid = avg_fid + hellinger_fidelity(perf_counts, counts)
-                fids.append(bench.score(Counter(counts)))
+                    result = backend.run(trans_qc, shots=8192).result()
+                    counts = result.get_counts()
+                    fids[k].append(benches[4].score(Counter(counts)))
 
-            fids.sort()
-            print(fids[2])
-
-
-# iterate_files_in_directory("/mnt/c/Users/giort/Documents/GitHub/qos/callibration_data")
+            for v in fids:
+               v.sort()
+               
+            for i,v in enumerate(fids):
+                fids[i] = v[2]
+                   
+            print(fids)
+                
+            fids.clear()       
+            backends.clear()
+    
 
 
 def execute_on_backends():
@@ -344,5 +421,6 @@ def test_counts():
     
     print(fid1, fid2)
 
-execute_benchmarks()
+
+iterate_files_in_directory()
 

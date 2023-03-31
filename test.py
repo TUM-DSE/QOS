@@ -3,6 +3,7 @@ from datetime import datetime
 from qiskit import IBMQ
 import matplotlib.pyplot as plt
 import numpy as np
+import csv
 
 def datetime_to_str(obj):
     """Helper function to convert datetime objects to strings"""
@@ -104,18 +105,22 @@ def plot_bar_chart(filename, title, xlabel, ylabel):
     
 def plot_data(filename):
     data = {}
-    with open(filename) as f:
-        for line in f:
-            name, values = line.strip().split(';')
-            print(values)
-            data[name] = list(map(int, values.split(',')))
+    with open(filename, 'r') as file:
+        reader = csv.reader(file, delimiter=';')
+        data = {int(row[0]) : [float(x) for x in row[1].split(',')] for row in reader}
 
+    #x_axis_data = [d[0] for d in data]
+    
     means = [np.mean(data[name]) for name in data]
     stds = [np.std(data[name]) for name in data]
+    
+    labels = [str(i) for i in data.keys()]
+    coords = [i for i in range(5)]
 
     fig, ax = plt.subplots()
-    ax.bar(data.keys(), means, yerr=stds, align='center', alpha=0.5, ecolor='black', capsize=10)
-    ax.set_xlabel('IBMQ Backend')
+    ax.bar(coords, means, yerr=stds, align='center', alpha=0.5, ecolor='black', capsize=10, tick_label=labels)
+    #ax.set_xticks(coords)
+    ax.set_xlabel('Maximum fragment size (# of qbits)')
     ax.set_ylabel('Fidelity Score')
     #ax.set_title('GHZ fidelity score across IBMQ Backends')
     plt.savefig('plot.png', dpi=300, bbox_inches="tight")
@@ -153,9 +158,8 @@ def plot_benchmarks():
     ax.legend()
         
     plt.savefig('plot.png', dpi=300, bbox_inches="tight")
-    
-    
-data = read_data('results.txt')
-plot_line(data, "temporal_heterogeneity.png")
+
 #data = read_data('results.txt')
 #plot_line(data, 'plot.png')
+
+plot_data("results.txt")
