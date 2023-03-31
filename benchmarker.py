@@ -50,13 +50,17 @@ backends = {
     # "FakeBoeblingenV2": 20,
     # "FakeSingaporeV2": 20,
     # "FakeJohannesburgV2": 20,
-    # "FakeCairoV2": 27,
-    # "FakeHanoiV2": 27,
-    # "FakeParisV2": 27,
-    # "FakeSydneyV2": 27,
-    # "FakeTorontoV2": 27,
-    # "FakeKolkataV2": 27,
-    # "FakeMontrealV2": 27,
+    "FakeCairoV2": 27,
+    "FakeHanoiV2": 27,
+    "FakeParisV2": 27,
+    "FakeSydneyV2": 27,
+    "FakeTorontoV2": 27,
+    "FakeKolkataV2": 27,
+    "FakeMontrealV2": 27,
+    "FakeAucklandV2": 27,
+    "FakeGenevaV2": 27,
+    "FakeMumbaiV2": 27,
+    "FakwParisV2": 27,
     # "FakeCambridgeV2": 28,
     # "FakeWashingtonV2": 127,
 }
@@ -75,11 +79,7 @@ benchmarks = {
 shots = 8192
 
 qbits = [
-    [24],  # 1 fragment
-    [12],  # 2 fragments
-    [8],  # 3 fragments
-    [6],  # 4 fragments
-    [4],  # 6 fragments
+    [16],  # 6 fragments
 ]  # This is for adding other combinations.
 
 rounds = 1
@@ -104,6 +104,7 @@ if sys.argv[1] == "gen":
     static = False
 
     # Without combinations all on the same backend, all the same benchmark
+    """
     for i in qbits:
         f = open("configs/config_" + str(id) + ".yml", "w")
         f.write("config:\n")
@@ -133,6 +134,42 @@ if sys.argv[1] == "gen":
             f.write("        - backend: " + backend + "\n")
         id += 1
     """
+
+    for bk in backends.keys():
+        for benchmark in benchmarks.keys():
+            for i in qbits:
+                f = open("configs/config_" + str(id) + ".yml", "w")
+                f.write("config:\n")
+                f.write("  path: results/\n")
+                f.write("  static: " + str(static) + "\n")
+                f.write("  nshots: " + str(shots) + "\n")
+                f.write("  nruns: " + str(runs) + "\n")
+                f.write("  benchmarks:\n")
+                for idx in range(len(i)):
+                    f.write("    - name: " + benchmark + "\n")
+                    if (
+                        benchmark == "BitCodeBenchmark"
+                        or benchmark == "PhaseCodeBenchmark"
+                    ):
+                        f.write("      nqbits: " + str(math.ceil(i[idx] / 2)) + "\n")
+                    elif benchmark == "VQEBenchmark":
+                        f.write("      nqbits: " + str(int(i[idx] / 2)) + "\n")
+                    else:
+                        f.write("      nqbits: " + str(i[idx]) + "\n")
+                    f.write("      nlayers: " + "\n")
+                    f.write("      time_step: " + "\n")
+                    f.write("      total_time: " + "\n")
+                    f.write("      initial_state: " + "\n")
+                    if benchmarks[benchmark] == 2:
+                        f.write("      rounds: " + str(rounds) + "\n")
+                    else:
+                        f.write("      rounds:\n")
+                    f.write("      cut: false\n")
+                    f.write("      frags:\n")
+                    f.write("        - backend: " + bk + "\n")
+                id += 1
+
+        """
     for i in qbits:
         combinations = unique_combinations(list_benchmarks, len(i))
         for j in combinations:
