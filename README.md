@@ -65,3 +65,53 @@ Arg* - Means that the argument is not optional
 - rounds (`rounds`)*
 - initial state (`initial_state`)
 
+# Log
+
+## Draft
+
+### Evalutation - Challenges
+
+#### Introducion
+This is an introduction the actual evaluation which are the challenges. I think it is at least drafted. It is already adapted to the 5 challenges.
+- [x] Framworks
+- [x] Backends
+- [x] Benchmark
+- [x] Performance Metrics
+
+#### Challenges
+
+##### Scalability
+- [x] Results 
+- [x] Implications 
+- [x] Proposal 
+- [x] Effectiveness 
+The Scalability challenge is drafted, the two figures are there and are explained on the Results and Effectiveness sections.
+
+##### Efficiency
+- [x] Results 
+- [x] Implications 
+- [x] Proposal 
+- [x] Effectiveness 
+The effienciency challenges is drafted, the two figures are good and clearly depict the effectiveness of the solution.
+
+##### Spatial Hereginity
+- [x] Results 
+- [x] Implications 
+- [x] Proposal 
+- [ ] Effectiveness
+For this challenge the figure on for the Effectiveness is missing however, we are coming to the conclusion that the best machine usually is the best machine
+throuhout time variance, which means that if we were to run on the best machine one day usually that is the best machine everyday and so there is no actuall challenge.
+    
+##### Temporal Variance 
+- [x] Results 
+- [x] Implications 
+- [x] Proposal 
+- [ ] Effectiveness 
+The Effectiveness is missing because the figure is missing, but the rest should be enough for the draft.
+
+##### Multiprograming
+- [x] Results 
+- [x] Implications 
+- [x] Proposal 
+- [ ] Effectiveness
+The Effectiveness is also missing here, this is saying the plot showing results of the solution is missing. 
