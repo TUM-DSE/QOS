@@ -36,7 +36,7 @@ class IBMQPU:
                     return self._properties
 
                 backend.properties = MethodType(properties, backend)
-            self.is_simulator = True
+            self.is_simulator = False
         elif isinstance(provider, AccountProvider):
             backend = provider.get_backend(backend_name)
 

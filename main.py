@@ -11,6 +11,8 @@ from qiskit.visualization import plot_histogram, plot_circuit_layout, plot_coupl
 from collections import Counter
 from qiskit.transpiler import Layout
 from qiskit_aer.noise import NoiseModel
+import matplotlib.pyplot as plt
+from qiskit import schedule as build_schedule
 import csv
 import os.path
 import time
@@ -225,7 +227,7 @@ class App:
             benchmark_names = benchmark_names + b.name()
 
         self.filename = (
-            self.backend.backend.name
+            self.backend.backend.backend_name
             + benchmark_names
             + str(self.nqbits)
             + "Shots"
@@ -290,7 +292,7 @@ class App:
                 qc = merge_circs(qc, self.circuits[i])
 
         # prf_cnts = perfect_counts(qc)
-        # print(qc)
+        #print(qc)
         depth_b4 = 0
         cnot_b4 = 0
 
@@ -299,7 +301,10 @@ class App:
 
         backend = self.backend.backend
         # print(backend.name)
-        nqbits = self.backend.backend.num_qubits
+        if hasattr(backend, "num_qubits"):
+            nqbits = backend.num_qubits
+        else:
+            nqbits = backend.configuration().num_qubits
         # pdb.set_trace()
 
         utilization = 0
@@ -320,19 +325,27 @@ class App:
 
         for k in range(self.nruns):
             try:
-                # qc = transpile(qc, backend, optimization_level=3, scheduling_method='as_late_as_possible')
-                qc = transpile(qc, backend, optimization_level=3)
+                qc = transpile(qc, backend, optimization_level=3, scheduling_method='alap')
+                #qc = transpile(qc, backend, optimization_level=3)
             except e:
                 print("Probably the circuit is too large for this backend. Skipping...")
                 traceback.print_exc()
                 exit(0)
-            # print(qc)
+            #print(qc)
 
             depth_after = 0
             cnot_after = 0
-
+            #print("trans done")
             depth_after = qc.depth()
             cnot_after = getCNOTS(qc)
+            
+            #sched = build_schedule(qc, backend)
+            #fig = sched.draw()
+            #plt.savefig("schedule.png", dpi=300)
+            
+            for i in range(qc.num_qubits):
+                if qc.qubit_duration(i) > 0:
+                    print(qc.qubit_duration(i))
 
             # print(depth_b4, "\t", depth_after)
             # print(cnot_b4, "\t", cnot_after)
@@ -405,10 +418,11 @@ class App:
                 job = simulator.run(qc, shots=self.nshots, noise_model=backend_noise)
                 # job = backend.run(run_input=qc, shots=self.nshots)
             else:
-                job = backend.run(circuits=qc, shots=self.nshots)
+                #print("running")
+                job = backend.run(qc, shots=self.nshots)
             counts = job.result().get_counts()
             # splitted_counts = split_counts(counts, self.nbenchmarks)
-            # print(counts)
+            #print("run done")
 
             # plot_histogram(
             # counts, filename="results/counts" + ".png", figsize=(10, 10)

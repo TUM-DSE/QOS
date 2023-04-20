@@ -103,6 +103,36 @@ def plot_bar_chart(filename, title, xlabel, ylabel):
     plt.savefig('plot.png', dpi=300, bbox_inches="tight")
     
     
+def plot_multi_data(filename):
+    labels = []
+    data = []
+    with open(filename, 'r') as file:
+        reader = csv.reader(file)
+        header = next(reader)
+        
+        for row in reader:
+            labels.append(row[0])
+            data.append([float(row[1]), float(row[2]), float(row[3]), float(row[4]), float(row[5])])
+
+    #x_axis_data = [d[0] for d in data]
+    
+    #means = [np.mean(data[name]) for name in data]
+    #stds = [np.std(data[name]) for name in data]
+    
+    #labels = [str(i) for i in data.keys()]
+    #coords = [i for i in range(5)]
+    #print(header[1:])
+    markers = ['o', '^', 's', 'p', 'd']
+    #fig, ax = plt.subplots()
+    for i,d in enumerate(data):
+        plt.plot(header[1:], d, marker=markers[i], label=labels[i])
+    
+    plt.legend(title="Width diff.")
+    plt.xlabel(header[0])
+    plt.ylabel('Idle time (%)')
+    #ax.set_title('GHZ fidelity score across IBMQ Backends')
+    plt.savefig('multiprogramming.png', dpi=300, bbox_inches="tight")
+    
 def plot_data(filename):
     data = {}
     with open(filename, 'r') as file:
@@ -162,4 +192,4 @@ def plot_benchmarks():
 #data = read_data('results.txt')
 #plot_line(data, 'plot.png')
 
-plot_data("results.txt")
+plot_multi_data("results.csv")
