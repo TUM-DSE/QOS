@@ -373,7 +373,8 @@ def execute_benchmarks():
             #fid_buffer.sort()
             #fids[key][b].append(fid_buffer[2])
 
-    print(fids)
+    with open('scalability.txt', 'w') as file:
+        file.write(json.dumps(fids))
     
 def plot_results():
     with open('scalability2.txt') as f:
