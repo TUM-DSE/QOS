@@ -4,6 +4,8 @@ from qiskit import IBMQ
 import matplotlib.pyplot as plt
 import numpy as np
 import csv
+from matplotlib.colors import CSS4_COLORS as fancy_colors
+import matplotlib.patches as mpatches
 
 def datetime_to_str(obj):
     """Helper function to convert datetime objects to strings"""
@@ -86,21 +88,44 @@ def plot_bar_chart(filename, title, xlabel, ylabel):
         data = [line.strip().split() for line in file]
 
     # separate x and y data
-    x_data = [item[0] for item in data]
-    y_data = [float(item[1]) for item in data]
+    #x_data = [item[0] for item in data]
+    x_data = ["Random", "Best\navailable", "Max. fidelity\ndifference", "Best\nmachine", "Optimal"]
+    y_data = [float(item[0]) for item in data]
 
-    # create bar plot
     fig, ax = plt.subplots()
-    ax.bar(x_data, y_data)
-    plt.xticks(rotation='vertical')
-
+    bar_list = ax.bar(x_data, y_data)
+    bar_list[0].set_color(fancy_colors["darkseagreen"])
+    bar_list[0].set_edgecolor("k")
+    #bar_list[0].set_hatch("-")
+    bar_list[1].set_color(fancy_colors["darkseagreen"])
+    bar_list[1].set_edgecolor("k")
+    #bar_list[1].set_hatch("-")
+    bar_list[2].set_color(fancy_colors["darkseagreen"])
+    bar_list[2].set_edgecolor("k")
+    #bar_list[2].set_hatch("-")
+    bar_list[3].set_color(fancy_colors["lightcoral"])
+    bar_list[3].set_edgecolor("k")
+    #bar_list[3].set_hatch("x")
+    bar_list[4].set_color(fancy_colors["lightcoral"])
+    bar_list[4].set_edgecolor("k")
+    #bar_list[4].set_hatch("x")
+    #plt.xticks(rotation='vertical')
+    plt.text(0.01, 0.95, "Manual vs automated: 0.02",
+             transform=plt.gca().transAxes)
+    
+    plt.ylim(0.75, 1)
     # set axis labels and title
+    red_patch = mpatches.Patch(color='darkseagreen', label='Automated')
+    blue_patch = mpatches.Patch(color='lightcoral', label='Manual')
+
+    plt.legend(handles=[red_patch, blue_patch])
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
-    ax.set_title(title)
+    #ax.set_title(title)
 
     # show plot
-    plt.savefig('plot.png', dpi=300, bbox_inches="tight")
+    plt.savefig('selection.png', dpi=300, bbox_inches="tight")
+    #plt.savefig('selection.png', dpi=300)
     
     
 def plot_multi_data(filename):
@@ -192,4 +217,4 @@ def plot_benchmarks():
 #data = read_data('results.txt')
 #plot_line(data, 'plot.png')
 
-plot_multi_data("results.csv")
+plot_bar_chart("selection.txt", "", "Backend selection scheme", "Fidelity score")

@@ -16,7 +16,7 @@ from qiskit.quantum_info import Statevector
 def _get_ideal_counts(circuit: QuantumCircuit) -> Counter:
     ideal_counts = {}
 
-    if circuit.num_qubits < 11:
+    if circuit.num_qubits < 100:
         sv = Statevector.from_label("0" * circuit.num_qubits)
         circuit_no_meas = circuit.remove_final_measurements(inplace=False)
         sv = sv.evolve(circuit_no_meas)
