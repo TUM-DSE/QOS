@@ -377,7 +377,7 @@ def execute_benchmarks():
         file.write(json.dumps(fids))
     
 def plot_results():
-    with open('scalability2.txt') as f:
+    with open('scalability.txt') as f:
         data = f.read()
         
     fids = json.loads(data)
@@ -406,7 +406,8 @@ def plot_results():
     width = 0.2  # the width of the bars
     multiplier = 0
     
-    hatches = [".", "-", "o", "|"]
+    #hatches = [".", "-", "o", "|"]
+    hatches = ["/", "-", "\\", "|"]
     colors = [fancy_colors["lightsteelblue"], fancy_colors["bisque"], fancy_colors["turquoise"], fancy_colors["lightcoral"]]
     # fig, ax = plt.subplots(layout='constrained')
     fig, ax = plt.subplots()
@@ -418,7 +419,8 @@ def plot_results():
         rects = ax.bar(x + offset, score, width, label=qbits, align='center', yerr=stds[qbits], hatch=hatches[i], color=colors[i])
         # ax.bar_label(rects, padding=3)
         multiplier += 1
-
+    
+    plt.ylim(0.5, 1)
     ax.set_xlabel("Benchmarks")
     ax.set_ylabel("Fidelity Score")
     #ax.set_xticks(x + 2 * width, group_labels, rotation=90)
@@ -428,7 +430,7 @@ def plot_results():
     lgnd = ax.legend(loc='center', bbox_to_anchor=(0.5, 1.05), ncols=4, handlelength=3, handleheight=2)
 
         
-    plt.savefig('scalability.png', dpi=300, bbox_inches="tight")
+    plt.savefig('scalability_results.png', dpi=300, bbox_inches="tight")
     
 
 def test_qasm_smilator():
@@ -501,32 +503,34 @@ def test_counts():
 
  
 def run_scale():
-    backend = FakeOslo()
+    backend = FakeParisV2()
     fids = {}
-    #qubits = [i for i in range(2, 11, 2)]
-    qubits = [i for i in range(2, 8)]
+    qubits = [10]
+    #qubits = [i for i in range(2, 11)]
     #layers = [i for i in range(1, 11, 2)]
-    layers = [3, 5, 7]
+    layers = [1]
     
     for q in qubits:        
         for l in layers:
-            bench = HamiltonianSimulationBenchmark(q, total_time=l)
+            #bench = HamiltonianSimulationBenchmark(q, total_time=l)
+            bench = GHZBenchmark(q)
             qc = bench.circuit()
-            fids[str(q) + "_" + str(l)] = []
+            #fids[str(q) + "_" + str(l)] = []
+            fids[str(q)] = []
            
-            cqc = transpile(qc, backend)
+            cqc = transpile(qc, backend, optimization_level=3)
 
             for i in range(5):
                 result = backend.run(cqc, shots=8192).result()
                 #print(result)
                 counts = result.get_counts()
                 # avg_fid = avg_fid + hellinger_fidelity(perf_counts, counts)
-                fids[str(q) + "_" + str(l)].append(bench.score(Counter(counts)))
+                fids[str(q)].append(bench.score(Counter(counts)))
 
             # print(fids)
             # fids.sort()
         #print(fids[str(q) + "_" + str(l)])
-
+    print(fids)
     means = [np.median(fids[name]) for name in fids]
     stds = [np.std(fids[name]) for name in fids]
     diff_all = np.max(np.abs(np.subtract.outer(means, means)))
@@ -556,9 +560,8 @@ def run_scale():
     # ax.set_title('GHZ fidelity score across IBMQ Backends')
     plt.savefig("plot.png", dpi=300, bbox_inches="tight")
 
-    
- 
+
 #test_counts()
 #execute_benchmarks()
-execute_benchmarks()
+plot_results()
 
