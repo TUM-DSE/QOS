@@ -99,15 +99,15 @@ The effienciency challenges is drafted, the two figures are good and clearly dep
 - [x] Implications 
 - [x] Proposal 
 - [ ] Effectiveness
-For this challenge the figure on for the Effectiveness is missing however, we are coming to the conclusion that the best machine usually is the best machine
-throuhout time variance, which means that if we were to run on the best machine one day usually that is the best machine everyday and so there is no actuall challenge.
+The Effectiveness is missing because the figure is missing, but the rest should be enough for the draft.
     
 ##### Temporal Variance 
 - [x] Results 
 - [x] Implications 
 - [x] Proposal 
 - [ ] Effectiveness 
-The Effectiveness is missing because the figure is missing, but the rest should be enough for the draft.
+For this challenge the figure on for the Effectiveness is missing however, we are coming to the conclusion that the best machine usually is the best machine
+throuhout time variance, which means that if we were to run on the best machine one day usually that is the best machine everyday and so there is no actuall challenge. Or is there?
 
 ##### Multiprograming
 - [x] Results 
