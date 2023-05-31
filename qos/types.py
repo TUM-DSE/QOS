@@ -13,8 +13,9 @@ class QCircuit(ABC):
 # A job class should be the counter part of a job entry on the Quantum circuit database
 class Job(ABC):
     args: Dict[str, Any]
-    circuit: QCircuit
-    pass
+
+    def __init__(self) -> None:
+        self.args = {}
 
 
 class Engine(ABC):

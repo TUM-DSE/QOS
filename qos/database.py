@@ -2,7 +2,9 @@ from typing import Any, Dict, List
 import json
 import os
 from qos.types import Engine, Job
+from qos.backends.types import QPUInfo
 import redis
+from qos.tools import dict2obj, redisToObj
 
 
 class database:
@@ -24,14 +26,9 @@ class database:
         # hash - jobId3 = { <job information>, results: json.dumps(<probabilty distribution>)}
         # ...
         with redis.Redis() as db:
-            jobData = {
-                "id": 11,
-                "status": "submited",
-                "results": json.dumps({}),
-            }
             db.sadd("jobList", 11)
 
-            for a, b in jobData.items():
+            for a, b in job.args.items():
                 db.hset(11, a, b)
 
             # self.db.hmset(self.idCounter, jobData)
@@ -53,7 +50,20 @@ class database:
     def getJob(jobId: int):
         with redis.Redis() as db:
             all = db.hgetall(jobId)
-        return all
+            job = redisToObj(all)
+        return job
+
+    def addQPU(qpu: QPUInfo) -> int:
+        # Add the qpu to the db
+        with redis.Redis() as db:
+
+            for a, b in qpu.args.items():
+                db.hset(
+                    11, a, b
+                )  # ---------------------------------------------------------- Continue from here, find a efficient way to get a free id, do the same for jobs
+
+            # self.db.hmset(self.idCounter, jobData)
+        return 11
 
     def dumpDB(self):
         pass

@@ -2,7 +2,6 @@ from types import MethodType
 from typing import Any, Dict, Optional
 from warnings import warn
 from qos.backends.types import QPU
-import random
 import logging
 from time import sleep
 
@@ -12,9 +11,13 @@ from time import sleep
 
 
 class TestQPU(QPU):
-    def __init__() -> None:
-        pass
+    logger: logging.Logger
 
-    def run(self) -> int:
+    def __init__(self) -> None:
+        self.logger = logging.getLogger(__name__)
+        return
+
+    def run(self, circuit) -> int:
+        self.logger.log(10, "Running job")
         sleep(5)
         return 42

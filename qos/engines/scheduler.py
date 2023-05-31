@@ -2,10 +2,13 @@ from typing import Any, Dict, List
 from qos.types import Job
 from threading import Thread, Lock, Semaphore
 import logging
-from qos.backends.test_qpu import TestQPU as tqpu
+from qos.backends.test_qpu import TestQPU
+from qos.backends.ibmq import IBMQPU
 from qos.types import Engine, Job
+from qiskit.circuit import QuantumCircuit
 from qos.database import database as db
 import json
+import pdb
 
 
 class Scheduler(Engine):
@@ -24,11 +27,19 @@ class Scheduler(Engine):
 
         self.logger.log(10, "Got new job")
         job = db.getJob(jobId)
-        results = tqpu.run(job)
+
+        if job.provider == "test":
+            qpu = TestQPU()
+            results = qpu.run()
+        elif job.provider == "ibm":
+            qpu = IBMQPU()
+            circuit = QuantumCircuit.from_qasm_str(job.circuit)
+            print(job.backend)
+            print(circuit)
+            trans_circuit = qpu.transpile(circuit, job.backend)
+            results = qpu.run(trans_circuit, job.backend, job.shots).get_counts()
 
         db.setJobField(jobId, "status", "DONE")
-
-        # Check what is happening here, what does dumps do
         db.setJobField(jobId, "results", json.dumps(results))
 
         return 0

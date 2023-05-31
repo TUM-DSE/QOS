@@ -3,7 +3,9 @@ from qos.types import Job
 from time import sleep
 import pdb
 import subprocess
-
+from qiskit.circuit.random import random_circuit
+import logging
+import json
 
 # redis_server = subprocess.Popen(["redis-server"])
 
@@ -13,10 +15,15 @@ import subprocess
 def main():
     # pdb.set_trace()
 
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(level=10)
+
     qos = QOS()
 
     newJob = Job()
-    Job.args = {"shots": 10}
+    circuit = random_circuit(2, 2, measure=True)
+    newJob.args["shots"] = 1000
+    newJob.args["circuit"] = circuit.qasm()
 
     newJobId = qos.run(newJob)
 

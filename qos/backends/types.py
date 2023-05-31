@@ -16,6 +16,14 @@ class QPU(Backend):
     pass
 
 
-class SImulator(Backend):
+class QPUInfo(ABC):
+    qid: int
+    args: Dict[str, Any]
+
+    def __init__(self) -> None:
+        self.args = {}
+
+
+class Simulator(Backend):
     name: str
     pass
