@@ -12,6 +12,8 @@ class QCircuit(ABC):
 
 # A job class should be the counter part of a job entry on the Quantum circuit database
 class Job(ABC):
+    jib: int
+    status: str
     args: Dict[str, Any]
 
     def __init__(self) -> None:

@@ -1,5 +1,5 @@
 from typing import List
-from qos.database import database as db
+import qos.database as db
 from qos.types import Backend, QCircuit
 
 from qos.engines.scheduler import Scheduler

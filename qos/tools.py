@@ -1,8 +1,9 @@
 from typing import Dict, Any
 import yaml
 import pdb
-import qos.database
-from qos.backends.types import QPUInfo
+import qos.database as db
+from qos.types import Job
+from qos.backends.types import QPU
 
 
 class dict2obj(object):
@@ -36,9 +37,30 @@ class dict2obj_bytes(object):
                 )
 
 
-def redisToObj(redisDict: Dict[str, Any]):
-    job = dict2obj_bytes(redisDict)
-    return job
+def redisToQPU(qid: int, redisDict: Dict[str, Any]) -> QPU:
+    decodedDict = decodeRedisDict(redisDict)
+    newqpuInfo = QPU()
+    newqpuInfo.id = qid
+    newqpuInfo.name = decodedDict["name"]
+    decodedDict.pop("name")
+    newqpuInfo.args = decodedDict
+    return newqpuInfo
+
+
+def decodeRedisDict(redisDict: Dict[str, Any]) -> Dict[str, Any]:
+    newDict = {}
+    for key, value in redisDict.items():
+        newDict[key.decode("utf-8")] = value.decode("utf-8")
+    return newDict
+
+
+def redisToJob(jid: int, redisDict: Dict[str, Any]) -> QPU:
+    newJob = Job()
+    newJob.id = jid
+    newJob.status = redisDict["status"]
+    redisDict.pop("status")
+    newJob.args = redisDict
+    return newJob
 
 
 def load_qpus(qpu_file: str):
@@ -46,18 +68,15 @@ def load_qpus(qpu_file: str):
         data = yaml.safe_load(qpuList)
 
     # Print the data dictionary
-    print(data)
-    print("\n")
-
-    pdb.set_trace()
+    # pdb.set_trace()
 
     # data = dict2obj(data)
 
     for i in [j for j in data["qpus"]]:
-        newQPU = QPUInfo()
+        newQPU = QPU()
         for x, y in i.items():
             newQPU.args[x] = y
 
-        qos.database.addQPU(newQPU)
+        db.addQPU(newQPU)
 
     return 0

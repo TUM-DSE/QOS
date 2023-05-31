@@ -11,17 +11,26 @@ class Backend(ABC):
 
 
 # A job class should be the counter part of a job entry on the Quantum circuit database
-class QPU(Backend):
+class QPU(ABC):
+    id: int
     name: str
-    pass
-
-
-class QPUInfo(ABC):
-    qid: int
     args: Dict[str, Any]
 
     def __init__(self) -> None:
+        self.name = ""
+        self.id = -1
         self.args = {}
+
+    def __str__(self) -> str:
+        return (
+            "QPU\n id: \t"
+            + str(self.id)
+            + "\n name: \t"
+            + self.name
+            + "\n args: \t"
+            + str(self.args)
+            + "\n"
+        )
 
 
 class Simulator(Backend):

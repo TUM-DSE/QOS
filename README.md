@@ -9,6 +9,23 @@ The following logging levels are used.
 ![logging levels](https://www.loggly.com/wp-content/uploads/2022/09/logging-levels.png)
 
 
+# Development Log
+
+## 
+
+
+
+## Database
+
+The database uses a Redis database, before running QOS the redis server needs to be started with `redis-server ./redis.conf`
+
+The database stores all the available QPUs in hash datastrutures, the hashes identification keys are the QPU's ids. To easly find unsued ids, they are also store is a set "qpuList".
+The same applies to the jobs, job hashes and "jobList"
+
+
+
+
+
 
 
 

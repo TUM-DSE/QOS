@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 from qos.types import Job
 from .engines.transformer import Transformer
-from qos.database import database
+import qos.database as database
 import redis
 import logging
 import qos.tools
@@ -10,7 +10,6 @@ import qos.tools
 class QOS:
     """Main API that will be exposed to the user"""
 
-    db: database
     transformer: Transformer
     logger = logging.getLogger(__name__)
 
@@ -26,7 +25,14 @@ class QOS:
         self.transformer = Transformer()
         self.logger.log(10, "QOS API initialized")
 
-        qpus = qos.tools.load_qpus("qpus_available")
+        qos.tools.load_qpus("qpus_available")
+
+        print("Available QPUs:")
+        for i in range(1, 5):
+            print(database.getQPU(i))
+
+        print("Done")
+        exit(0)
 
     def run(self, job: Job) -> int:
 

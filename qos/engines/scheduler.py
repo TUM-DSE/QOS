@@ -6,7 +6,7 @@ from qos.backends.test_qpu import TestQPU
 from qos.backends.ibmq import IBMQPU
 from qos.types import Engine, Job
 from qiskit.circuit import QuantumCircuit
-from qos.database import database as db
+import qos.database as db
 import json
 import pdb
 

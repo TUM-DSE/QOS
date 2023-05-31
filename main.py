@@ -7,8 +7,6 @@ from qiskit.circuit.random import random_circuit
 import logging
 import json
 
-# redis_server = subprocess.Popen(["redis-server"])
-
 # This is an sample client's code
 
 
@@ -41,5 +39,3 @@ def main():
 
 
 main()
-
-# redis_server.terminate()

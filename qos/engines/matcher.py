@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 from qos.types import Engine, Job
 from qos.engines.multiprogrammer import Multiprogrammer
-from qos.database import database as db
+import qos.database as db
 
 
 class Matcher(Engine):
