@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 import json
 import os
-from qos.types import Engine, Job
+from qos.types import Engine, Job, QC
 from qos.backends.types import QPU
 import redis
 from qos.tools import redisToQPU, redisToJob
@@ -11,6 +11,10 @@ MAXJOBS = 1000
 
 def qpuIdGen(qid: int):
     return "qpu" + str(qid)
+
+
+def qcIdGen(qid: int):
+    return "qc" + str(qid)
 
 
 def jobIdGen(qid: int):
@@ -66,11 +70,22 @@ def addQPU(qpu: QPU) -> int:
         newId = db.incr("qpuCounter")
         qpuId = qpuIdGen(newId)
         # Add the qpu to the db
-        with redis.Redis() as db:
-            for a, b in qpu.args.items():
-                db.hset(qpuId, a, b)
+        for a, b in qpu.args.items():
+            db.hset(qpuId, a, b)
 
-        return newId
+    return newId
+
+
+def addQC(qc: QC) -> int:
+
+    with redis.Redis() as db:
+        newId = db.incr("qcCounter")
+        QCId = qcIdGen(newId)
+        # Add the qpu to the db
+        for a, b in qc.args.items():
+            db.hset(QCId, a, b)
+
+    return newId
 
 
 def getQPU(id: int) -> QPU:

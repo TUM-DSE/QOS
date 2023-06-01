@@ -4,15 +4,18 @@ import sys
 from threading import Thread, Lock, Semaphore
 
 
-# This should contain any kind of circuit qiskit circuit or circ, etc
-class QCircuit(ABC):
+# This should contain any kind of circuit, qiskit circuit or circ, etc
+class QC(ABC):
+    id: int
+    type: str
+    args: Dict[str, Any]
     _circuit: Any
     pass
 
 
 # A job class should be the counter part of a job entry on the Quantum circuit database
 class Job(ABC):
-    jib: int
+    ib: int
     status: str
     args: Dict[str, Any]
 

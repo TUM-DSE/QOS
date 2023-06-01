@@ -11,27 +11,23 @@ The following logging levels are used.
 
 # Development Log
 
-## 
-
-
-
 ## Database
 
 The database uses a Redis database, before running QOS the redis server needs to be started with `redis-server ./redis.conf`
+
+Since the database data is stored in a file in the background and at exit to clean the database do (with the redis server running):
+
+```
+redis-cli
+flushall
+```
 
 The database stores all the available QPUs in hash datastrutures, the hashes identification keys are the QPU's ids. To easly find unsued ids, they are also store is a set "qpuList".
 The same applies to the jobs, job hashes and "jobList"
 
 
 
-
-
-
-
-
-
-
-
+---
 
 
 

@@ -4,6 +4,8 @@ from .engines.transformer import Transformer
 import qos.database as database
 import redis
 import logging
+from qos.types import QC
+from qiskit import QuantumCircuit
 import qos.tools
 
 
@@ -31,18 +33,23 @@ class QOS:
         for i in range(1, 5):
             print(database.getQPU(i))
 
-        print("Done")
-        exit(0)
+    def run(self, circuit: Any) -> int:
 
-    def run(self, job: Job) -> int:
+        newQC = QC(circuit)
+
+        if type(circuit) == QuantumCircuit:
+            newQC.type = "qiskit"
 
         # Adds the job to the database
-        newJobId = database.addJob(job)
+        QCId = database.addQC(newQC)
+        newQC.id = QCId
+
         self.logger.log(10, "New job added to the database")
 
-        # Sends the job to the transformer
-        self.transformer.submit(newJobId)
-        return newJobId
+        # Sends the job to the transformer ----------------- This submittion needs to be done in another thread or this will block the API
+        self.transformer.submit(newQC)
+
+        return QCId
 
     def results(self, jobId: int) -> None:
 
