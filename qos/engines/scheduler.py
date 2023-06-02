@@ -4,7 +4,7 @@ from threading import Thread, Lock, Semaphore
 import logging
 from qos.backends.test_qpu import TestQPU
 from qos.backends.ibmq import IBMQPU
-from qos.types import Engine, Job
+from qos.types import Engine, Job, QCircuit
 from qiskit.circuit import QuantumCircuit
 import qos.database as db
 import json
@@ -23,10 +23,9 @@ class Scheduler(Engine):
         # new_thread.join()  # After registering the task exit the thread
         pass
 
-    def submit(self, jobId: int) -> None:
+    def submit(self, job: Job) -> None:
 
-        self.logger.log(10, "Got new job")
-        job = db.getJob(jobId)
+        self.logger.log(10, "Got new circuit to be scheduled")
 
         if job.provider == "test":
             qpu = TestQPU()
@@ -38,6 +37,8 @@ class Scheduler(Engine):
             print(circuit)
             trans_circuit = qpu.transpile(circuit, job.backend)
             results = qpu.run(trans_circuit, job.backend, job.shots).get_counts()
+
+        # Here the scheduler would do its job
 
         db.setJobField(jobId, "status", "DONE")
         db.setJobField(jobId, "results", json.dumps(results))

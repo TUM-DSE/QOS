@@ -1,5 +1,5 @@
 from qos.api import QOS
-from qos.types import Job, QC
+from qos.types import Job, QCircuit
 from time import sleep
 import pdb
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
@@ -19,8 +19,6 @@ def main():
 
     qos = QOS()
 
-    qcircuit = QC()
-
     # This is a random circuit, the results should be counts split equally on the values 0000, 0011, 1100, 1111
     qreg_q = QuantumRegister(4, "q")
     circuit = QuantumCircuit(qreg_q)
@@ -31,9 +29,15 @@ def main():
     circuit.cx(qreg_q[2], qreg_q[3])
     circuit.measure_all()
 
-    newJobId = qos.run(newJob)
+    logger.log(10, "Submitting circuit")
+
+    newJobId = qos.run(circuit)
+
+    logger.log(10, "Circuit submitted")
 
     results = qos.results(newJobId)
+
+    logger.log(10, "Results tentative fetch")
 
     while results == 1:
         if results == 1:
@@ -42,6 +46,7 @@ def main():
         sleep(0.5)
 
         results = qos.results(newJobId)
+        logger.log(10, "Results tentative fetch")
 
     print(results)
 

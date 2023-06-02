@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 import json
 import os
-from qos.types import Engine, Job, QC
+from qos.types import Engine, Job, QCircuit
 from qos.backends.types import QPU
 import redis
 from qos.tools import redisToQPU, redisToJob
@@ -76,7 +76,7 @@ def addQPU(qpu: QPU) -> int:
     return newId
 
 
-def addQC(qc: QC) -> int:
+def addQC(qc: QCircuit) -> int:
 
     with redis.Redis() as db:
         newId = db.incr("qcCounter")

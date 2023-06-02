@@ -25,6 +25,9 @@ flushall
 The database stores all the available QPUs in hash datastrutures, the hashes identification keys are the QPU's ids. To easly find unsued ids, they are also store is a set "qpuList".
 The same applies to the jobs, job hashes and "jobList"
 
+The database will store three structures: Jobs, Circuits and QPUs
+
+### Jobs
 
 
 ---

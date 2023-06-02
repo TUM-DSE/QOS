@@ -4,9 +4,10 @@ from .engines.transformer import Transformer
 import qos.database as database
 import redis
 import logging
-from qos.types import QC
+from qos.types import QCircuit
 from qiskit import QuantumCircuit
 import qos.tools
+import threading
 
 
 class QOS:
@@ -14,6 +15,9 @@ class QOS:
 
     transformer: Transformer
     logger = logging.getLogger(__name__)
+    workers: List[
+        threading.Thread
+    ]  # I think we wont be needing this, the API just issues the job and does nothing else with it
 
     def __init__(self) -> None:
         # self.db = database()
@@ -26,6 +30,7 @@ class QOS:
 
         self.transformer = Transformer()
         self.logger.log(10, "QOS API initialized")
+        self.workers = []
 
         qos.tools.load_qpus("qpus_available")
 
@@ -35,10 +40,15 @@ class QOS:
 
     def run(self, circuit: Any) -> int:
 
-        newQC = QC(circuit)
+        newQC = QCircuit()
+        newJob = Job()
 
         if type(circuit) == QuantumCircuit:
             newQC.type = "qiskit"
+
+        newJob.circuit = circuit.qasm()
+
+        print("Circuit:", newJob.circuit)
 
         # Adds the job to the database
         QCId = database.addQC(newQC)
@@ -46,8 +56,12 @@ class QOS:
 
         self.logger.log(10, "New job added to the database")
 
-        # Sends the job to the transformer ----------------- This submittion needs to be done in another thread or this will block the API
-        self.transformer.submit(newQC)
+        self.workers.append(
+            threading.Thread(target=self.transformer_submit, args=(newQC,))
+        )
+
+        self.logger.log(10, "Opening new thread, sumbitting QC to transformer")
+        self.workers[-1].start()
 
         return QCId
 
@@ -59,3 +73,6 @@ class QOS:
             return database.getJobField(jobId, "results")
         else:
             return 1
+
+    def transformer_submit(self, qc: QCircuit) -> None:
+        self.transformer.submit(qc)

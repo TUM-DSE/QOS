@@ -1,6 +1,6 @@
 from typing import List
 import qos.database as db
-from qos.types import Backend, QCircuit
+from qos.types import Backend, QCircuit, Job
 
 from qos.engines.scheduler import Scheduler
 
@@ -9,14 +9,12 @@ class Multiprogrammer:
     def __init__(self) -> None:
         pass
 
-    def submit(self, jobId: int):
+    def submit(self, job: Job):
 
-        job = db.getJob(jobId)
-
-        sched = Scheduler()
         # Here the multiprogramming engine would do its job
 
-        sched.submit(jobId)
+        sched = Scheduler()
+        sched.submit(job)
 
         return 0
 
