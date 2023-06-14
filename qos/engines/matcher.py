@@ -24,7 +24,60 @@ class Matcher(Engine):
             backend = eval(qpu_name)()
             self._qpus.append(backend)
 
-    def mapomatic_default(self, circuit : QuantumCircuit) -> List:
+    def trivialConstFunction(self, circuit: QuantumCircuit, layouts, backend):
+
+        print(dir(backend.properties()))
+
+        return []
+    
+    def accurate_cost_func(circ, layouts, backend):
+        out = []
+        props = backend.properties()
+        dt = backend.configuration().dt
+        num_qubits = backend.configuration().num_qubits
+        t1s = [props.qubit_property(qq, 'T1')[0] for qq in range(num_qubits)]
+        t2s = [props.qubit_property(qq, 'T2')[0] for qq in range(num_qubits)]
+        for layout in layouts:
+            sch_circ = transpile(circ, backend, initial_layout=layout,
+                                optimization_level=0, scheduling_method='alap')
+            error = 0
+            fid = 1
+            touched = set()
+            for item in sch_circ._data:
+                if item[0].name == 'cx':
+                    q0 = sch_circ.find_bit(item[1][0]).index
+                    q1 = sch_circ.find_bit(item[1][1]).index
+                    fid *= (1-props.gate_error('cx', [q0, q1]))
+                    touched.add(q0)
+                    touched.add(q1)
+
+                elif item[0].name in ['sx', 'x']:
+                    q0 = sch_circ.find_bit(item[1][0]).index
+                    fid *= 1-props.gate_error(item[0].name, q0)
+                    touched.add(q0)
+
+                elif item[0].name == 'measure':
+                    q0 = sch_circ.find_bit(item[1][0]).index
+                    fid *= 1-props.readout_error(q0)
+                    touched.add(q0)
+
+                elif item[0].name == 'delay':
+                    q0 = sch_circ.find_bit(item[1][0]).index
+                    # Ignore delays that occur before gates
+                    # This assumes you are in ground state and errors
+                    # do not occur.
+                    if q0 in touched:
+                        time = item[0].duration * dt
+                        fid *= 1-idle_error(time, t1s[q0], t2s[q0])
+
+            error = 1-fid
+            out.append((layout, error))
+            
+        return out
+
+
+    
+    def match(self, circuit : QuantumCircuit, cost_function=None) -> List:
         
         try:
             trans_qc = transpile(circuit, self._qpus[0], optimization_level=3)
@@ -33,7 +86,7 @@ class Matcher(Engine):
 
         small_qc = mm.deflate_circuit(trans_qc)
 
-        return mm.best_overall_layout(small_qc, self._qpus, successors=True)
+        return mm.best_overall_layout(small_qc, self._qpus, successors=True, cost_function=cost_function)
 
     def submit(self, job : Job) -> int:
 
@@ -41,7 +94,7 @@ class Matcher(Engine):
 
         qc = QuantumCircuit.from_qasm_str(job.circuit)
 
-        print(self.mapomatic_default(qc))
+        print(self.match(qc, cost_function=self.trivialConstFunction))
 
         print("-------------")
         multiprog = Multiprogrammer()
