@@ -8,7 +8,7 @@ class Transformer(Engine):
     def __init__(self) -> None:
         pass
 
-    def submit(self, circuits: List[QCircuit]) -> int:
+    def submit(self, job: Job) -> int:
 
         # Here the transformer would do its job
 
