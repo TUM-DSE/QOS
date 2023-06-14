@@ -27,6 +27,7 @@ class Scheduler(Engine):
 
         self.logger.log(10, "Got new circuit to be scheduled")
 
+        """
         if job.provider == "test":
             qpu = TestQPU()
             results = qpu.run()
@@ -37,10 +38,18 @@ class Scheduler(Engine):
             print(circuit)
             trans_circuit = qpu.transpile(circuit, job.backend)
             results = qpu.run(trans_circuit, job.backend, job.shots).get_counts()
+        """
 
         # Here the scheduler would do its job
 
-        db.setJobField(jobId, "status", "DONE")
-        db.setJobField(jobId, "results", json.dumps(results))
+        results = {"test": 43}
+
+        db.setJobField(job.id, "status", "DONE")
+        db.setJobField(job.id, "results", json.dumps(results))
+
+        stat = db.getJobField(job.id, "status").decode("utf-8")
+
+        print("Status:", stat)
+        exit()
 
         return 0

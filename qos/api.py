@@ -54,25 +54,29 @@ class QOS:
         QCId = database.addQC(newQC)
         newQC.id = QCId
 
+        # Adds the job to the database
+        jobId = database.addJob(newJob)
+        newJob.id = jobId
+
         self.logger.log(10, "New job added to the database")
 
         self.workers.append(
-            threading.Thread(target=self.transformer_submit, args=(newQC,))
+            threading.Thread(target=self.transformer_submit, args=(newJob,))
         )
 
         self.logger.log(10, "Opening new thread, sumbitting QC to transformer")
         self.workers[-1].start()
 
-        return QCId
+        return jobId
 
     def results(self, jobId: int) -> None:
 
-        stat = database.getJobField(jobId, "status").decode("utf-8")
+        stat = database.getJobField(jobId, "status")
 
-        if stat == "DONE":
+        if stat == b"DONE":
             return database.getJobField(jobId, "results")
         else:
             return 1
 
-    def transformer_submit(self, qc: QCircuit) -> None:
-        self.transformer.submit(qc)
+    def transformer_submit(self, job: Job) -> None:
+        self.transformer.submit(job)
