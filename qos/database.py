@@ -75,6 +75,12 @@ def addQPU(qpu: QPU) -> int:
 
     return newId
 
+def setQPUField(id: int, key: str, value: float):
+
+    qpuId = qpuIdGen(id)
+    with redis.Redis() as db:
+        db.hset(qpuId, key, value)
+    return 0
 
 def addQC(qc: QCircuit) -> int:
 
