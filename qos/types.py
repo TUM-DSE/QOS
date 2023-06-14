@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 import sys
 from threading import Thread, Lock, Semaphore
+from qos.backends.types import QPU
 
 
 # This should contain any kind of circuit, qiskit circuit or circ, etc
@@ -20,6 +21,7 @@ class QCircuit(ABC):
 class Job(ABC):
     id: int
     status: str
+    qpu: QPU
     circuits: List[QCircuit]
     args: Dict[str, Any]
 

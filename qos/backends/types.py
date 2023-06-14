@@ -14,6 +14,9 @@ class Backend(ABC):
 class QPU(ABC):
     id: int
     name: str
+    provider: str
+    backend: str
+    shots: int
     args: Dict[str, Any]
 
     def __init__(self) -> None:

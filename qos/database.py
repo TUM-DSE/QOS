@@ -75,6 +75,7 @@ def addQPU(qpu: QPU) -> int:
 
     return newId
 
+
 def setQPUField(id: int, key: str, value: float):
 
     qpuId = qpuIdGen(id)
@@ -82,10 +83,12 @@ def setQPUField(id: int, key: str, value: float):
         db.hset(qpuId, key, value)
     return 0
 
+
 def getLastQPUid():
     with redis.Redis() as db:
         max_qpu_id = db.get("qpuCounter")
         return redisToInt(max_qpu_id)
+
 
 def addQC(qc: QCircuit) -> int:
 
@@ -106,6 +109,15 @@ def getQPU(id: int) -> QPU:
         all = db.hgetall(qpuId)
         qpu = redisToQPU(id, all)
     return qpu
+
+
+def getAllQPU() -> List[QPU]:
+
+    qpus = []
+    with redis.Redis() as db:
+        for i in range(1, redisToInt(db.get("qpuCounter")) + 1):
+            qpus.append(getQPU(i))
+    return qpus
 
 
 def dumpDB(self):

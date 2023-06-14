@@ -43,7 +43,7 @@ def main():
         if results == 1:
             print("Job is still running")
 
-        sleep(0.5)
+        sleep(1)
 
         results = qos.results(newJobId)
         logger.log(10, "Results tentative fetch")

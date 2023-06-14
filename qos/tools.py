@@ -41,6 +41,7 @@ def redisToQPU(qid: int, redisDict: Dict[str, Any]) -> QPU:
     decodedDict = decodeRedisDict(redisDict)
     newqpuInfo = QPU()
     newqpuInfo.id = qid
+    newqpuInfo.provider = decodedDict["provider"]
     newqpuInfo.name = decodedDict["name"]
     decodedDict.pop("name")
     newqpuInfo.args = decodedDict
@@ -51,6 +52,7 @@ def redisToInt(redisInt) -> int:
     toReturn = redisInt.decode("utf-8")
 
     return int(toReturn)
+
 
 def decodeRedisDict(redisDict: Dict[str, Any]) -> Dict[str, Any]:
     newDict = {}
