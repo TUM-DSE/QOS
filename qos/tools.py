@@ -4,6 +4,8 @@ import pdb
 import qos.database as db
 from qos.types import Job
 from qos.backends.types import QPU
+from qiskit.providers.fake_provider import FakeProviderForBackendV2
+import json
 
 
 class dict2obj(object):
@@ -77,6 +79,10 @@ def load_qpus(qpu_file: str):
         for x, y in i.items():
             newQPU.args[x] = y
 
-        db.addQPU(newQPU)
+        id = db.addQPU(newQPU)
+
+        qpu = FakeProviderForBackendV2.getBackend(newQPU.name)
+
+        db.setQPUField(id, "backend", json.dumps(qpu))
 
     return 0
