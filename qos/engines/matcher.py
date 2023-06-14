@@ -24,7 +24,7 @@ class Matcher(Engine):
             backend = eval(qpu_name)()
             self._qpus.append(backend)
 
-    def mapomatic_default(circuit : QuantumCircuit) -> List:
+    def mapomatic_default(self, circuit : QuantumCircuit) -> List:
         
         try:
             trans_qc = transpile(circuit, self._qpus[0], optimization_level=3)
@@ -39,7 +39,9 @@ class Matcher(Engine):
 
         # Here the matching engine would do its job
 
-        print(self.mapomatic_default(QuantumCircuit.from_qasm_str(job.circuit)))
+        qc = QuantumCircuit.from_qasm_str(job.circuit)
+
+        print(self.mapomatic_default(qc))
 
         print("-------------")
         multiprog = Multiprogrammer()
