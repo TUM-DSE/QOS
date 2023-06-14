@@ -4,7 +4,7 @@ import os
 from qos.types import Engine, Job, QCircuit
 from qos.backends.types import QPU
 import redis
-from qos.tools import redisToQPU, redisToJob
+from qos.tools import redisToQPU, redisToJob, redisToInt
 
 MAXJOBS = 1000
 
@@ -81,6 +81,11 @@ def setQPUField(id: int, key: str, value: float):
     with redis.Redis() as db:
         db.hset(qpuId, key, value)
     return 0
+
+def getLastQPUid():
+    with redis.Redis() as db:
+        max_qpu_id = db.get("qpuCounter")
+        return redisToInt(max_qpu_id)
 
 def addQC(qc: QCircuit) -> int:
 

@@ -4,8 +4,6 @@ import pdb
 import qos.database as db
 from qos.types import Job
 from qos.backends.types import QPU
-from qiskit.providers.fake_provider import FakeProviderForBackendV2
-import json
 
 
 class dict2obj(object):
@@ -49,6 +47,11 @@ def redisToQPU(qid: int, redisDict: Dict[str, Any]) -> QPU:
     return newqpuInfo
 
 
+def redisToInt(redisInt) -> int:
+    toReturn = redisInt.decode("utf-8")
+
+    return int(toReturn)
+
 def decodeRedisDict(redisDict: Dict[str, Any]) -> Dict[str, Any]:
     newDict = {}
     for key, value in redisDict.items():
@@ -80,9 +83,5 @@ def load_qpus(qpu_file: str):
             newQPU.args[x] = y
 
         id = db.addQPU(newQPU)
-
-        qpu = FakeProviderForBackendV2.getBackend(newQPU.name)
-
-        db.setQPUField(id, "backend", json.dumps(qpu))
 
     return 0
