@@ -6,6 +6,7 @@ from qiskit.providers.fake_provider import *
 import mapomatic as mm
 import redis
 from qiskit import transpile, QuantumCircuit
+import numpy as np
 
 class Matcher(Engine):
 
@@ -25,12 +26,15 @@ class Matcher(Engine):
             self._qpus.append(backend)
 
     def trivialConstFunction(self, circuit: QuantumCircuit, layouts, backend):
+        fid = 1.0
 
-        print(dir(backend.properties()))
+        for key, value in circuit.count_ops().items():
+            fid = 1
+        
 
         return []
     
-    def accurate_cost_func(circ, layouts, backend):
+    def accurate_cost_func(self, circ, layouts, backend):
         out = []
         props = backend.properties()
         dt = backend.configuration().dt
@@ -68,14 +72,28 @@ class Matcher(Engine):
                     # do not occur.
                     if q0 in touched:
                         time = item[0].duration * dt
-                        fid *= 1-idle_error(time, t1s[q0], t2s[q0])
+                        fid *= 1-self.idle_error(time, t1s[q0], t2s[q0])
 
             error = 1-fid
             out.append((layout, error))
             
         return out
 
-
+    def idle_error(self, time, t1, t2):
+        """Compute the approx. idle error from T1 and T2
+        Parameters:
+            time (float): Delay time in sec
+            t1 (float): T1 time in sec
+            t2, (float): T2 time in sec
+        Returns:
+            float: Idle error
+        """
+        t2 = min(t1, t2)
+        rate1 = 1/t1
+        rate2 = 1/t2
+        p_reset = 1-np.exp(-time*rate1)
+        p_z = (1-p_reset)*(1-np.exp(-time*(rate2-rate1)))/2
+        return p_z + p_reset
     
     def match(self, circuit : QuantumCircuit, cost_function=None) -> List:
         
@@ -94,7 +112,9 @@ class Matcher(Engine):
 
         qc = QuantumCircuit.from_qasm_str(job.circuit)
 
-        print(self.match(qc, cost_function=self.trivialConstFunction))
+        print(self.match(qc, cost_function=None))
+        print("-------------------------")
+        print(self.match(qc, cost_function=self.accurate_cost_func))
 
         print("-------------")
         multiprog = Multiprogrammer()
