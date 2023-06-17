@@ -8,9 +8,56 @@ import redis
 from qiskit import transpile, QuantumCircuit
 import numpy as np
 
+gates = {
+    "u3" : 1,
+    "u2" : 1,
+    "u1" : 1,
+    "cx" : 2,
+    "id" : 1,
+    "u0" : 1,
+    "u" : 1,
+    "p" : 1,
+    "x" : 1,
+    "y" : 1,
+    "z" : 1,
+    "h" : 1,
+    "s" : 1,
+    "sdg" : 1,
+    "t" : 1,
+    "tdg" : 1,
+    "rx" : 1,
+    "ry" : 1,
+    "rz" : 1,
+    "sx" : 1,
+    "sxdg" : 1,
+    "cz" : 1,
+    "cy" : 1,
+    "swap" : 1,
+    "ch" : 1,
+    "ccx" : 1,
+    "cswap" : 1,
+    "crx" : 1,
+    "cry" : 1,
+    "crz" : 1,
+    "cu1" : 1,
+    "cp" : 1,
+    "cu3" : 1,
+    "csx" : 1,
+    "cu" : 1,
+    "rxx" : 1,
+    "rzz" : 1,
+    "rccx" : 1,
+    "rc3x" : 1,
+    "c3x" : 1,
+    "c3sqrtx" : 1,
+    "c4x" : 1
+}
+
+
 class Matcher(Engine):
 
     _qpus = []
+    _qpu_properties = {}
 
     def __init__(self) -> None:
         max_qpu_id = 0
@@ -23,16 +70,59 @@ class Matcher(Engine):
                 continue
             
             backend = eval(qpu_name)()
+            self._qpu_properties[backend.name()] = {}
+            self._qpu_properties[backend.name()]["medianReadoutError"] = self.getMedianReadoutError(backend)
+
+            basis_gates = backend.configuration().basis_gates
+            for g in basis_gates:
+                self._qpu_properties[backend.name()][g] = self.getMedianGateError(backend, g)
+
             self._qpus.append(backend)
 
+    def getMedianReadoutError(self, backend):
+        props = backend.properties()
+        readouts = []
+
+        for i in range(backend.configuration().n_qubits):
+            readouts.append(props.readout_error(i))
+
+        return np.median(readouts)
+
+    
+    def getMedianGateError(self, backend, gate):
+        props = backend.properties()
+        coupling_map = backend.configuration().coupling_map
+        qubits = [i for i in range(backend.configuration().n_qubits)]
+        errors = []
+
+        if gate == 'reset':
+            return 0.0
+
+        if gates[gate] == 1:    
+            for q in qubits:
+             errors.append(props.gate_error(gate, q))
+        else:
+            for pair in coupling_map:
+                errors.append(props.gate_error(gate, pair))
+        
+        return np.median(errors)
+    
     def trivialConstFunction(self, circuit: QuantumCircuit, layouts, backend):
         fid = 1.0
+        error = 0
 
         for key, value in circuit.count_ops().items():
-            fid = 1
+            if key == 'measure' or key == 'barrier':
+                continue
+            for v in range(value):
+                fid *= (1 - self._qpu_properties[backend.name()][key])
         
+        for i in range(circuit.num_qubits):
+            fid *= (1 - self._qpu_properties[backend.name()]["medianReadoutError"])
 
-        return []
+        error = 1 - fid
+
+        return [(layouts[0], error)]
     
     def accurate_cost_func(self, circ, layouts, backend):
         out = []
@@ -112,6 +202,8 @@ class Matcher(Engine):
 
         qc = QuantumCircuit.from_qasm_str(job.circuit)
 
+        print(self.match(qc, cost_function=self.trivialConstFunction))
+        print("-------------------------")
         print(self.match(qc, cost_function=None))
         print("-------------------------")
         print(self.match(qc, cost_function=self.accurate_cost_func))
