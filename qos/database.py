@@ -4,9 +4,11 @@ import os
 from qos.types import Engine, Job, QCircuit
 from qos.backends.types import QPU
 import redis
+import pdb
 from qos.tools import redisToQPU, redisToJob, redisToInt
 
 MAXJOBS = 1000
+WINDOWSIZE = 5
 
 
 def qpuIdGen(qid: int):
@@ -31,6 +33,7 @@ def addJob(job: Job) -> int:
     with redis.Redis() as db:
         newId = db.incr("jobCounter")  # To start from 0
         jobId = jobIdGen(newId)
+
         for a, b in job.args.items():
             db.hset(jobId, a, b)
     return newId
@@ -58,6 +61,7 @@ def getJobField(id: int, field: str):
 def getJob(id: int):
 
     jobId = jobIdGen(id)
+    # pdb.set_trace()
     with redis.Redis() as db:
         all = db.hgetall(jobId)
         job = redisToJob(id, all)
@@ -102,6 +106,15 @@ def addQC(qc: QCircuit) -> int:
     return newId
 
 
+def getQPU_fromname(name: str) -> QPU:
+    with redis.Redis() as db:
+        for i in range(1, redisToInt(db.get("qpuCounter")) + 1):
+            qpu = getQPU(i)
+            if qpu.alias == name:
+                return qpu
+    return None
+
+
 def getQPU(id: int) -> QPU:
 
     qpuId = qpuIdGen(id)
@@ -120,12 +133,45 @@ def getAllQPU() -> List[QPU]:
     return qpus
 
 
+def windowCounter():
+    with redis.Redis() as db:
+        return redisToInt(db.get("windowCounter"))
+
+
 def dumpDB(self):
     pass
 
 
 def deleteJob(self, qid: int):
     pass
+
+
+def moveWindow(self):
+    with redis.Redis() as db:
+        db.decr("windowCounter")
+        db.lpop("window")
+    return
+
+
+def addToWindow(self, job: Job):
+    if windowCounter() == WINDOWSIZE:
+        moveWindow()
+
+    with redis.Redis() as db:
+        db.lpush("window", job.id)
+    pass
+
+
+def initWindow(self):
+    with redis.Redis() as db:
+        db.set("windowCounter", 0)
+    return
+
+
+def currentWindow() -> List[Job]:
+    with redis.Redis() as db:
+        window = db.lrange("window", 0, -1)
+    return window
 
 
 # Not used, maybe for future use

@@ -8,6 +8,7 @@ from qos.types import QCircuit
 from qiskit import QuantumCircuit
 import qos.tools
 import threading
+import pdb
 
 
 class QOS:
@@ -74,9 +75,14 @@ class QOS:
         stat = database.getJobField(jobId, "status")
 
         if stat == b"DONE":
+            job = database.getJob(jobId)
+            pdb.set_trace()
+            # Probably now we would process the results from the subjobs and return the final job result
+            retult = database.getJobField(job.subjobs[0].results, "results")
             return database.getJobField(jobId, "results")
         else:
             return 1
 
     def transformer_submit(self, job: Job) -> None:
+        # pdb.set_trace()
         self.transformer.submit(job)

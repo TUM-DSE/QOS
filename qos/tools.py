@@ -4,6 +4,7 @@ import pdb
 import qos.database as db
 from qos.types import Job
 from qos.backends.types import QPU
+import ast
 
 
 class dict2obj(object):
@@ -43,6 +44,7 @@ def redisToQPU(qid: int, redisDict: Dict[str, Any]) -> QPU:
     newqpuInfo.id = qid
     newqpuInfo.provider = decodedDict["provider"]
     newqpuInfo.name = decodedDict["name"]
+    newqpuInfo.alias = decodedDict["alias"]
     decodedDict.pop("name")
     newqpuInfo.args = decodedDict
     return newqpuInfo
@@ -64,8 +66,28 @@ def decodeRedisDict(redisDict: Dict[str, Any]) -> Dict[str, Any]:
 def redisToJob(jid: int, redisDict: Dict[str, Any]) -> QPU:
     newJob = Job()
     newJob.id = jid
-    newJob.status = redisDict["status"]
-    redisDict.pop("status")
+    # pdb.set_trace()
+
+    newJob.status = redisDict[b"status"]
+
+    try:
+        newJob.matching = ast.literal_eval(redisDict[b"matching"])
+        redisDict.pop(b"matching")
+    except:
+        newJob.matching = []
+    try:
+        newJob.circuit = redisDict[b"circuit"]
+        redisDict.pop(b"circuit")
+    except:
+        newJob.circuit = None
+
+    try:
+        newJob.subjobs = redisDict[b"subjobs"]
+        redisDict.pop(b"subjobs")
+    except:
+        newJob.subjobs = []
+
+    redisDict.pop(b"status")
     newJob.args = redisDict
     return newJob
 

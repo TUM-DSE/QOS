@@ -17,6 +17,7 @@ class QPU(ABC):
     provider: str
     backend: str
     shots: int
+    alias: str
     args: Dict[str, Any]
 
     def __init__(self) -> None:

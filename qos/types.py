@@ -21,13 +21,34 @@ class QCircuit(ABC):
 class Job(ABC):
     id: int
     status: str
-    qpu: QPU
-    circuits: List[QCircuit]
+    assigned_qpu: QPU
+    status: str
+    circuit: List[QCircuit]
+    matching: List[tuple]
     args: Dict[str, Any]
 
     def __init__(self) -> None:
         self.args = {}
         self.subjobs: List[Job] = []
+        self.args["status"] = "PENDING"
+
+    def best_layout(self):
+        return self.matching[0][0]
+
+    def best_qpu(self):
+        return self.matching[0][1]
+
+    def __format__(self, __format_spec: str) -> str:
+        return (
+            "Job id: "
+            + str(self.id)
+            + "\n\t status: \t"
+            + self.status
+            + "\n"
+            + "\n\t #subjobs: "
+            + len(self.subjobs)
+            + "\n"
+        )
 
 
 class Engine(ABC):

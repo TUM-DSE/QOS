@@ -1,13 +1,40 @@
 # qos
 Quantum Operating System
 
+
+# TODO
+
+- [ ] Database should store a list with the ids of the current jobs
+- [ ] Implement window on the database (initWindow, getCurrentWindow, moveWindow, ...)
+- [ ] There should be a way concurrently running the scheduler and executing the circuits on the cloud
+
+
+# Desing decisions
+
+Should the matching engine receive the whole job, schedule the subjobs and then send the whole jobs to the multiprogramming engine
+OR
+The matching engine receives each subjob from the transformer and then submits each subjob to the multiprogamming engine?
+## Arguments
+- If the matching engine receives the whole job every time we want to match a single job we would need to send a job with a single subjob, which is not friendly
+- If the matching engine only receives subjobs it will send subjobs to the multiprogrammer which will only consider merging a single subjob with one of the jobs on the window and not the other subjobs
+
+---
+
+The storing on the database is being done with the hash data type from redis. This works, however seems kind sketchy the way that we are converting from database data to object.
+A Redis hash is basicly a dictionary of strings (a set of string keys with string values).
+Now, on the database adding values to the hash set is relatively straightforward, then converting the hashset to an object we have to convert each key string from the Redis dict to a object attribute
+OR just copy the whole redis dict as a python dictionary of job arguments, which is not that user friendly.
+
+---
+
+
+
 # Logging
 
 Logging something from information messages to critical errors uses the `logging` python library.
 The following logging levels are used.
 
 ![logging levels](https://www.loggly.com/wp-content/uploads/2022/09/logging-levels.png)
-
 
 # Development Log
 
