@@ -7,6 +7,12 @@ from qos.backends.types import QPU
 import ast
 
 
+def debugPrint():
+    subjobs = db.getJobField(1, "subjobs")
+    print(subjobs)
+    return
+
+
 class dict2obj(object):
     def __init__(self, d):
         for k, v in d.items():
@@ -68,10 +74,13 @@ def redisToJob(jid: int, redisDict: Dict[str, Any]) -> QPU:
     newJob.id = jid
     # pdb.set_trace()
 
-    newJob.status = redisDict[b"status"]
+    try:
+        newJob.status = redisDict[b"status"]
+    except:
+        newJob.status = []
 
     try:
-        newJob.matching = ast.literal_eval(redisDict[b"matching"])
+        newJob.matching = ast.literal_eval(redisDict[b"matching"].decode())
         redisDict.pop(b"matching")
     except:
         newJob.matching = []
@@ -82,10 +91,16 @@ def redisToJob(jid: int, redisDict: Dict[str, Any]) -> QPU:
         newJob.circuit = None
 
     try:
-        newJob.subjobs = redisDict[b"subjobs"]
+        newJob.subjobs = ast.literal_eval(redisDict[b"subjobs"].decode())
         redisDict.pop(b"subjobs")
     except:
         newJob.subjobs = []
+
+    try:
+        newJob.shots = redisDict[b"shots"]
+        redisDict.pop(b"shots")
+    except:
+        newJob.shots = -1
 
     redisDict.pop(b"status")
     newJob.args = redisDict

@@ -4,6 +4,8 @@ from qos.types import Engine, Job, QCircuit
 import qos.database as db
 import pdb
 
+from qos.tools import debugPrint
+
 
 class Transformer(Engine):
     def __init__(self) -> None:
@@ -22,7 +24,11 @@ class Transformer(Engine):
         db.setJobField(job.id, "subjobs", str(job.subjobs))
 
         matcher = Matcher()
-        # pdb.set_trace()
         matcher.submit(job)
+
+        print("----------------------------Transformer: ")
+        debugPrint()
+
+        # pdb.set_trace()
 
         return 0

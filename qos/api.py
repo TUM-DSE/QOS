@@ -10,6 +10,8 @@ import qos.tools
 import threading
 import pdb
 
+from qos.tools import debugPrint
+
 
 class QOS:
     """Main API that will be exposed to the user"""
@@ -76,10 +78,11 @@ class QOS:
 
         if stat == b"DONE":
             job = database.getJob(jobId)
-            pdb.set_trace()
             # Probably now we would process the results from the subjobs and return the final job result
-            retult = database.getJobField(job.subjobs[0].results, "results")
-            return database.getJobField(jobId, "results")
+            # pdb.set_trace()
+            # tmpjob = database.getJob(job.subjobs[0])
+            results = database.getJobField(job.subjobs[0], "results").decode()
+            return results
         else:
             return 1
 

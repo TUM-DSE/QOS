@@ -32,23 +32,28 @@ class Scheduler(Engine):
 
         for i in job.subjobs:
 
-            if i.qpu.provider == "test":
+            tmpjob = db.getJob(i)
+            tmpjob.qpu = db.getQPU_fromname(tmpjob.args[b"qpu"].decode())
+
+            if tmpjob.qpu.provider == "test":
                 qpu = TestQPU()
                 results = qpu.run()
-            elif i.qpu.provider == "ibm":
+            elif tmpjob.qpu.provider == "ibm":
                 qpu = IBMQPU()
-                circuit = QuantumCircuit.from_qasm_str(i.circuit)
-                print(i.qpu.name)
+                circuit = QuantumCircuit.from_qasm_str(tmpjob.circuit.decode())
+                print(tmpjob.qpu.name)
                 print(circuit)
-                trans_circuit = qpu.transpile(circuit, i.qpu.name)
-                results = qpu.run(trans_circuit, i.qpu.name, i.shots).get_counts()
+                trans_circuit = qpu.transpile(circuit, tmpjob.qpu.name)
+                results = qpu.run(
+                    trans_circuit, tmpjob.qpu.name, tmpjob.shots
+                ).get_counts()
 
             # Here the scheduler would do its job
 
             self.logger.log(10, "Got results from qpu, updating")
 
-            db.setJobField(i.id, "status", "DONE")
-            db.setJobField(i.id, "results", json.dumps(results))
+            db.setJobField(tmpjob.id, "status", "DONE")
+            db.setJobField(tmpjob.id, "results", json.dumps(results))
 
         # This is not supposed to be like this, this should run on a thread and update the database when the job is done in the cloud
         db.setJobField(job.id, "status", "DONE")
@@ -59,9 +64,10 @@ class Scheduler(Engine):
 
     def _bestqpu_policy(self, new_job: Job) -> None:
         self.logger.log(10, "Running best qpu policy")
-        pdb.set_trace()
+        # pdb.set_trace()
         for i in new_job.subjobs:
             tmpjob = db.getJob(i)
-            tmpjob.qpu = db.getQPU_fromname(tmpjob.best_qpu())
-            tmpjob.shots = 1000
+            tmpjob.args["qpu"] = tmpjob.best_qpu()
+            tmpjob.args["shots"] = 1000
+            db.updateJob(i, tmpjob)
         return

@@ -58,6 +58,14 @@ def getJobField(id: int, field: str):
     return info
 
 
+def updateJob(id: int, job: Job):
+    jobId = jobIdGen(id)
+    with redis.Redis() as db:
+        for a, b in job.args.items():
+            db.hset(jobId, a, b)
+    return 0
+
+
 def getJob(id: int):
 
     jobId = jobIdGen(id)
