@@ -3,12 +3,13 @@ import json
 import os
 from qos.types import Engine, Job, QCircuit
 from qos.backends.types import QPU
+import logging
 import redis
 import pdb
 from qos.tools import redisToQPU, redisToJob, redisToInt
 
 MAXJOBS = 1000
-WINDOWSIZE = 5
+WINDOWSIZE = 3
 
 
 def qpuIdGen(qid: int):
@@ -78,12 +79,17 @@ def getJob(id: int):
 
 def addQPU(qpu: QPU) -> int:
 
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(level=10)
+
     with redis.Redis() as db:
         newId = db.incr("qpuCounter")
         qpuId = qpuIdGen(newId)
         # Add the qpu to the db
         for a, b in qpu.args.items():
             db.hset(qpuId, a, b)
+
+    logger.log(10, "Added QPU to the database")
 
     return newId
 

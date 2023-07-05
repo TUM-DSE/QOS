@@ -4,6 +4,7 @@ from qos.engines.multiprogrammer import Multiprogrammer
 import qos.database as db
 from qiskit.providers.fake_provider import *
 import mapomatic as mm
+import logging
 import pdb
 import redis
 from qiskit import transpile, QuantumCircuit
@@ -196,20 +197,31 @@ class Matcher(Engine):
 
     def match(self, circuit: QuantumCircuit, cost_function=None) -> List:
 
+        logger = logging.getLogger(__name__)
+        logging.basicConfig(level=10)
+
         try:
             trans_qc = transpile(circuit, self._qpus[0], optimization_level=3)
-        except:
-            print("Can't transpile on this backend")
+        except NameError as e:
+            print("Can't transpile on this backend", e)
+            return 1
 
         small_qc = mm.deflate_circuit(trans_qc)
 
-        return mm.best_overall_layout(
+        this = mm.best_overall_layout(
             small_qc, self._qpus, successors=True, cost_function=cost_function
         )
+
+        logger.log(10, "Matched circuit to backend")
+
+        return this
 
     def submit(self, job: Job) -> int:
 
         # Here the matching engine would do its job
+
+        logger = logging.getLogger(__name__)
+        logging.basicConfig(level=10)
 
         for i in job.subjobs:
 
@@ -217,16 +229,17 @@ class Matcher(Engine):
 
             qc = QuantumCircuit.from_qasm_str(tmpjob.circuit.decode("utf-8"))
 
-            print(self.match(qc, cost_function=self.trivialConstFunction))
-            print("-------------------------")
-            print(self.match(qc, cost_function=None))
-            print("-------------------------")
-            this = self.match(qc, cost_function=self.accurate_cost_func)
-            print(this)
-            print("-------------")
+            # print(self.match(qc, cost_function=self.trivialConstFunction))
+            # print("-------------------------")
+            # print(self.match(qc, cost_function=None))
+            # print("-------------------------")
+            this = self.match(qc, cost_function=self.trivialConstFunction)
+            # print(this)
+            # print("-------------")
 
-            tmpjob.matching = this
-            db.setJobField(tmpjob.id, "matching", str(this))
+            if this != 1:
+                tmpjob.matching = this
+                db.setJobField(tmpjob.id, "matching", str(this))
 
         multiprog = Multiprogrammer()
         multiprog.submit(job)
@@ -240,12 +253,12 @@ class Matcher(Engine):
 
         qc = QuantumCircuit.from_qasm_str(job.circuit)
 
-        print(self.match(qc, cost_function=self.trivialConstFunction))
-        print("-------------------------")
-        print(self.match(qc, cost_function=None))
-        print("-------------------------")
-        print(self.match(qc, cost_function=self.accurate_cost_func))
-        print("-------------")
+        # print(self.match(qc, cost_function=self.trivialConstFunction))
+        # print("-------------------------")
+        # print(self.match(qc, cost_function=None))
+        # print("-------------------------")
+        self.match(qc, cost_function=self.accurate_cost_func)
+        # print("-------------")
 
         multiprog = Multiprogrammer()
         multiprog.submit(job)

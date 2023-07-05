@@ -41,8 +41,9 @@ class Scheduler(Engine):
             elif tmpjob.qpu.provider == "ibm":
                 qpu = IBMQPU()
                 circuit = QuantumCircuit.from_qasm_str(tmpjob.circuit.decode())
-                print(tmpjob.qpu.name)
-                print(circuit)
+                # print(tmpjob.qpu.name)
+                # print(circuit)
+                # pdb.set_trace()
                 trans_circuit = qpu.transpile(circuit, tmpjob.qpu.name)
                 results = qpu.run(
                     trans_circuit, tmpjob.qpu.name, tmpjob.shots

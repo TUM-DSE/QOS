@@ -35,12 +35,6 @@ class QOS:
         self.logger.log(10, "QOS API initialized")
         self.workers = []
 
-        qos.tools.load_qpus("qpus_available")
-
-        print("Available QPUs:")
-        for i in range(1, 5):
-            print(database.getQPU(i))
-
     def run(self, circuit: Any) -> int:
 
         newQC = QCircuit()
@@ -51,7 +45,7 @@ class QOS:
 
         newJob.circuit = circuit.qasm()
 
-        print("Circuit:", newJob.circuit)
+        # print("Circuit:", newJob.circuit)
 
         # Adds the job to the database
         QCId = database.addQC(newQC)
@@ -69,6 +63,7 @@ class QOS:
 
         self.logger.log(10, "Opening new thread, sumbitting QC to transformer")
         self.workers[-1].start()
+        self.workers[-1].join()
 
         return jobId
 

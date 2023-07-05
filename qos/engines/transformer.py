@@ -3,6 +3,7 @@ from qos.engines.matcher import Matcher
 from qos.types import Engine, Job, QCircuit
 import qos.database as db
 import pdb
+from time import sleep
 
 from qos.tools import debugPrint
 
@@ -26,8 +27,9 @@ class Transformer(Engine):
         matcher = Matcher()
         matcher.submit(job)
 
-        print("----------------------------Transformer: ")
-        debugPrint()
+        # print("----------------------------Transformer: ")
+        # debugPrint()
+        sleep(0.2)
 
         # pdb.set_trace()
 

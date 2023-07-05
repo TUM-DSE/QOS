@@ -5,6 +5,7 @@ import qos.database as db
 from qos.types import Job
 from qos.backends.types import QPU
 import ast
+import logging
 
 
 def debugPrint():
@@ -105,22 +106,3 @@ def redisToJob(jid: int, redisDict: Dict[str, Any]) -> QPU:
     redisDict.pop(b"status")
     newJob.args = redisDict
     return newJob
-
-
-def load_qpus(qpu_file: str):
-    with open(qpu_file + ".yml", "r") as qpuList:
-        data = yaml.safe_load(qpuList)
-
-    # Print the data dictionary
-    # pdb.set_trace()
-
-    # data = dict2obj(data)
-
-    for i in [j for j in data["qpus"]]:
-        newQPU = QPU()
-        for x, y in i.items():
-            newQPU.args[x] = y
-
-        id = db.addQPU(newQPU)
-
-    return 0
