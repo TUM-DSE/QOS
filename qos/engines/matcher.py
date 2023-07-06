@@ -233,7 +233,7 @@ class Matcher(Engine):
             # print("-------------------------")
             # print(self.match(qc, cost_function=None))
             # print("-------------------------")
-            this = self.match(qc, cost_function=self.trivialConstFunction)
+            this = self.match(qc, cost_function=None)
             # print(this)
             # print("-------------")
 

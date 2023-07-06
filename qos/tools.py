@@ -1,11 +1,15 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 import yaml
 import pdb
 import qos.database as db
 from qos.types import Job
 from qos.backends.types import QPU
 import ast
+from qiskit import QuantumCircuit
 import logging
+from qiskit.converters import circuit_to_dag
+from qiskit.providers.fake_provider import *
+from qiskit.providers.basicaer import QasmSimulatorPy
 
 
 def debugPrint():
@@ -106,3 +110,76 @@ def redisToJob(jid: int, redisDict: Dict[str, Any]) -> QPU:
     redisDict.pop(b"status")
     newJob.args = redisDict
     return newJob
+
+
+def qpuProperties(qpuId: int):
+    tmpqpu = db.getQPU(qpuId)
+    print(tmpqpu.alias)
+    backend = eval(tmpqpu.name)()
+    # backend = db.getQPU_fromname(tmpqpu.alias)
+    return backend.properties().to_dict()
+
+
+def predict_queue_time(qpuId: int) -> int:
+
+    tmpqpu = db.getQPU(qpuId)
+    print(tmpqpu.alias)
+    backend = eval(tmpqpu.name)()
+    # backend = db.getQPU_fromname(tmpqpu.alias)
+    print(backend.properties().to_dict())
+
+    return 0
+
+
+def estimate_execution_time(circ: str, avg_gate_times: Dict, backend: QPU) -> int:
+    exec_time = 0
+    qc = QuantumCircuit.from_qasm_str(circ)
+    qc = backend.transpile(circuit=qc, opt_level=0)
+
+    long_chain_gates = circuit_to_dag(qc).count_ops_longest_path()
+
+    long_chain_gates.pop("measure")
+    long_chain_gates.pop("barrier")
+
+    for i, j in long_chain_gates.items():
+        exec_time += avg_gate_times[i] * j
+
+    return exec_time
+
+
+def average_gate_times(hw_properties: Dict):
+    gate_times = {}
+    gate_counter = {}
+    value_pos = 1
+    for i in hw_properties["gates"]:
+
+        if i["gate"] == "reset":
+            value_pos = 0
+
+        if i["gate"] not in gate_times.keys():
+            gate_times[i["gate"]] = i["parameters"][value_pos]["value"]
+            gate_counter[i["gate"]] = 1
+            continue
+
+        gate_times[i["gate"]] += i["parameters"][value_pos]["value"]
+        gate_counter[i["gate"]] += 1
+
+        value_pos = 1
+
+    for i, j in gate_counter.items():
+        gate_times[i] = gate_times[i] / j
+
+    return gate_times
+
+
+def gate_execution_time(hw_properties: Dict, qbits: List[int], gate: str):
+
+    if gate == "id" or gate == "rz" or gate == "sx" or gate == "x" or gate == "reset":
+        for i in hw_properties["gates"]:
+            if i["qubits"] == qbits and i["gate"] == gate:
+                return i["parameters"][1]["value"]
+
+    else:
+        for i in hw_properties["gates"]:
+            if i["qubits"] == qbits and i["gate"] == gate:
+                return i["parameters"][1]["value"]

@@ -1,6 +1,5 @@
 from typing import Any, Dict, List
 from qos.types import Job
-from threading import Thread, Lock, Semaphore
 import logging
 from qos.backends.test_qpu import TestQPU
 from qos.backends.ibmq import IBMQPU
@@ -9,18 +8,15 @@ from qiskit.circuit import QuantumCircuit
 import qos.database as db
 import json
 import pdb
+from qos.tools import predict_queue_time
 
 
 class Scheduler(Engine):
 
     logger = logging.getLogger(__name__)
-    # runner: Thread
     # policy: scheduler_policy
 
     def __init__(self) -> int:
-        # new_thread = Thread(target=self._register_job)
-        # new_thread.start()
-        # new_thread.join()  # After registering the task exit the thread
         pass
 
     def submit(self, job: Job, policy) -> None:
@@ -56,7 +52,7 @@ class Scheduler(Engine):
             db.setJobField(tmpjob.id, "status", "DONE")
             db.setJobField(tmpjob.id, "results", json.dumps(results))
 
-        # This is not supposed to be like this, this should run on a thread and update the database when the job is done in the cloud
+        # This is not supposed to be like this, this should run on a new process and update the database when the job is done in the cloud
         db.setJobField(job.id, "status", "DONE")
 
         # stat = db.getJobField(job.id, "status").decode("utf-8")
@@ -65,6 +61,21 @@ class Scheduler(Engine):
 
     def _bestqpu_policy(self, new_job: Job) -> None:
         self.logger.log(10, "Running best qpu policy")
+        # pdb.set_trace()
+        for i in new_job.subjobs:
+            tmpjob = db.getJob(i)
+            tmpjob.args["qpu"] = tmpjob.best_qpu()
+            tmpjob.args["shots"] = 1000
+            db.updateJob(i, tmpjob)
+        return
+
+    # This policy follows the following rules:
+    # 1. If the job has more than one subjob, means that it was merged and then use the assigned QPU
+    # 2.
+
+    def _lightload_balance_policy(self, new_job: Job) -> None:
+        self.logger.log(10, "Running best qpu policy")
+        predict_queue_time(1)
         # pdb.set_trace()
         for i in new_job.subjobs:
             tmpjob = db.getJob(i)

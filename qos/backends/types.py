@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 import sys
-from threading import Thread, Lock, Semaphore
+from qiskit import transpile
+from qiskit.providers.fake_provider import *
 
 
 class Backend(ABC):
@@ -35,6 +36,12 @@ class QPU(ABC):
             + str(self.args)
             + "\n"
         )
+
+    def transpile(self, circuit, opt_level=int) -> int:
+
+        if self.provider == "ibm":
+            backend = eval(self.name)()
+            return transpile(circuit, backend=backend, optimization_level=opt_level)
 
 
 class Simulator(Backend):

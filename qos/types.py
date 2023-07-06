@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 import sys
-from threading import Thread, Lock, Semaphore
 from qos.backends.types import QPU
 
 

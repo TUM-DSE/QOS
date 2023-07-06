@@ -29,8 +29,6 @@ class Transformer(Engine):
 
         # print("----------------------------Transformer: ")
         # debugPrint()
-        sleep(0.2)
-
         # pdb.set_trace()
 
         return 0

@@ -7,7 +7,7 @@ import logging
 from qos.types import QCircuit
 from qiskit import QuantumCircuit
 import qos.tools
-import threading
+from multiprocessing import Process
 import pdb
 
 from qos.tools import debugPrint
@@ -19,7 +19,7 @@ class QOS:
     transformer: Transformer
     logger = logging.getLogger(__name__)
     workers: List[
-        threading.Thread
+        Process
     ]  # I think we wont be needing this, the API just issues the job and does nothing else with it
 
     def __init__(self) -> None:
@@ -57,11 +57,9 @@ class QOS:
 
         self.logger.log(10, "New job added to the database")
 
-        self.workers.append(
-            threading.Thread(target=self.transformer_submit, args=(newJob,))
-        )
+        self.workers.append(Process(target=self.transformer_submit, args=(newJob,)))
 
-        self.logger.log(10, "Opening new thread, sumbitting QC to transformer")
+        self.logger.log(10, "Opening new process, sumbitting QC to transformer")
         self.workers[-1].start()
         self.workers[-1].join()
 

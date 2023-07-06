@@ -1,17 +1,20 @@
-from concurrent.futures import ThreadPoolExecutor, wait, as_completed
-from time import sleep
-from random import randint
+from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
+from qiskit.dagcircuit import DAGCircuit
+from qiskit.converters import circuit_to_dag
+from qiskit.visualization import dag_drawer
 
+q = QuantumRegister(2, "q")
+circ = QuantumCircuit(q)
+circ.h(q[0])
+circ.cx(q[0], q[1])
+circ.rz(0.5, q[1])
+circ.measure_all()
 
-def return_after_5_secs(num):
-    sleep(randint(1, 20))
-    return "Return of {}".format(num)
+print(circ)
 
+test = circuit_to_dag(circ).count_ops_longest_path()
 
-pool = ThreadPoolExecutor(5)
-futures = []
-for x in range(5):
-    futures.append(pool.submit(return_after_5_secs, x))
+print(test)
 
-for x in as_completed(futures):
-    print(x.result())
+# dag = circuit_to_dag(circ)
+# dag_drawer(dag)

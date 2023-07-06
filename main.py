@@ -7,8 +7,10 @@ from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
 import subprocess
 from qiskit.circuit.random import random_circuit
 import logging
+from qos.database import getQPU
 import json
-import threading
+from multiprocessing import Process
+from qos.tools import average_gate_times, qpuProperties, estimate_execution_time
 
 # This is an sample client's code
 
@@ -195,13 +197,32 @@ def main():
     logger = logging.getLogger(__name__)
     logging.basicConfig(level=10)
 
-    clients: List[threading.Thread] = []
+    clients: List[Process] = []
 
-    clients.append(threading.Thread(target=client1))
-    clients.append(threading.Thread(target=client2))
-    clients.append(threading.Thread(target=client3))
-    clients.append(threading.Thread(target=client4))
-    clients.append(threading.Thread(target=client5))
+    qreg_q = QuantumRegister(5, "q")
+    circuit = QuantumCircuit(qreg_q)
+    circuit.h(qreg_q[0])
+    circuit.h(qreg_q[2])
+    circuit.h(qreg_q[4])
+    circuit.cx(qreg_q[0], qreg_q[3])
+    circuit.cx(qreg_q[2], qreg_q[1])
+    circuit.cx(qreg_q[1], qreg_q[4])
+    circuit.measure_all()
+
+    circ = circuit.qasm()
+
+    qpu = getQPU(7)
+
+    this = average_gate_times(qpuProperties(7))
+    pdb.set_trace()
+    estimate_execution_time(circ, this, qpu)
+    exit()
+
+    # clients.append(Process(target=client1))
+    # clients.append(Process(target=client2))
+    # clients.append(Process(target=client3))
+    # clients.append(Process(target=client4))
+    # clients.append(Process(target=client5))
 
     for i, client in enumerate(clients):
         logging.info("Starting client " + str(i))

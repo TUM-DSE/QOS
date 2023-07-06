@@ -21,11 +21,10 @@ class Multiprogrammer:
 
         # Here the multiprogramming engine would do its job
 
-        print(self.multiprogram(job, self._base_policy))
-        print("-------------------------")
+        self.multiprogram(job, self._base_policy)
 
         sched = Scheduler()
-        sched.submit(job, sched._bestqpu_policy)
+        sched.submit(job, sched._lightload_balance_policy)
 
         return 0
 
