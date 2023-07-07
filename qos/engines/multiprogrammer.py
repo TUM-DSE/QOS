@@ -4,6 +4,9 @@ from qos.types import Backend, QCircuit, Job
 import pdb
 import logging
 from qos.engines.scheduler import Scheduler
+import queue
+
+pipe_name = "multiprog_fifo.pipe"
 
 
 def check_layout_overlap(layout1: List, layout2: List) -> bool:
@@ -15,6 +18,8 @@ def check_layout_overlap(layout1: List, layout2: List) -> bool:
 
 class Multiprogrammer:
     def __init__(self) -> None:
+        # Continue here
+        # Spawn a single process this engine and every matcher engine process communicates with this one using the pipe
         pass
 
     def submit(self, job: Job):

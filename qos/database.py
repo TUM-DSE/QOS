@@ -85,6 +85,9 @@ def addQPU(qpu: QPU) -> int:
     with redis.Redis() as db:
         newId = db.incr("qpuCounter")
         qpuId = qpuIdGen(newId)
+
+        db.config_set("notify-keyspace-events", "KEA")
+
         # Add the qpu to the db
         for a, b in qpu.args.items():
             db.hset(qpuId, a, b)
