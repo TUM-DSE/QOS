@@ -1,6 +1,7 @@
 from typing import Any, Dict, List
 from qos.types import Engine, Job, QCircuit
 from qos.engines.multiprogrammer import Multiprogrammer
+from qos.engines.multiprogrammer import pipe_name as multiprog_pipe_name
 import qos.database as db
 from qiskit.providers.fake_provider import *
 import mapomatic as mm
@@ -241,8 +242,15 @@ class Matcher(Engine):
                 tmpjob.matching = this
                 db.setJobField(tmpjob.id, "matching", str(this))
 
-        multiprog = Multiprogrammer()
-        multiprog.submit(job)
+        # Send to multiprogrammer
+
+        multiprogFifo = open(multiprog_pipe_name, "w")
+        message = str(job.id) + "\n"
+        logger.log(10, "Sending job to multiprogrammer")
+        multiprogFifo.write(message)
+
+        # multiprog = Multiprogrammer()
+        # multiprog.submit(job)
 
         return 0
 

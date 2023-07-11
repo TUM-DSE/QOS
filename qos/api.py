@@ -9,7 +9,9 @@ from qiskit import QuantumCircuit
 import qos.tools
 from multiprocessing import Process
 import pdb
-
+from qos.engines.multiprogrammer import pipe_name as multiprog_pipe_name
+from qos.engines.multiprogrammer import Multiprogrammer
+import os
 from qos.tools import debugPrint
 
 
@@ -30,6 +32,14 @@ class QOS:
         logging.getLogger("urllib3").setLevel(logging.WARNING)
         logging.getLogger("qiskit").setLevel(logging.WARNING)
         logging.getLogger("stevedore").setLevel(logging.WARNING)
+
+        self.logger.log(10, "Checking if multiprogrammer is running")
+        # pdb.set_trace()
+        if not os.path.exists(multiprog_pipe_name):
+            self.logger.log(10, "Multiprogrammer not running, starting it")
+            # Create a FIFO pipe
+            os.mkfifo(multiprog_pipe_name)
+            Multiprogrammer()
 
         self.transformer = Transformer()
         self.logger.log(10, "QOS API initialized")

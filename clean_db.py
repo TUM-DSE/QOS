@@ -1,4 +1,5 @@
 import redis
+import os
 
 # Connect to Redis
 r = redis.Redis()
@@ -15,5 +16,6 @@ while cursor != 0:
         r.delete(*keys)
 
 r.delete("jobCounter")
+os.remove("multiprog_fifo.pipe")
 
 print(f"Deleted {keys_deleted} keys matching the pattern '{pattern}'.")

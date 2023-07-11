@@ -5,6 +5,8 @@ import pdb
 import logging
 from qos.engines.scheduler import Scheduler
 import queue
+from multiprocessing import Process
+from time import sleep
 
 pipe_name = "multiprog_fifo.pipe"
 
@@ -18,9 +20,9 @@ def check_layout_overlap(layout1: List, layout2: List) -> bool:
 
 class Multiprogrammer:
     def __init__(self) -> None:
-        # Continue here
-        # Spawn a single process this engine and every matcher engine process communicates with this one using the pipe
-        pass
+        Process(target=self.engine_watcher).start()
+        sleep(2)
+        return
 
     def submit(self, job: Job):
 
@@ -32,6 +34,23 @@ class Multiprogrammer:
         sched.submit(job, sched._lightload_balance_policy)
 
         return 0
+
+    def engine_watcher(self):
+        # pdb.set_trace()
+        openfifo = open(pipe_name, "r")
+
+        while True:
+            print("Waiting for message")
+            line = openfifo.readline()
+            if not line:
+                continue
+            else:
+                print(
+                    line + "received message"
+                )  # This probably can just be the job id, and then we can get the job from the database
+                # get the job from the database?
+                job = db.getJob(int(line))
+                self.multiprogram(job, self._base_policy)
 
     def multiprogram(self, job: Job, merge_policy):
         this = merge_policy(job, 0.1)

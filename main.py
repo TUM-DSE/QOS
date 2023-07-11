@@ -211,14 +211,13 @@ def main():
 
     circ = circuit.qasm()
 
-    qpu = getQPU(7)
+    # qpu = getQPU(7)
 
-    this = average_gate_times(qpuProperties(7))
-    pdb.set_trace()
-    estimate_execution_time(circ, this, qpu)
-    exit()
+    # this = average_gate_times(qpuProperties(7))
+    # pdb.set_trace()
+    # estimate_execution_time(circ, this, qpu)
 
-    # clients.append(Process(target=client1))
+    clients.append(Process(target=client1))
     # clients.append(Process(target=client2))
     # clients.append(Process(target=client3))
     # clients.append(Process(target=client4))
