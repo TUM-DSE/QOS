@@ -1,9 +1,10 @@
 from typing import Any, Dict, List
-from qos.types import Job
+from qos.types import Qernel
 import logging
+import jsonpickle
 from qos.backends.test_qpu import TestQPU
 from qos.backends.ibmq import IBMQPU
-from qos.types import Engine, Job, QCircuit
+from qos.types import Engine, Qernel
 from qiskit.circuit import QuantumCircuit
 import qos.database as db
 import json
@@ -19,67 +20,67 @@ class Scheduler(Engine):
     def __init__(self) -> int:
         pass
 
-    def submit(self, job: Job, policy) -> None:
+    def submit(self, qernel: Qernel, policy) -> None:
 
-        self.logger.log(10, "Got new job to be scheduled")
+        self.logger.log(10, "Got new qernel to be scheduled")
         # results = {"test": 43}
 
-        policy(job)  # Assign qpus to the subjobs
+        policy(qernel)  # Assign qpus to the subqernels
 
-        for i in job.subjobs:
+        for i in qernel.subqernels:
 
-            tmpjob = db.getJob(i)
-            tmpjob.qpu = db.getQPU_fromname(tmpjob.args[b"qpu"].decode())
+            tmpqernel = db.getQernel(i)
+            tmpqernel.qpu = db.getQPU_fromname(tmpqernel.args[b"qpu"].decode())
 
-            if tmpjob.qpu.provider == "test":
+            if tmpqernel.qpu.provider == "test":
                 qpu = TestQPU()
                 results = qpu.run()
-            elif tmpjob.qpu.provider == "ibm":
+            elif tmpqernel.qpu.provider == "ibm":
                 qpu = IBMQPU()
-                circuit = QuantumCircuit.from_qasm_str(tmpjob.circuit.decode())
-                # print(tmpjob.qpu.name)
+                circuit = QuantumCircuit.from_qasm_str(tmpqernel.circuit.decode())
+                # print(tmpqernel.qpu.name)
                 # print(circuit)
                 # pdb.set_trace()
-                trans_circuit = qpu.transpile(circuit, tmpjob.qpu.name)
+                trans_circuit = qpu.transpile(circuit, tmpqernel.qpu.name)
                 results = qpu.run(
-                    trans_circuit, tmpjob.qpu.name, tmpjob.shots
+                    trans_circuit, tmpqernel.qpu.name, tmpqernel.shots
                 ).get_counts()
 
-            # Here the scheduler would do its job
+            # Here the scheduler would do its qernel
 
             self.logger.log(10, "Got results from qpu, updating")
 
-            db.setJobField(tmpjob.id, "status", "DONE")
-            db.setJobField(tmpjob.id, "results", json.dumps(results))
+            db.setQernelField(tmpqernel.id, "status", "DONE")
+            db.setQernelField(tmpqernel.id, "results", jsonpickle.encode(results))
 
-        # This is not supposed to be like this, this should run on a new process and update the database when the job is done in the cloud
-        db.setJobField(job.id, "status", "DONE")
+        # This is not supposed to be like this, this should run on a new process and update the database when the qernel is done in the cloud
+        db.setQernelField(qernel.id, "status", "DONE")
 
-        # stat = db.getJobField(job.id, "status").decode("utf-8")
+        # stat = db.getQernelField(qernel.id, "status").decode("utf-8")
 
         return 0
 
-    def _bestqpu_policy(self, new_job: Job) -> None:
+    def _bestqpu_policy(self, new_qernel: Qernel) -> None:
         self.logger.log(10, "Running best qpu policy")
         # pdb.set_trace()
-        for i in new_job.subjobs:
-            tmpjob = db.getJob(i)
-            tmpjob.args["qpu"] = tmpjob.best_qpu()
-            tmpjob.args["shots"] = 1000
-            db.updateJob(i, tmpjob)
+        for i in new_qernel.subqernels:
+            tmpqernel = db.getQernel(i)
+            tmpqernel.args["qpu"] = tmpqernel.best_qpu()
+            tmpqernel.args["shots"] = 1000
+            db.updateQernel(i, tmpqernel)
         return
 
     # This policy follows the following rules:
-    # 1. If the job has more than one subjob, means that it was merged and then use the assigned QPU
+    # 1. If the qernel has more than one subqernel, means that it was merged and then use the assigned QPU
     # 2.
 
-    def _lightload_balance_policy(self, new_job: Job) -> None:
+    def _lightload_balance_policy(self, new_qernel: Qernel) -> None:
         self.logger.log(10, "Running best qpu policy")
         predict_queue_time(1)
         # pdb.set_trace()
-        for i in new_job.subjobs:
-            tmpjob = db.getJob(i)
-            tmpjob.args["qpu"] = tmpjob.best_qpu()
-            tmpjob.args["shots"] = 1000
-            db.updateJob(i, tmpjob)
+        for i in new_qernel.subqernels:
+            tmpqernel = db.getQernel(i)
+            tmpqernel.args["qpu"] = tmpqernel.best_qpu()
+            tmpqernel.args["shots"] = 1000
+            db.updateQernel(i, tmpqernel)
         return

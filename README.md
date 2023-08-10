@@ -1,29 +1,44 @@
 # qos
 Quantum Operating System
 
+# * Log
 
-# TODO
+- The refactoring seems to be fine up until the Optimiser call of the Matcher - Continue here 
 
-- [ ] Database should store a list with the ids of the current jobs
+
+
+
+# TODO - QOS System V2 refactoring
+
+- [ ] Rename jobs to Qernels
+- [ ] Redo the Qernel properties
+- [ ] Create an AST class
+- [ ] Rename and reorganize folders into system blocks?
+- [ ] Create the Analyser component
+- [ ] Extend the DAG code to work with other libraries or to be library independent (now it works with qiskit)
+
+# Other TODOS
+
+- [ ] Database should store a list with the ids of the current qernels
 - [ ] Implement window on the database (initWindow, getCurrentWindow, moveWindow, ...)
 - [ ] There should be a way concurrently running the scheduler and executing the circuits on the cloud
 
 
-# Desing decisions
+# Design decisions
 
-Should the matching engine receive the whole job, schedule the subjobs and then send the whole jobs to the multiprogramming engine
+Should the matching engine receive the whole qernel, schedule the subqernels and then send the whole qernels to the multiprogramming engine
 OR
-The matching engine receives each subjob from the transformer and then submits each subjob to the multiprogamming engine?
+The matching engine receives each subqernel from the transformer and then submits each subqernel to the multiprogamming engine?
 ## Arguments
-- If the matching engine receives the whole job every time we want to match a single job we would need to send a job with a single subjob, which is not friendly
-- If the matching engine only receives subjobs it will send subjobs to the multiprogrammer which will only consider merging a single subjob with one of the jobs on the window and not the other subjobs
+- If the matching engine receives the whole qernel every time we want to match a single qernel we would need to send a qernel with a single subqernel, which is not friendly
+- If the matching engine only receives subqernels it will send subqernels to the multiprogrammer which will only consider merging a single subqernel with one of the qernels on the window and not the other subqernels
 
 ---
 
 The storing on the database is being done with the hash data type from redis. This works, however seems kind sketchy the way that we are converting from database data to object.
 A Redis hash is basicly a dictionary of strings (a set of string keys with string values).
 Now, on the database adding values to the hash set is relatively straightforward, then converting the hashset to an object we have to convert each key string from the Redis dict to a object attribute
-OR just copy the whole redis dict as a python dictionary of job arguments, which is not that user friendly.
+OR just copy the whole redis dict as a python dictionary of qernel arguments, which is not that user friendly.
 
 ---
 
@@ -50,11 +65,11 @@ flushall
 ```
 
 The database stores all the available QPUs in hash datastrutures, the hashes identification keys are the QPU's ids. To easly find unsued ids, they are also store is a set "qpuList".
-The same applies to the jobs, job hashes and "jobList"
+The same applies to the qernels, qernel hashes and "qernelList"
 
-The database will store three structures: Jobs, Circuits and QPUs
+The database will store three structures: Qernels and QPUs
 
-### Jobs
+### Qernels
 
 
 ---

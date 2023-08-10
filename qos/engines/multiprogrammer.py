@@ -1,15 +1,15 @@
 from typing import List
 import qos.database as db
-from qos.types import Backend, QCircuit, Job
+from qos.types import Backend, Qernel
 import pdb
 import logging
 from qos.engines.scheduler import Scheduler
 import queue
 from multiprocessing import Process
 from time import sleep
+import os
 
 pipe_name = "multiprog_fifo.pipe"
-
 
 def check_layout_overlap(layout1: List, layout2: List) -> bool:
     for i in range(0, len(layout1)):
@@ -20,23 +20,24 @@ def check_layout_overlap(layout1: List, layout2: List) -> bool:
 
 class Multiprogrammer:
     def __init__(self) -> None:
-        Process(target=self.engine_watcher).start()
+        Process(target=self.window_monitor).start()
         sleep(2)
         return
 
-    def submit(self, job: Job):
+    #def submit(self, qernel: Qernel):
+    #
+    #    # Here the multiprogramming engine would do its qernel
+    #
+    #    self.multiprogram(qernel, self._base_policy)
+    #
+    #    sched = Scheduler()
+    #    sched.submit(qernel, sched._lightload_balance_policy)
+    #
+    #    return 0
 
-        # Here the multiprogramming engine would do its job
-
-        self.multiprogram(job, self._base_policy)
-
-        sched = Scheduler()
-        sched.submit(job, sched._lightload_balance_policy)
-
-        return 0
-
-    def engine_watcher(self):
+    def window_monitor(self):
         # pdb.set_trace()
+        os.mkfifo(pipe_name)
         openfifo = open(pipe_name, "r")
 
         while True:
@@ -47,13 +48,13 @@ class Multiprogrammer:
             else:
                 print(
                     line + "received message"
-                )  # This probably can just be the job id, and then we can get the job from the database
-                # get the job from the database?
-                job = db.getJob(int(line))
-                self.multiprogram(job, self._base_policy)
+                )
+                # ? This probably can just be the qernel id, and then we can get the qernel from the database?
+                qernel = db.getQernel(int(line))
+                self.multiprogram(qernel, self._restrict_policy)
 
-    def multiprogram(self, job: Job, merge_policy):
-        this = merge_policy(job, 0.1)
+    def multiprogram(self, qernel: Qernel, merge_policy):
+        this = merge_policy(qernel, 0.1)
         return this
 
     # Merging policies:
@@ -64,12 +65,13 @@ class Multiprogrammer:
     #   Example: The window has 5 circuits E, D, C, B, A and the new circuits are F, G, H.
     #   1. Consider merging F or G or H with E, D, C, B, A, by this order. Lets consider that F could be merged with A
     #   2. The new circuits left are G and H, move the window by two circuits, this is because the new circuits need to enter the window and the size of the window is fixed
-    def _restrict_policy(self, new_job: Job, error_limit: float) -> None:
+    def _restrict_policy(self, new_qernel: Qernel, error_limit: float) -> None:
         # self.logger.log(10, "Running Restrict policy")
         window = db.currentWindow()
 
         for i in window[::-1]:
-            for j in new_job.subjobs:
+            # ! This is not supposed to go through the subqernels, just the matchings, fix this
+            for j in new_qernel.subqernels:
                 if j.best_qpu == i.best_qpu and not check_layout_overlap(
                     j.best_layout(), i.best_layout()
                 ):
@@ -79,7 +81,7 @@ class Multiprogrammer:
 
         return 0
 
-    def _base_policy(self, new_job: Job, error_limit: float) -> None:
+    def _base_policy(self, newQernel: Qernel, error_limit: float) -> None:
         # self.logger.log(10, "Running Base policy")
 
         logger = logging.getLogger(__name__)
@@ -87,7 +89,7 @@ class Multiprogrammer:
 
         window = db.currentWindow()
 
-        for j in new_job.subjobs:
+        for j in newQernel.subqernels:
             for i in window[::-1]:
                 for x in i.matching:
                     print(x)

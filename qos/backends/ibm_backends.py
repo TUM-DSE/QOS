@@ -5,19 +5,18 @@ from warnings import warn
 import mapomatic as mm
 import qiskit.providers.fake_provider as FakeAccountProvider
 from qiskit.compiler import transpile
-from qiskit.providers.ibmq import AccountProvider
-from qiskit.providers.ibmq.ibmqbackend import IBMQSimulator
+from qiskit_ibm_provider import IBMProvider
 from qiskit.providers.models.backendproperties import BackendProperties
 from qiskit.circuit import QuantumCircuit
 
 
 class IBMQPU:
     def __init__(
-        self, backend_name: str, provider: Optional[AccountProvider] = None
+        self, backend_name: str, provider: Optional[IBMProvider] = None
     ) -> None:
         if "Fake" in backend_name:
             # if provider is not None:
-            #    warn("AccountProvider passed but fake backend requested.")
+            #    warn("IBMProvider passed but fake backend requested.")
             backend = getattr(FakeAccountProvider, backend_name)()
 
             # Need to do some modifications for compatility with mapomatic if V2
@@ -37,10 +36,10 @@ class IBMQPU:
 
                 backend.properties = MethodType(properties, backend)
             self.is_simulator = True
-        elif isinstance(provider, AccountProvider):
+        elif isinstance(provider, IBMProvider):
             backend = provider.get_backend(backend_name)
 
-            if isinstance(backend, IBMQSimulator):
+            if backend.configuration().simulator:
                 raise ValueError(
                     "Simulators are not currently supported. Please choose a quantum backend."
                 )

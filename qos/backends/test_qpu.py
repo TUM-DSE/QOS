@@ -18,6 +18,6 @@ class TestQPU(QPU):
         return
 
     def run(self, circuit) -> int:
-        self.logger.log(10, "Running job")
+        self.logger.log(10, "Running qernel")
         sleep(5)
         return 42

@@ -20,7 +20,7 @@ circuit.measure_all()
 
 qc = transpile(circuit, backend.backend)
 
-job = backend.backend.run(qc, shots=8192)
+qernel = backend.backend.run(qc, shots=8192)
 
-counts = job.result().get_counts()
+counts = qernel.result().get_counts()
 plot_histogram(counts, filename="plot.png")

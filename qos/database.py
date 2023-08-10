@@ -1,12 +1,12 @@
 from typing import Any, Dict, List
-import json
+import jsonpickle
 import os
-from qos.types import Engine, Job, QCircuit
+from qos.types import Engine, Qernel
 from qos.backends.types import QPU
 import logging
 import redis
 import pdb
-from qos.tools import redisToQPU, redisToJob, redisToInt
+from qos.tools import redisToQPU, redisToQernel, redisToInt
 
 MAXJOBS = 1000
 WINDOWSIZE = 3
@@ -20,61 +20,68 @@ def qcIdGen(qid: int):
     return "qc" + str(qid)
 
 
-def jobIdGen(qid: int):
-    return "job" + str(qid)
+def qernelIdGen(qid: int):
+    return "qernel" + str(qid)
 
 
-def addJob(job: Job) -> int:
-    # Add the job to the db
-    # This data structure for each job is the follwing:
-    # hash - job1 = { <job information>, results: json.dumps(<probabilty distribution>)}
-    # hash - job2 = { <job information>, results: json.dumps(<probabilty distribution>)}
-    # hash - job3 = { <job information>, results: json.dumps(<probabilty distribution>)}
+def addQernel(qernel: Qernel) -> int:
+    # Add the qernel to the db
+    # This data structure for each qernel is the follwing:
+    # hash - qernel1 = { <qernel information>, results: json.dumps(<probabilty distribution>)}
+    # hash - qernel2 = { <qernel information>, results: json.dumps(<probabilty distribution>)}
+    # hash - qernel3 = { <qernel information>, results: json.dumps(<probabilty distribution>)}
     # ...
     with redis.Redis() as db:
-        newId = db.incr("jobCounter")  # To start from 0
-        jobId = jobIdGen(newId)
+        newId = db.incr("qernelCounter")  # To start from 0
+        qernelId = qernelIdGen(newId)
 
-        for a, b in job.args.items():
-            db.hset(jobId, a, b)
+        for a, b in qernel.args.items():
+            db.hset(qernelId, a, b)
+
+        if qernel.provider != "":
+            db.hset(qernelId, "provider", qernel.provider)
+        if qernel.circuit != None:
+            db.hset(qernelId, "circuit", jsonpickle.encode(qernel.circuit.serialize))
+        if qernel.matching != "":
+            db.hset(qernelId, "matching", str(qernel.matching))
     return newId
 
 
-def setJobField(id: int, key: str, value: float):
+def setQernelField(id: int, key: str, value: float):
 
-    jobId = jobIdGen(id)
+    qernelId = qernelIdGen(id)
     with redis.Redis() as db:
-        db.hset(jobId, key, value)
+        db.hset(qernelId, key, value)
     return 0
 
 
-def getJobField(id: int, field: str):
+def getQernelField(id: int, field: str):
 
-    jobId = jobIdGen(id)
+    qernelId = qernelIdGen(id)
     with redis.Redis() as db:
         info = db.hget(
-            jobId,
+            qernelId,
             field,
         )
     return info
 
 
-def updateJob(id: int, job: Job):
-    jobId = jobIdGen(id)
+def updateQernel(id: int, qernel: Qernel):
+    qernelId = qernelIdGen(id)
     with redis.Redis() as db:
-        for a, b in job.args.items():
-            db.hset(jobId, a, b)
+        for a, b in qernel.args.items():
+            db.hset(qernelId, a, b)
     return 0
 
 
-def getJob(id: int):
+def getQernel(id: int):
 
-    jobId = jobIdGen(id)
+    qernelId = qernelIdGen(id)
     # pdb.set_trace()
     with redis.Redis() as db:
-        all = db.hgetall(jobId)
-        job = redisToJob(id, all)
-    return job
+        all = db.hgetall(qernelId)
+        qernel = redisToQernel(id, all)
+    return qernel
 
 
 def addQPU(qpu: QPU) -> int:
@@ -111,16 +118,16 @@ def getLastQPUid():
         return redisToInt(max_qpu_id)
 
 
-def addQC(qc: QCircuit) -> int:
-
-    with redis.Redis() as db:
-        newId = db.incr("qcCounter")
-        QCId = qcIdGen(newId)
-        # Add the qpu to the db
-        for a, b in qc.args.items():
-            db.hset(QCId, a, b)
-
-    return newId
+#def addQC(qc: QCircuit) -> int:
+#
+#    with redis.Redis() as db:
+#        newId = db.incr("qcCounter")
+#        QCId = qcIdGen(newId)
+#        # Add the qpu to the db
+#        for a, b in qc.args.items():
+#            db.hset(QCId, a, b)
+#
+#    return newId
 
 
 def getQPU_fromname(name: str) -> QPU:
@@ -159,7 +166,7 @@ def dumpDB(self):
     pass
 
 
-def deleteJob(self, qid: int):
+def deleteQernel(self, qid: int):
     pass
 
 
@@ -170,12 +177,12 @@ def moveWindow(self):
     return
 
 
-def addToWindow(self, job: Job):
+def addToWindow(self, qernel: Qernel):
     if windowCounter() == WINDOWSIZE:
         moveWindow()
 
     with redis.Redis() as db:
-        db.lpush("window", job.id)
+        db.lpush("window", qernel.id)
     pass
 
 
@@ -185,7 +192,7 @@ def initWindow(self):
     return
 
 
-def currentWindow() -> List[Job]:
+def currentWindow() -> List[Qernel]:
     with redis.Redis() as db:
         window = db.lrange("window", 0, -1)
     return window
@@ -200,8 +207,8 @@ def findFreeQPUId(self):
 
 
 # Not used, maybe for future use
-def findFreeJobId(self):
+def findFreeQernelId(self):
     with redis.Redis() as db:
         for i in range(MAXJOBS):
-            if not db.sismember("jobList", i):
+            if not db.sismember("qernelList", i):
                 return i

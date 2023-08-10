@@ -1,5 +1,5 @@
 from qos.api import QOS
-from qos.types import Job, QCircuit
+from qos.types import Qernel
 from typing import List
 from time import sleep
 import pdb
@@ -32,22 +32,22 @@ def client1():
 
     logger.log(10, "Submitting circuit")
 
-    newJobId = qos.run(circuit)
+    newQernelId = qos.run(circuit)
 
     logger.log(10, "Circuit submitted")
 
-    results = qos.results(newJobId)
+    results = qos.results(newQernelId)
 
     # logger.log(10, "Results tentative fetch")
 
     while results == 1:
         if results != 1:
-            logger.log(10, "Job 1 finished")
+            logger.log(10, "Qernel 1 finished")
             print(results)
 
         sleep(10)
 
-        results = qos.results(newJobId)
+        results = qos.results(newQernelId)
 
     logger.log(10, "Circuit results finished")
     # logger.log(10, "Results tentative fetch")
@@ -69,22 +69,22 @@ def client2():
 
     logger.log(10, "Submitting circuit")
 
-    newJobId = qos.run(circuit)
+    newQernelId = qos.run(circuit)
 
     logger.log(10, "Circuit submitted")
 
-    results = qos.results(newJobId)
+    results = qos.results(newQernelId)
 
     # logger.log(10, "Results tentative fetch")
 
     while results == 1:
         if results != 1:
-            logger.log(10, "Job finished")
+            logger.log(10, "Qernel finished")
             print(results)
 
         sleep(10)
 
-        results = qos.results(newJobId)
+        results = qos.results(newQernelId)
 
 
 def client3():
@@ -103,22 +103,22 @@ def client3():
 
     logger.log(10, "Submitting circuit")
 
-    newJobId = qos.run(circuit)
+    newQernelId = qos.run(circuit)
 
     logger.log(10, "Circuit submitted")
 
-    results = qos.results(newJobId)
+    results = qos.results(newQernelId)
 
     # logger.log(10, "Results tentative fetch")
 
     while results == 1:
         if results != 1:
-            logger.log(10, "Job finished")
+            logger.log(10, "Qernel finished")
             print(results)
 
         sleep(10)
 
-        results = qos.results(newJobId)
+        results = qos.results(newQernelId)
 
 
 def client4():
@@ -138,22 +138,22 @@ def client4():
 
     logger.log(10, "Submitting circuit")
 
-    newJobId = qos.run(circuit)
+    newQernelId = qos.run(circuit)
 
     logger.log(10, "Circuit submitted")
 
-    results = qos.results(newJobId)
+    results = qos.results(newQernelId)
 
     # logger.log(10, "Results tentative fetch")
 
     while results == 1:
         if results != 1:
-            logger.log(10, "Job finished")
+            logger.log(10, "Qernel finished")
             print(results)
 
         sleep(10)
 
-        results = qos.results(newJobId)
+        results = qos.results(newQernelId)
 
 
 def client5():
@@ -174,22 +174,22 @@ def client5():
 
     logger.log(10, "Submitting circuit")
 
-    newJobId = qos.run(circuit)
+    newQernelId = qos.run(circuit)
 
     logger.log(10, "Circuit submitted")
 
-    results = qos.results(newJobId)
+    results = qos.results(newQernelId)
 
     logger.log(10, "Results tentative fetch")
 
     while results == 1:
         if results != 1:
-            logger.log(10, "Job finished")
+            logger.log(10, "Qernel finished")
             print(results)
 
         sleep(10)
 
-        results = qos.results(newJobId)
+        results = qos.results(newQernelId)
 
 
 def main():

@@ -5,7 +5,7 @@ import os
 r = redis.Redis()
 
 # Use the SCAN command to retrieve keys matching the pattern
-pattern = "job*"
+pattern = "qernel*"
 cursor = "0"
 keys_deleted = 0
 
@@ -15,7 +15,7 @@ while cursor != 0:
     if keys:
         r.delete(*keys)
 
-r.delete("jobCounter")
+r.delete("qernelCounter")
 os.remove("multiprog_fifo.pipe")
 
 print(f"Deleted {keys_deleted} keys matching the pattern '{pattern}'.")

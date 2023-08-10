@@ -1,10 +1,10 @@
 from typing import Any, Dict, List
-from qos.types import Job
-from .engines.transformer import Transformer
+from qos.types import Qernel
+from .engines.optimiser import Optimiser
 import qos.database as database
 import redis
 import logging
-from qos.types import QCircuit
+#from qos.types import QCircuit
 from qiskit import QuantumCircuit
 import qos.tools
 from multiprocessing import Process
@@ -13,16 +13,17 @@ from qos.engines.multiprogrammer import pipe_name as multiprog_pipe_name
 from qos.engines.multiprogrammer import Multiprogrammer
 import os
 from qos.tools import debugPrint
+from .dag import DAG
 
 
 class QOS:
     """Main API that will be exposed to the user"""
 
-    transformer: Transformer
+    optimiser: Optimiser
     logger = logging.getLogger(__name__)
     workers: List[
         Process
-    ]  # I think we wont be needing this, the API just issues the job and does nothing else with it
+    ]  # I think we wont be needing this, the API just issues the qernel and does nothing else with it
 
     def __init__(self) -> None:
         # self.db = database()
@@ -35,60 +36,59 @@ class QOS:
 
         self.logger.log(10, "Checking if multiprogrammer is running")
         # pdb.set_trace()
+
+        #We before starting the system again we need to delete the pipe file, otherwise the Multiprogrammer
+        #wont open the file for reading and the Matcher will stall on the open for writting
         if not os.path.exists(multiprog_pipe_name):
             self.logger.log(10, "Multiprogrammer not running, starting it")
             # Create a FIFO pipe
-            os.mkfifo(multiprog_pipe_name)
             Multiprogrammer()
 
-        self.transformer = Transformer()
+        self.optimiser = Optimiser()
         self.logger.log(10, "QOS API initialized")
         self.workers = []
 
     def run(self, circuit: Any) -> int:
 
-        newQC = QCircuit()
-        newJob = Job()
+        #newQC = QCircuit()
+        newQernel = Qernel()
 
+        # * Here the circuits from different providers are converted into DAGS
         if type(circuit) == QuantumCircuit:
-            newQC.type = "qiskit"
+            newQernel.provider = "qiskit"
+            newQernel.circuit = DAG(circuit)
+        else:
+            print("Circuit provider not supported yet")
+            exit(1)
 
-        newJob.circuit = circuit.qasm()
+        # Adds the qernel to the database
+        qernelId = database.addQernel(newQernel)
+        newQernel.id = qernelId
 
-        # print("Circuit:", newJob.circuit)
+        self.logger.log(10, "New qernel added to the database")
 
-        # Adds the job to the database
-        QCId = database.addQC(newQC)
-        newQC.id = QCId
-
-        # Adds the job to the database
-        jobId = database.addJob(newJob)
-        newJob.id = jobId
-
-        self.logger.log(10, "New job added to the database")
-
-        self.workers.append(Process(target=self.transformer_submit, args=(newJob,)))
+        self.workers.append(Process(target=self.optimiser_submit, args=(newQernel,)))
 
         self.logger.log(10, "Opening new process, sumbitting QC to transformer")
         self.workers[-1].start()
         self.workers[-1].join()
 
-        return jobId
+        return qernelId
 
-    def results(self, jobId: int) -> None:
+    def results(self, qernelId: int) -> None:
 
-        stat = database.getJobField(jobId, "status")
+        stat = database.getQernelField(qernelId, "status")
 
         if stat == b"DONE":
-            job = database.getJob(jobId)
-            # Probably now we would process the results from the subjobs and return the final job result
+            qernel = database.getQernel(qernelId)
+            # Probably now we would process the results from the subqernels and return the final qernel result
             # pdb.set_trace()
-            # tmpjob = database.getJob(job.subjobs[0])
-            results = database.getJobField(job.subjobs[0], "results").decode()
+            # tmpqernel = database.getQernel(qernel.subqernels[0])
+            results = database.getQernelField(qernel.subqernels[0], "results").decode()
             return results
         else:
             return 1
 
-    def transformer_submit(self, job: Job) -> None:
+    def optimiser_submit(self, qernel: Qernel) -> None:
         # pdb.set_trace()
-        self.transformer.submit(job)
+        self.optimiser.submit(qernel)

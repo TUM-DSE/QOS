@@ -2,7 +2,7 @@ from typing import Dict, Any, List
 import yaml
 import pdb
 import qos.database as db
-from qos.types import Job
+from qos.types import Qernel
 from qos.backends.types import QPU
 import ast
 from qiskit import QuantumCircuit
@@ -13,8 +13,8 @@ from qiskit.providers.basicaer import QasmSimulatorPy
 
 
 def debugPrint():
-    subjobs = db.getJobField(1, "subjobs")
-    print(subjobs)
+    subqernels = db.getQernelField(1, "subqernels")
+    print(subqernels)
     return
 
 
@@ -74,42 +74,42 @@ def decodeRedisDict(redisDict: Dict[str, Any]) -> Dict[str, Any]:
     return newDict
 
 
-def redisToJob(jid: int, redisDict: Dict[str, Any]) -> QPU:
-    newJob = Job()
-    newJob.id = jid
+def redisToQernel(jid: int, redisDict: Dict[str, Any]) -> QPU:
+    newQernel = Qernel()
+    newQernel.id = jid
     # pdb.set_trace()
 
     try:
-        newJob.status = redisDict[b"status"]
+        newQernel.status = redisDict[b"status"]
     except:
-        newJob.status = []
+        newQernel.status = []
 
     try:
-        newJob.matching = ast.literal_eval(redisDict[b"matching"].decode())
+        newQernel.matching = ast.literal_eval(redisDict[b"matching"].decode())
         redisDict.pop(b"matching")
     except:
-        newJob.matching = []
+        newQernel.matching = []
     try:
-        newJob.circuit = redisDict[b"circuit"]
+        newQernel.circuit = redisDict[b"circuit"]
         redisDict.pop(b"circuit")
     except:
-        newJob.circuit = None
+        newQernel.circuit = None
 
     try:
-        newJob.subjobs = ast.literal_eval(redisDict[b"subjobs"].decode())
-        redisDict.pop(b"subjobs")
+        newQernel.subqernels = ast.literal_eval(redisDict[b"subqernels"].decode())
+        redisDict.pop(b"subqernels")
     except:
-        newJob.subjobs = []
+        newQernel.subqernels = []
 
     try:
-        newJob.shots = redisDict[b"shots"]
+        newQernel.shots = redisDict[b"shots"]
         redisDict.pop(b"shots")
     except:
-        newJob.shots = -1
+        newQernel.shots = -1
 
     redisDict.pop(b"status")
-    newJob.args = redisDict
-    return newJob
+    newQernel.args = redisDict
+    return newQernel
 
 
 def qpuProperties(qpuId: int):

@@ -1,7 +1,7 @@
 from types import MethodType
 from typing import Any, Dict, Optional
 from qos.backends.types import QPU
-from qiskit.providers.ibmq import IBMQ
+from qiskit_ibm_provider import IBMProvider
 from qiskit import compiler
 import logging
 from qiskit.providers import fake_provider
@@ -17,17 +17,17 @@ class IBMQPU(QPU):
 
     def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
-        self.provider = IBMQ.load_account()
+        self.provider = IBMProvider.load_account()
         return
 
     def run(self, circuit, backend, nshots) -> int:
         self.logger.log(10, "Running circuit")
         backend_obj = getattr(fake_provider, backend)()
-        job = backend_obj.run(circuit, shots=int(nshots))
-        return job.result()
+        qernel = backend_obj.run(circuit, shots=int(nshots))
+        return qernel.result()
 
     def transpile(self, circuit, backend) -> int:
-        self.logger.log(10, "Transpiling job")
+        self.logger.log(10, "Transpiling qernel")
         backend_obj = getattr(fake_provider, backend)()
         # pdb.set_trace()
         # backend = [backend for backend in backends() if backend.name() == backend][0

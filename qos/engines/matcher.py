@@ -1,5 +1,5 @@
 from typing import Any, Dict, List
-from qos.types import Engine, Job, QCircuit
+from qos.types import Engine, Qernel
 from qos.engines.multiprogrammer import Multiprogrammer
 from qos.engines.multiprogrammer import pipe_name as multiprog_pipe_name
 import qos.database as db
@@ -217,18 +217,18 @@ class Matcher(Engine):
 
         return this
 
-    def submit(self, job: Job) -> int:
+    def submit(self, qernel: Qernel) -> int:
 
-        # Here the matching engine would do its job
+        # Here the matching engine would do its qernel
 
         logger = logging.getLogger(__name__)
         logging.basicConfig(level=10)
 
-        for i in job.subjobs:
+        for i in qernel.subqernels:
 
-            tmpjob = db.getJob(i)
+            tmpqernel = db.getQernel(i)
 
-            qc = QuantumCircuit.from_qasm_str(tmpjob.circuit.decode("utf-8"))
+            qc = QuantumCircuit.from_qasm_str(tmpqernel.circuit.decode("utf-8"))
 
             # print(self.match(qc, cost_function=self.trivialConstFunction))
             # print("-------------------------")
@@ -239,27 +239,27 @@ class Matcher(Engine):
             # print("-------------")
 
             if this != 1:
-                tmpjob.matching = this
-                db.setJobField(tmpjob.id, "matching", str(this))
+                tmpqernel.matching = this
+                db.setQernelField(tmpqernel.id, "matching", str(this))
 
         # Send to multiprogrammer
 
         multiprogFifo = open(multiprog_pipe_name, "w")
-        message = str(job.id) + "\n"
-        logger.log(10, "Sending job to multiprogrammer")
+        message = str(qernel.id) + "\n"
+        logger.log(10, "Sending qernel to multiprogrammer")
         multiprogFifo.write(message)
 
         # multiprog = Multiprogrammer()
-        # multiprog.submit(job)
+        # multiprog.submit(qernel)
 
         return 0
 
-    # This is to submit a single job instead of a whole job with subjobs
-    def submit_single(self, job: Job) -> int:
+    # This is to submit a single qernel instead of a whole qernel with subqernels
+    def submit_single(self, qernel: Qernel) -> int:
 
-        # Here the matching engine would do its job
+        # Here the matching engine would do its qernel
 
-        qc = QuantumCircuit.from_qasm_str(job.circuit)
+        qc = QuantumCircuit.from_qasm_str(qernel.circuit)
 
         # print(self.match(qc, cost_function=self.trivialConstFunction))
         # print("-------------------------")
@@ -269,6 +269,6 @@ class Matcher(Engine):
         # print("-------------")
 
         multiprog = Multiprogrammer()
-        multiprog.submit(job)
+        multiprog.submit(qernel)
 
         return 0

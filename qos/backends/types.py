@@ -11,7 +11,7 @@ class Backend(ABC):
         pass
 
 
-# A job class should be the counter part of a job entry on the Quantum circuit database
+# A qernel class should be the counter part of a qernel entry on the Quantum circuit database
 class QPU(ABC):
     id: int
     name: str
