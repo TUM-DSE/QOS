@@ -41,7 +41,7 @@ def addQernel(qernel: Qernel) -> int:
         if qernel.provider != "":
             db.hset(qernelId, "provider", qernel.provider)
         if qernel.circuit != None:
-            db.hset(qernelId, "circuit", jsonpickle.encode(qernel.circuit.serialize))
+            db.hset(qernelId, "circuit", qernel.circuit.to_string)
         if qernel.matching != "":
             db.hset(qernelId, "matching", str(qernel.matching))
     return newId

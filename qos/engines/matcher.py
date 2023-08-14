@@ -10,6 +10,10 @@ import pdb
 import redis
 from qiskit import transpile, QuantumCircuit
 import numpy as np
+import networkx as nx
+import jsonpickle as jp
+from networkx.readwrite import json_graph
+from qos.dag import DAG
 
 gates = {
     "u3": 1,
@@ -228,7 +232,9 @@ class Matcher(Engine):
 
             tmpqernel = db.getQernel(i)
 
-            qc = QuantumCircuit.from_qasm_str(tmpqernel.circuit.decode("utf-8"))
+            #qc = QuantumCircuit.from_qasm_str(tmpqernel.circuit.decode("utf-8"))
+            qc_dag = DAG.from_string(tmpqernel.circuit.decode("utf-8"))
+            qc = qc_dag.to_circuit()
 
             # print(self.match(qc, cost_function=self.trivialConstFunction))
             # print("-------------------------")

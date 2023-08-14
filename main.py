@@ -10,6 +10,7 @@ import logging
 from qos.database import getQPU
 import json
 from multiprocessing import Process
+from qos.dag import DAG
 from qos.tools import average_gate_times, qpuProperties, estimate_execution_time
 
 # This is an sample client's code
@@ -31,6 +32,13 @@ def client1():
     circuit.measure_all()
 
     logger.log(10, "Submitting circuit")
+    print(circuit)
+
+    qc_dag = DAG.from_circuit(circuit)
+    DAG.draw(qc_dag, filename="qc_dag.png")
+    
+    dag_dag = DAG.from_string(qc_dag.to_string)
+    DAG.draw(dag_dag, filename="dag_dag.png")
 
     newQernelId = qos.run(circuit)
 
