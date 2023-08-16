@@ -41,7 +41,7 @@ def addQernel(qernel: Qernel) -> int:
         if qernel.provider != "":
             db.hset(qernelId, "provider", qernel.provider)
         if qernel.circuit != None:
-            db.hset(qernelId, "circuit", qernel.circuit.to_string)
+            db.hset(qernelId, "circuit", qernel.circuit.pickle)
         if qernel.matching != "":
             db.hset(qernelId, "matching", str(qernel.matching))
     return newId
@@ -52,6 +52,18 @@ def setQernelField(id: int, key: str, value: float):
     qernelId = qernelIdGen(id)
     with redis.Redis() as db:
         db.hset(qernelId, key, value)
+    return 0
+
+def addSubqernel(qernelId: int, subqernelId: int):
+
+    with redis.Redis() as db:
+        subqernels = db.hget(qernelId, "subqernels")
+        if subqernels == None:
+            subqernels = [subqernelId]
+        else:
+            list(subqernels).append(subqernelId)
+        
+        db.hset(qernelId, "subqernels", str(subqernels))
     return 0
 
 

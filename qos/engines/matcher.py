@@ -11,7 +11,7 @@ import redis
 from qiskit import transpile, QuantumCircuit
 import numpy as np
 import networkx as nx
-import jsonpickle as jp
+import pickle
 from networkx.readwrite import json_graph
 from qos.dag import DAG
 
@@ -233,7 +233,7 @@ class Matcher(Engine):
             tmpqernel = db.getQernel(i)
 
             #qc = QuantumCircuit.from_qasm_str(tmpqernel.circuit.decode("utf-8"))
-            qc_dag = DAG.from_string(tmpqernel.circuit.decode("utf-8"))
+            qc_dag = DAG
             qc = qc_dag.to_circuit()
 
             # print(self.match(qc, cost_function=self.trivialConstFunction))

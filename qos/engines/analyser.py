@@ -15,3 +15,8 @@ class Analyser(Engine):
 
     def __init__(self) -> None:
         pass
+
+    @staticmethod
+    def analyse(qernel: Qernel) -> Qernel:
+        # TODO - This is where the analysis would happen
+        return qernel

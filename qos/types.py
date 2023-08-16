@@ -59,9 +59,11 @@ class Qernel(ABC):
         self.dependencies: List[Qernel] = []
         self.args["status"] = "PENDING"
 
+    @property
     def best_layout(self):
         return self.matching[0][0]
 
+    @property
     def best_qpu(self):
         return self.matching[0][1]
 

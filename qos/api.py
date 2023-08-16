@@ -2,6 +2,7 @@ from typing import Any, Dict, List
 from qos.types import Qernel
 from .engines.optimiser import Optimiser
 import qos.database as database
+from qos.engines.analyser import Analyser
 import redis
 import logging
 #from qos.types import QCircuit
@@ -67,11 +68,11 @@ class QOS:
 
         self.logger.log(10, "New qernel added to the database")
 
-        self.workers.append(Process(target=self.optimiser_submit, args=(newQernel,)))
+        self.workers.append(Process(target=self.analyser_submit, args=(newQernel,)))
 
-        self.logger.log(10, "Opening new process, sumbitting QC to transformer")
+        self.logger.log(10, "Opening new process, sumbitting QC to analyser")
         self.workers[-1].start()
-        self.workers[-1].join()
+        self.workers[-1].join() # ! I think this is not supposed to join, it just starts and it will exit on its own, we need to check this
 
         return qernelId
 
@@ -89,6 +90,9 @@ class QOS:
         else:
             return 1
 
-    def optimiser_submit(self, qernel: Qernel) -> None:
+    def analyser_submit(self, qernel: Qernel) -> None:
         # pdb.set_trace()
+        # ! We should get a better name for this function
+        qernel = Analyser.analyse(qernel)
         self.optimiser.submit(qernel)
+        
