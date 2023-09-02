@@ -1,7 +1,7 @@
 # qos
 Quantum Operating System
 
-# * Log
+# Log
 
 - The refactoring seems to be fine up until the Optimiser call of the Matcher
 - Problem: The dag is only initialized from a qiskit quantum circuit and to store it on the database I need to serialize the dag and then deserialize it. For this I need to create a DAG class from a DiGraph from the networkx library

@@ -68,7 +68,7 @@ class QOS:
 
         self.logger.log(10, "New qernel added to the database")
 
-        self.workers.append(Process(target=self.analyser_submit, args=(newQernel,)))
+        self.workers.append(Process(target=self.worker_start, args=(newQernel,)))
 
         self.logger.log(10, "Opening new process, sumbitting QC to analyser")
         self.workers[-1].start()
@@ -90,9 +90,8 @@ class QOS:
         else:
             return 1
 
-    def analyser_submit(self, qernel: Qernel) -> None:
+    def worker_start(self, qernel: Qernel) -> None:
         # pdb.set_trace()
-        # ! We should get a better name for this function
         qernel = Analyser.analyse(qernel)
         self.optimiser.submit(qernel)
         

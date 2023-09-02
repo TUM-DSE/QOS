@@ -32,6 +32,7 @@ class Qernel(ABC):
     id: int
     #qpu: QPU
     status: str
+    metadata: Dict[str, Any]
     assigned_qpu: QPU
     #status: str
     transformations: List[Transformations]

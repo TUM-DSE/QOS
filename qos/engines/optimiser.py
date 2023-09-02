@@ -1,5 +1,5 @@
 from typing import Any, Dict, List
-from qos.engines.matcher import Matcher
+from qos.engines.virtualizer import Virtualizer
 from qos.types import Engine, Qernel
 import qos.database as db
 import pdb
@@ -14,7 +14,7 @@ class Optimiser(Engine):
 
     def submit(self, qernel: Qernel) -> int:
 
-        # Here the transformer would do its job, but for now we just copy the qernel and adds it as a subqernel to the original
+        # Here the Optimizer would do its job, but for now we just copy the qernel and adds it as a subqernel to the original
         new_qernel = Qernel()
         new_qernel.circuit = qernel.circuit
         new_qernel.provider = qernel.provider
@@ -29,8 +29,8 @@ class Optimiser(Engine):
         qernel.subqernels.append(new_qernel)
         db.addSubqernel(qernel.id, new_qernel.id)
 
-        matcher = Matcher()
-        matcher.submit(qernel)
+        Virtualizer = Virtualizer()
+        Virtualizer.submit(qernel)
 
         # print("----------------------------Transformer: ")
         # debugPrint()
