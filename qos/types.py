@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 import sys
 from qos.backends.types import QPU
-from qiskit import dagcircuit
+from qiskit import dagcircuit, QuantumCircuit
 from .dag import DAG
 
 
@@ -40,25 +40,50 @@ class Qernel(ABC):
     # * This is the circuit provider that was submitted by the client
     # * so we can return the result using the same API
     provider: str
-    circuit: DAG
+    circuit: QuantumCircuit
+    dag = DAG
     matching: List[tuple]
     args: Dict[str, Any]
 
-    def __init__(self) -> None:
+    def __init__(self, qc: QuantumCircuit = None, metadata: dict[str, Any] = None) -> None:
         self.args = {}
 
         # If a Qernel has subqernels it wont have dependencies and vice-versa.
         # This is because if is has subqernels then it means that it was an original circuit
         #   that was split by the Optimizer
         # If it has dependencies it means that it was a new system-created Qernel created
-        #   by the Multiprogrammer to encalsulate a merged circuit and its original Qernel
+        #   by the Multiprogrammer to encapsulate a merged circuit and its original Qernel
         #   dependencies
         self.provider = ""
-        self.circuit = None
+        self.circuit = qc
+        if qc is not None:
+            self.dag = DAG(qc)
+        if metadata is None:
+            self.metadata = {}
+        else:
+            self.metadata = metadata
         self.matching = []
         self.subqernels: List[Qernel] = []
         self.dependencies: List[Qernel] = []
         self.args["status"] = "PENDING"
+
+    def set_metadata(self, metadata):
+        self.metadata = metadata
+
+    def get_metadata(self) -> dict[str, Any]:
+        return self.metadata
+    
+    def edit_metadata(self, metadata: dict[str, Any]) -> None:
+        self.metadata.update(metadata)
+    
+    def get_circuit(self) -> QuantumCircuit:
+        if self.circuit is None:
+            return self.dag.to_circuit()
+        else:
+            return self.circuit
+        
+    def get_dag(self) -> DAG:
+        return self.dag
 
     @property
     def best_layout(self):
@@ -86,17 +111,16 @@ class Engine(ABC):
     """Generic interface for implementations of QOS Engines"""
 
     @abstractmethod
-    def submit(self, args: Dict[str, Any]) -> int:
+    def run(self, args: Dict[str, Any]) -> int:
         pass
-
 
 #    @abstractmethod
 #    def execute(self, id: int, args: Dict[str, Any]) -> None:
 #        pass
 
-#    @abstractmethod
-#    def fetch(self, id: int, args: Dict[str, Any]) -> None:
-#        pass
+    @abstractmethod
+    def results(self, id: int, args: Dict[str, Any]) -> None:
+        pass
 
 
 class Backend(ABC):

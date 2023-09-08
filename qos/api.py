@@ -1,8 +1,8 @@
 from typing import Any, Dict, List
 from qos.types import Qernel
-from .engines.optimiser import Optimiser
+from .distributed_transpiler.optimiser import Optimiser
 import qos.database as database
-from qos.engines.analyser import Analyser
+from qos.distributed_transpiler.analyser import Analyser
 import redis
 import logging
 #from qos.types import QCircuit

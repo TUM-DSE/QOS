@@ -12,7 +12,7 @@ class Optimiser(Engine):
     def __init__(self) -> None:
         pass
 
-    def submit(self, qernel: Qernel) -> int:
+    def run(self, qernel: Qernel) -> int:
 
         # Here the Optimizer would do its job, but for now we just copy the qernel and adds it as a subqernel to the original
         new_qernel = Qernel()
@@ -29,11 +29,14 @@ class Optimiser(Engine):
         qernel.subqernels.append(new_qernel)
         db.addSubqernel(qernel.id, new_qernel.id)
 
-        Virtualizer = Virtualizer()
-        Virtualizer.submit(qernel)
+        #Virtualizer = Virtualizer()
+        #Virtualizer.submit(qernel)
 
         # print("----------------------------Transformer: ")
         # debugPrint()
         # pdb.set_trace()
 
-        return 0
+        return qernel
+    
+    def results(self) -> None:
+        pass
