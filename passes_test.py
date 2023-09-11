@@ -15,7 +15,7 @@ def test_analyses_passes(qernel: Qernel) -> None:
 
 
 def main():
-    qc = random_circuit(5, 5, measure=True)
+    qc = random_circuit(5, 5, max_operands=2, measure=True)
     print(qc)
 
     qernel = Qernel(qc)
