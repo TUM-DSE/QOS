@@ -1,0 +1,48 @@
+[project]
+name = "Quantum Virtual Machine"
+version = "0.0.1"
+description = "Framework for Virtual and Distributed Quantum Computing"
+authors = [
+    {name = "Nathaniel Tornow", email = "nathaniel.tornow@tum.de"},
+]
+dependencies = [
+    "qiskit>=0.41.1",
+    "networkx>=3.0",
+    "ray>=2.3.0",
+    "qiskit-ibmq-provider>=0.20.1",
+    "setuptools>=67.6.0",
+    "clingo>=5.6.2",
+    "sqlitedict>=2.1.0",
+    "qiskit-ibm-runtime>=0.9.3",
+    "qiskit-optimization>=0.5.0",
+    "tqdm>=4.65.0",
+    "pandas>=2.0.2",
+    "mapomatic>=0.8.0",
+    "seaborn>=0.12.2",
+]
+requires-python = ">=3.10"
+readme = "README.md"
+license = {text = "MIT"}
+[project.optional-dependencies]
+jupyter = [
+    "jupyter>=1.0.0",
+    "matplotlib>=3.7.0",
+    "pylatexenc>=2.10",
+]
+dev = [
+    "mypy>=1.0.1",
+    "black>=23.1.0",
+    "pytest>=7.2.1",
+    "isort>=5.12.0",
+]
+bench = [
+    "pandas>=2.0.1",
+]
+
+[build-system]
+requires = ["pdm-pep517>=1.0.0"]
+build-backend = "pdm.pep517.api"
+
+[tool]
+[tool.pdm]
+[tool.pdm.dev-dependencies]
