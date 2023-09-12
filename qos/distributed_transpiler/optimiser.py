@@ -11,6 +11,7 @@ from qos.tools import debugPrint
 from qvm.qvm.compiler.virtualization import BisectionPass, OptimalDecompositionPass
 from qvm.qvm.compiler.virtualization.reduce_deps import CircularDependencyBreaker, GreedyDependencyBreaker, QubitDependencyMinimizer
 from qvm.qvm.compiler.distr_transpiler import QubitReuser
+from qvm.qvm.compiler.virtualization.wire_decomp import OptimalWireCutter
 from qvm.qvm import VirtualCircuit
 
 
@@ -48,6 +49,15 @@ class Optimiser(Engine):
         pass
 
 class GateVirtualizationPass(TransformationPass):
+    @abstractmethod
+    def name(self):
+        pass
+
+    @abstractmethod
+    def run(self, q: Qernel):
+        pass
+
+class WireCuttingPass(TransformationPass):
     @abstractmethod
     def name(self):
         pass
@@ -171,5 +181,25 @@ class RandomQubitReusePass(QubitReusePass):
         sub_qernel = Qernel()
         sub_qernel.set_circuit(virtual_circuit)    
         q.add_subqernel(sub_qernel)
+
+        return q
+
+class OptimalWireCuttingPass(WireCuttingPass):
+    _size_to_reach: int
+
+    def __init__(self, size_to_reach: int):
+        self._size_to_reach = size_to_reach
+
+    def name(self):
+        return "OptimalWireCuttingPass"
+    
+    def run(self, q: Qernel, budget: int) -> Qernel:
+        circuit = q.get_circuit()
+        optimal_wire_cutting_pass = OptimalWireCutter(self._size_to_reach)
+        new_circuit = optimal_wire_cutting_pass.run(circuit, budget)
+        virtual_circuit = VirtualCircuit(new_circuit)
+        sub_qernel = Qernel()
+        sub_qernel.set_circuit(virtual_circuit)    
+        q.add_subqernel(sub_qernel)    
 
         return q
