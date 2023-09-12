@@ -8,7 +8,9 @@ from qos.distributed_transpiler.types import TransformationPass
 from qos.types import Engine, Qernel
 import qos.database as db
 from qos.tools import debugPrint
-from qvm.qvm.compiler.virtualization import BisectionPass
+from qvm.qvm.compiler.virtualization import BisectionPass, OptimalDecompositionPass
+from qvm.qvm.compiler.virtualization.reduce_deps import CircularDependencyBreaker, GreedyDependencyBreaker, QubitDependencyMinimizer
+from qvm.qvm.compiler.distr_transpiler import QubitReuser
 from qvm.qvm import VirtualCircuit
 
 
@@ -45,8 +47,16 @@ class Optimiser(Engine):
     def results(self) -> None:
         pass
 
-
 class GateVirtualizationPass(TransformationPass):
+    @abstractmethod
+    def name(self):
+        pass
+
+    @abstractmethod
+    def run(self, q: Qernel):
+        pass
+
+class QubitReusePass(TransformationPass):
     @abstractmethod
     def name(self):
         pass
@@ -75,6 +85,91 @@ class GVBisectionPass(GateVirtualizationPass):
 
         return q
 
+class GVOptimalDecompositionPass(GateVirtualizationPass):
+    _size_to_reach: int
 
+    def __init__(self, size_to_reach: int):
+        self._size_to_reach = size_to_reach
 
+    def name(self):
+        return "OptimalDecompositionPass"
+    
+    def run(self, q: Qernel, budget: int) -> Qernel:
+        circuit = q.get_circuit()
+        optimal_decomposition_pass = OptimalDecompositionPass(self._size_to_reach)
+        new_circuit = optimal_decomposition_pass.run(circuit, budget)
+        virtual_circuit = VirtualCircuit(new_circuit)
+        sub_qernel = Qernel()
+        sub_qernel.set_circuit(virtual_circuit)    
+        q.add_subqernel(sub_qernel)    
 
+        return q
+
+class CircularDependencyBreakerPass(GateVirtualizationPass):
+    def name(self):
+        return "CircularDependencyBreakerPass"
+    
+    def run(self, q: Qernel, budget: int) -> Qernel:
+        circuit = q.get_circuit()
+        circular_dependency_breaker_pass = CircularDependencyBreaker()
+        new_circuit = circular_dependency_breaker_pass.run(circuit, budget)
+        virtual_circuit = VirtualCircuit(new_circuit)
+        sub_qernel = Qernel()
+        sub_qernel.set_circuit(virtual_circuit)    
+        q.add_subqernel(sub_qernel)    
+
+        return q
+    
+class GreedyDependencyBreakerPass(GateVirtualizationPass):
+    def name(self):
+        return "GreedyDependencyBreakerPass"
+    
+    def run(self, q: Qernel, budget: int) -> Qernel:
+        circuit = q.get_circuit()
+        greedy_dependency_breaker_pass = GreedyDependencyBreaker()
+        new_circuit = greedy_dependency_breaker_pass.run(circuit, budget)
+        virtual_circuit = VirtualCircuit(new_circuit)
+        sub_qernel = Qernel()
+        sub_qernel.set_circuit(virtual_circuit)    
+        q.add_subqernel(sub_qernel)    
+
+        return q
+    
+class QubitDependencyMinimizerPass(GateVirtualizationPass):
+    def name(self):
+        return "QubitDependencyMinimizerPass"
+    
+    def run(self, q: Qernel, budget: int) -> Qernel:
+        circuit = q.get_circuit()
+        qubit_dependency_minimizer_pass = QubitDependencyMinimizer()
+        new_circuit = qubit_dependency_minimizer_pass.run(circuit, budget)
+        virtual_circuit = VirtualCircuit(new_circuit)
+        sub_qernel = Qernel()
+        sub_qernel.set_circuit(virtual_circuit)    
+        q.add_subqernel(sub_qernel)    
+
+        return q
+    
+class RandomQubitReusePass(QubitReusePass):
+    _size_to_reach: int
+
+    def __init__(self, size_to_reach: int):
+        self._size_to_reach = size_to_reach
+    
+    def name(self):
+        return "RandomQubitReusePass"
+    
+    def run(self, q: Qernel) -> Qernel:
+        virtual_circuit = q.get_circuit()
+        random_qubit_reuser_pass = QubitReuser(self._size_to_reach)
+
+        if not isinstance(virtual_circuit, VirtualCircuit):
+            virtual_circuit = VirtualCircuit(virtual_circuit)
+        
+        random_qubit_reuser_pass.run(virtual_circuit)
+
+        sub_qernel = Qernel()
+        sub_qernel.set_circuit(virtual_circuit)    
+        q.add_subqernel(sub_qernel)
+
+        return q

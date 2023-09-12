@@ -21,8 +21,18 @@ def test_analyses_passes(qernel: Qernel) -> None:
 
 def test_transformation_passes(qernel: Qernel) -> Qernel:
     bisection_pass = GVBisectionPass(3)
+    optimal_decomposition_pass = GVOptimalDecompositionPass(3)
+    circular_dependency_pass = CircularDependencyBreakerPass()
+    greedy_dependency_breaker_pass = GreedyDependencyBreakerPass()
+    qubit_dependency_minimizer_pass = QubitDependencyMinimizerPass()
+    random_qubit_reuse_pass = RandomQubitReusePass(3)
 
     result = bisection_pass.run(qernel, 10)
+    result = optimal_decomposition_pass.run(qernel, 10)
+    result = circular_dependency_pass.run(qernel, 10)
+    result = greedy_dependency_breaker_pass.run(qernel, 10)
+    #result = qubit_dependency_minimizer_pass.run(qernel, 10)
+    result = random_qubit_reuse_pass.run(qernel)
 
     return result
 
