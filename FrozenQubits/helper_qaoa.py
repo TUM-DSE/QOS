@@ -4,7 +4,7 @@ import numpy as np
 import networkx as nx
 from collections import Counter
 import copy  
-from helper import *
+from FrozenQubits.helper import *
 
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter

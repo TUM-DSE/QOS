@@ -1,4 +1,5 @@
 from typing import Any, Dict, List
+import random
 from qos.types import Engine, Qernel
 from qos.distributed_transpiler.types import AnalysisPass
 from abc import ABC, abstractmethod
@@ -13,6 +14,7 @@ from qiskit import transpile, QuantumCircuit
 import numpy as np
 import networkx as nx
 from qiskit.converters import circuit_to_dag
+from qvm.qvm.compiler.dag import *
 
 
 class BasicAnalysisPass(AnalysisPass):
@@ -203,3 +205,55 @@ class DependencyGraphFromDAGPass(DAGAnalysisPass):
         dependency_graph_metadata = {"depenendency_graph" : dag.qubit_dependencies()}
 
         qernel.edit_metadata(dependency_graph_metadata)
+
+class QubitConnectivityGraphFromDAGPass(DAGAnalysisPass):
+    def __init__(self) -> None:
+        pass
+
+    def name(self) -> str:
+        return "QubitConnectivityGraphFromDAGPass"
+
+    def run(self, qernel: Qernel) -> None:
+        dag = qernel.get_dag()
+
+        dependency_graph_metadata = {"qubit_connectivity_graph" : dag_to_qcg(dag, use_qubit_idx=True)}
+
+        qernel.edit_metadata(dependency_graph_metadata)
+
+class QAOAAnalysisPass(DAGAnalysisPass):
+    def __init__(self) -> None:
+        pass
+
+    def name(self) -> str:
+        return "QAOAAnalysisPass"
+
+    def run(self, qernel: Qernel) -> None:
+        cgc_pass = QubitConnectivityGraphFromDAGPass()
+        cgc_pass.run(qernel)
+        cgc = qernel.get_metadata()['qubit_connectivity_graph']
+
+        qaoa_metadata = {
+            "h" : self.generate_h_from_graph(cgc),
+            "J" : self.generate_J_from_graph(cgc),
+            "offset" : 0.0,
+            "num_layers" : 1
+        }
+
+        qernel.edit_metadata(qaoa_metadata)
+
+    def generate_h_from_graph(self, graph: nx.Graph):
+        h = {}
+
+        for node in graph.nodes():
+            h[node] = 0.
+        
+        return h
+    
+    def generate_J_from_graph(self, graph: nx.Graph):
+        J = {}
+
+        for edge in graph.edges:
+            weight = random.choice([-1, 1])
+            J[edge] = weight
+
+        return J

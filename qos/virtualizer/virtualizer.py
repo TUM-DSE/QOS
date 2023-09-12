@@ -1,5 +1,6 @@
 from typing import Any, Dict, List
 from abc import ABC, abstractmethod
+import copy
 from qos.types import Engine, Qernel
 import qos.database as db
 import pdb
@@ -26,9 +27,11 @@ class GateVirtualizer(Virtualizer):
         to_return = []
         qc = qernel.get_circuit()
         sub_qernels = qernel.get_subqernels()
+        new_sub_qernels = []
 
         for i in range(len(sub_qernels)):
-            vqc = sub_qernels.pop().get_circuit()
+            sub_kernel = sub_qernels.pop()
+            vqc = sub_kernel.get_circuit()
             if isinstance(vqc, VirtualCircuit):
                 for frag, frag_circuit in vqc.fragment_circuits.items():
                     instance_labels = vqc.get_instance_labels(frag)
@@ -36,9 +39,12 @@ class GateVirtualizer(Virtualizer):
                     for c in instantiations:
                         new_qernel = Qernel()
                         new_qernel.set_circuit(c)
-                        qernel.add_subqernel(new_qernel)
+                        new_sub_qernels.append(new_qernel)                        
                         to_return.append(new_qernel)
 
+        for nsq in new_sub_qernels:
+            qernel.add_subqernel(nsq)
+        
         return to_return
     
     def results():

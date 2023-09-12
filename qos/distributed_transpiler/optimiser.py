@@ -231,7 +231,7 @@ class FrozenQubitsPass(QubitFreezingPass):
         circuit = q.get_circuit()
         metadata = q.get_metadata()
         h = metadata['h']
-        J = metadata['j']
+        J = metadata['J']
         offset = metadata['offset']
         num_layers = metadata['num_layers']
 
@@ -244,7 +244,7 @@ class FrozenQubitsPass(QubitFreezingPass):
             G, list_of_halting_qubits = drop_hotspot_node(G, list_of_fixed_vars=list_of_halting_qubits, verbosity=0)
 
         sub_Ising_list = halt_qubits(J=J, h=h, offset=offset, halting_list=list_of_halting_qubits)
-
+     
         for sub_problem in sub_Ising_list:
             new_circuit = pqc_QAOA(J=sub_problem['J'], h=sub_problem['h'], num_layers=num_layers)['qc']
             virtual_circuit = VirtualCircuit(new_circuit)
