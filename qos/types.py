@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 import sys
 from qos.backends.types import QPU
+from qvm.qvm.virtual_circuit import VirtualCircuit
 from qiskit import dagcircuit, QuantumCircuit
 from .dag import DAG
 
@@ -40,12 +41,12 @@ class Qernel(ABC):
     # * This is the circuit provider that was submitted by the client
     # * so we can return the result using the same API
     provider: str
-    circuit: QuantumCircuit
+    circuit: QuantumCircuit | VirtualCircuit
     dag = DAG
     matching: List[tuple]
     args: Dict[str, Any]
 
-    def __init__(self, qc: QuantumCircuit = None, metadata: dict[str, Any] = None) -> None:
+    def __init__(self, qc: QuantumCircuit | VirtualCircuit = None, metadata: dict[str, Any] = None) -> None:
         self.args = {}
 
         # If a Qernel has subqernels it wont have dependencies and vice-versa.
@@ -76,6 +77,9 @@ class Qernel(ABC):
     def edit_metadata(self, metadata: dict[str, Any]) -> None:
         self.metadata.update(metadata)
     
+    def set_circuit(self, qc: QuantumCircuit | VirtualCircuit) -> None:
+        self.circuit = qc
+
     def get_circuit(self) -> QuantumCircuit:
         if self.circuit is None:
             return self.dag.to_circuit()
@@ -84,6 +88,12 @@ class Qernel(ABC):
         
     def get_dag(self) -> DAG:
         return self.dag
+      
+    def add_subqernel(self, q) -> None:
+        self.subqernels.append(q)
+
+    def get_subqernels(self):
+        return self.subqernels
 
     @property
     def best_layout(self):

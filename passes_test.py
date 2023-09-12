@@ -4,6 +4,7 @@ from qiskit.circuit.random import random_circuit
 from qiskit.circuit import QuantumCircuit, ClassicalRegister
 from qiskit.circuit.library import TwoLocal
 from qos.types import Qernel
+from qos.virtualizer.virtualizer import GateVirtualizer
 from qvm.qvm.virtual_circuit import generate_instantiations
 
 
@@ -25,6 +26,13 @@ def test_transformation_passes(qernel: Qernel) -> Qernel:
 
     return result
 
+def test_virtualization(qernel: Qernel) -> List[Qernel]:
+    gate_virtualizer = GateVirtualizer()
+
+    results = gate_virtualizer.run(qernel)
+
+    return results
+
 def main():
     #qc = random_circuit(5, 5, max_operands=2, measure=True)
     qc = TwoLocal(5, entanglement='linear', rotation_blocks=["ry"], entanglement_blocks="rzz",reps=1)
@@ -38,15 +46,11 @@ def main():
 
     qernel = Qernel(qc)
 
-    circuits = []
-    result = test_transformation_passes(qernel)
-    virtual_circuit = VirtualCircuit(result.get_circuit())
-    for frag, frag_circuit in virtual_circuit.fragment_circuits.items():
-        instance_labels = virtual_circuit.get_instance_labels(frag)
-        instantiations = generate_instantiations(frag_circuit, instance_labels)
-        for c in instantiations:
-            print(c)
+    cut_circuit = test_transformation_passes(qernel)
+    qernels = test_virtualization(cut_circuit)
 
-    #print(qernel.get_metadata())
+    for q in qernels:
+        print(q.get_circuit())
+
 
 main()

@@ -66,13 +66,14 @@ class GVBisectionPass(GateVirtualizationPass):
     
     def run(self, q: Qernel, budget: int) -> Qernel:
         circuit = q.get_circuit()
-        virtual_circuit = VirtualCircuit(circuit)
-
         bisection_pass = BisectionPass(self._size_to_reach)
-
         new_circuit = bisection_pass.run(circuit, budget)
+        virtual_circuit = VirtualCircuit(new_circuit)
+        sub_qernel = Qernel()
+        sub_qernel.set_circuit(virtual_circuit)    
+        q.add_subqernel(sub_qernel)    
 
-        return Qernel(new_circuit)
+        return q
 
 
 
