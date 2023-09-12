@@ -2,17 +2,22 @@ from typing import Any, Dict, List
 from abc import ABC, abstractmethod
 import pdb
 from time import sleep
+import networkx as nx
 
 from qos.virtualizer.virtualizer import Virtualizer
 from qos.distributed_transpiler.types import TransformationPass
 from qos.types import Engine, Qernel
 import qos.database as db
 from qos.tools import debugPrint
+
 from qvm.qvm.compiler.virtualization import BisectionPass, OptimalDecompositionPass
 from qvm.qvm.compiler.virtualization.reduce_deps import CircularDependencyBreaker, GreedyDependencyBreaker, QubitDependencyMinimizer
 from qvm.qvm.compiler.distr_transpiler import QubitReuser
 from qvm.qvm.compiler.virtualization.wire_decomp import OptimalWireCutter
 from qvm.qvm import VirtualCircuit
+
+from FrozenQubits.helper_FrozenQubits import drop_hotspot_node, halt_qubits
+from FrozenQubits.helper_qaoa import pqc_QAOA
 
 
 class Optimiser(Engine):
@@ -67,6 +72,15 @@ class WireCuttingPass(TransformationPass):
         pass
 
 class QubitReusePass(TransformationPass):
+    @abstractmethod
+    def name(self):
+        pass
+
+    @abstractmethod
+    def run(self, q: Qernel):
+        pass
+
+class QubitFreezingPass(TransformationPass):
     @abstractmethod
     def name(self):
         pass
@@ -201,5 +215,41 @@ class OptimalWireCuttingPass(WireCuttingPass):
         sub_qernel = Qernel()
         sub_qernel.set_circuit(virtual_circuit)    
         q.add_subqernel(sub_qernel)    
+
+        return q
+    
+class FrozenQubitsPass(QubitFreezingPass):
+    _qubits_to_freeze: int
+
+    def __init__(self, qubits_to_freeze: int):
+        self._qubits_to_freeze = qubits_to_freeze
+
+    def name(self):
+        return "FrozenQubitsPass"
+    
+    def run(self, q: Qernel) -> Qernel:
+        circuit = q.get_circuit()
+        metadata = q.get_metadata()
+        h = metadata['h']
+        J = metadata['j']
+        offset = metadata['offset']
+        num_layers = metadata['num_layers']
+
+        G = nx.Graph()
+        G.add_edges_from(list(J.keys()))
+        G.add_nodes_from(list(h.keys()))
+
+        list_of_halting_qubits=[]
+        for i in range(self._qubits_to_freeze):
+            G, list_of_halting_qubits = drop_hotspot_node(G, list_of_fixed_vars=list_of_halting_qubits, verbosity=0)
+
+        sub_Ising_list = halt_qubits(J=J, h=h, offset=offset, halting_list=list_of_halting_qubits)
+
+        for sub_problem in sub_Ising_list:
+            new_circuit = pqc_QAOA(J=sub_problem['J'], h=sub_problem['h'], num_layers=num_layers)['qc']
+            virtual_circuit = VirtualCircuit(new_circuit)
+            sub_qernel = Qernel()
+            sub_qernel.set_circuit(virtual_circuit)    
+            q.add_subqernel(sub_qernel)    
 
         return q
