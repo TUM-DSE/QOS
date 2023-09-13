@@ -1,5 +1,8 @@
 # QAOA tools 
-
+import scipy
+import scipy.optimize as opt
+from typing import List, Mapping, Tuple
+from collections import Counter
 import numpy as np
 import networkx as nx
 from collections import Counter
@@ -8,7 +11,22 @@ from FrozenQubits.helper import *
 
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter
+from qiskit.quantum_info import hellinger_fidelity
+from qiskit.providers.aer import StatevectorSimulator
+from qiskit.quantum_info import Statevector
 
+
+def _get_ideal_counts(circuit: QuantumCircuit) -> Counter:
+    ideal_counts = {}
+    sv = Statevector.from_label("0" * circuit.num_qubits)
+    circuit_no_meas = circuit.remove_final_measurements(inplace=False)
+    sv = sv.evolve(circuit_no_meas)
+
+    for i, amplitude in enumerate(sv):
+        bitstring = f"{i:>0{circuit.num_qubits}b}"
+        probability = np.abs(amplitude) ** 2
+        ideal_counts[bitstring] = probability
+    return Counter(ideal_counts)
 
  
 def get_benchmark_id(
@@ -34,7 +52,7 @@ def get_benchmark_id(
     
     else: 
         print('Invalid benchmark type')
-        returnNone 
+        return None 
     
     return filename
 
@@ -100,6 +118,80 @@ def pqc_QAOA(J, h=None, num_layers=1,
     }
     return out        
 
+def _gen_ansatz(hamiltonian: dict[int, float], gamma: float, beta: float) -> QuantumCircuit:
+    qc = QuantumCircuit(len(hamiltonian.keys()))
+
+    # initialize |++++>
+    qc.h(qubit=qc.qubits)
+
+    # Apply the phase separator unitary
+    for k, v in hamiltonian.items():
+        i, j = k
+        weight = v
+        phi = gamma * weight
+
+        # Perform a ZZ interaction
+        qc.cnot(i, j)
+        qc.rz(2 * phi, qubit=j)
+        qc.cnot(i, j)
+
+    # Apply the mixing unitary
+    qc.rx(2 * beta, qubit=qc.qubits)
+
+    qc.measure_all()
+
+    return qc
+
+def _get_opt_angles(hamiltonian: dict[int, float]) -> Tuple[List, float]:
+    def f(params: List, hamiltonian: dict[int, float]) -> float:
+        gamma, beta = params
+        circ = _gen_ansatz(hamiltonian, gamma, beta)
+        probs = _get_ideal_counts(circ)
+        objective_value = _get_expectation_value_from_probs(hamiltonian, probs)
+
+        return -objective_value  # because we are minimizing instead of maximizing
+
+    init_params = [np.random.uniform() * 2 * np.pi, np.random.uniform() * 2 * np.pi]
+    out = opt.minimize(f, init_params, args=(hamiltonian), method="COBYLA")
+
+    return out["x"], out["fun"]
+
+def _gen_angles(hamiltonian: dict[int, float]) -> List:
+    # Classically simulate the variational optimization 5 times,
+    # return the parameters from the best performing simulation
+    best_params, best_cost = [], 10.0
+    for _ in range(10):
+        params, cost = _get_opt_angles(hamiltonian)
+        if cost < best_cost:
+            best_params = params
+            best_cost = cost
+    return best_params
+
+def _get_energy_for_bitstring(hamiltonian, bitstring: str) -> float:
+    energy = 0
+    for k, v in hamiltonian.items():
+        i, j = k
+        weight = v
+        if bitstring[i] == bitstring[j]:
+            energy -= weight  # if edge is UNCUT, weight counts against objective
+        else:
+            energy += weight  # if edge is CUT, weight counts towards objective
+    return energy
+
+def _get_expectation_value_from_probs(hamiltonian, probabilities: Counter) -> float:
+    expectation_value = 0.0
+    for bitstring, probability in probabilities.items():
+        expectation_value += probability * _get_energy_for_bitstring(hamiltonian, bitstring)
+    return expectation_value
+
+    def circuit(self) -> QuantumCircuit:
+        """Generate a QAOA circuit for the Sherrington-Kirkpatrick model.
+        The ansatz structure is given by the form of the Hamiltonian and requires
+        interactions between every pair of qubits. We restrict the depth of this proxy
+        benchmark to p=1 to keep the classical simulation scalable.
+        """
+        gamma, beta = self.params
+        return self._gen_ansatz(gamma, beta)
 
 
 

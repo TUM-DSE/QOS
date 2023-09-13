@@ -17,7 +17,7 @@ from qvm.qvm.compiler.virtualization.wire_decomp import OptimalWireCutter
 from qvm.qvm import VirtualCircuit
 
 from FrozenQubits.helper_FrozenQubits import drop_hotspot_node, halt_qubits
-from FrozenQubits.helper_qaoa import pqc_QAOA, bind_QAOA
+from FrozenQubits.helper_qaoa import pqc_QAOA, bind_QAOA, _gen_angles
 
 
 class Optimiser(Engine):
@@ -248,8 +248,8 @@ class FrozenQubitsPass(QubitFreezingPass):
         for sub_problem in sub_Ising_list:
             new_QAOA = pqc_QAOA(J=sub_problem['J'], h=sub_problem['h'], num_layers=num_layers)
             new_circuit = new_QAOA['qc']
-            print(new_QAOA['params'])
-            #new_circuit = bind_QAOA(new_circuit, new_QAOA['params'])
+            beta, gamma =_gen_angles(sub_problem['J'])
+            new_circuit = bind_QAOA(new_circuit, new_QAOA['params'], beta, gamma)
             virtual_circuit = VirtualCircuit(new_circuit)
             sub_qernel = Qernel()
             sub_qernel.set_circuit(virtual_circuit)    

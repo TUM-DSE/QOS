@@ -67,12 +67,12 @@ def main():
     #qc = qc.decompose()
     #print(qc)
 
-    #qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/sk/gridsearch_100/ideal/3_4_1^P=1.qasm")
-    #qc_frozen1 = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/sk/gridsearch_100/ideal/3_4_1^M=1_0^P=1.qasm")
-    #qc_frozen2 = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/sk/gridsearch_100/ideal/3_4_1^M=1_1^P=1.qasm")
-    #print(qc_full)
-    #print(qc_frozen1)
-    #print(qc_frozen2)   
+    qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/sk/gridsearch_100/ideal/3_4_1^P=1.qasm")
+    qc_frozen1 = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/sk/gridsearch_100/ideal/3_4_1^M=1_0^P=1.qasm")
+    qc_frozen2 = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/sk/gridsearch_100/ideal/3_4_1^M=1_1^P=1.qasm")
+    print(qc_full)
+    print(qc_frozen1)
+    print(qc_frozen2)   
 
     #circuits = [qc_full, qc_frozen1, qc_frozen2]
 
@@ -84,29 +84,27 @@ def main():
 
     #exit()
    
-    qc_supermarq_bench = QAOAVanillaProxy(5)
+    qc_supermarq_bench = QAOAVanillaProxy(4)
 
-    ham = qc_supermarq_bench.hamiltonian
     qc_supermarq = qc_supermarq_bench.circuit()
     qc_qiskit = cirq_to_qiskit(qc_supermarq)
 
     #cqc_qiskit = transpile(qc_qiskit, backend, optimization_level=3)
     #job = backend.run(cqc_qiskit, shots=20000)
 
-    #print(qc_qiskit)
+    print(qc_qiskit)
 
     qernel = Qernel(qc_qiskit)
 
     qaoa_analysis = QAOAAnalysisPass()
     qaoa_analysis.run(qernel)
-    new_ham = qernel.get_metadata()["J"]
 
-    #cut_circuit = test_transformation_passes(qernel)
-    #qernels = test_virtualization(cut_circuit)
+    cut_circuit = test_transformation_passes(qernel)
+    qernels = test_virtualization(cut_circuit)
 
-    #for q in qernels:
-        #qc_small = q.get_circuit()
-        #print(qc_small)
+    for q in qernels:
+        qc_small = q.get_circuit()
+        print(qc_small)
         #cqc_small = transpile(qc_small, backend, optimization_level=3)
         #job = backend.run(cqc_small, shots=20000)
 
