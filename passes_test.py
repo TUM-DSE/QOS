@@ -4,12 +4,15 @@ from qiskit.circuit.random import random_circuit
 from qiskit.circuit import QuantumCircuit, ClassicalRegister
 from qiskit.circuit.library import TwoLocal
 from qiskit.providers.fake_provider import *
+from qiskit_ibm_provider import IBMProvider
 from qiskit import *
 from qos.types import Qernel
 from qos.virtualizer.virtualizer import GateVirtualizer
 from qvm.qvm.virtual_circuit import generate_instantiations
 from qos.dag import dag_to_qcg
 import matplotlib.pyplot as plt
+from supermarq.benchmarks.qaoa_vanilla_proxy import *
+from supermarq.converters import *
 
 def test_analyses_passes(qernel: Qernel) -> None:
     basic_pass = BasicAnalysisPass()
@@ -64,23 +67,49 @@ def main():
     #qc = qc.decompose()
     #print(qc)
 
-    qc = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/sk/gridsearch_100/ideal/5_6_1^P=1.qasm")
-    print(qc)
+    #qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/sk/gridsearch_100/ideal/3_4_1^P=1.qasm")
+    #qc_frozen1 = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/sk/gridsearch_100/ideal/3_4_1^M=1_0^P=1.qasm")
+    #qc_frozen2 = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/sk/gridsearch_100/ideal/3_4_1^M=1_1^P=1.qasm")
+    #print(qc_full)
+    #print(qc_frozen1)
+    #print(qc_frozen2)   
 
-    qernel = Qernel(qc)
+    #circuits = [qc_full, qc_frozen1, qc_frozen2]
+
+    #provider =  IBMProvider(instance="ibm-q-research-2/tu-munich-1/main")
+    #backend = provider.get_backend("ibm_nairobi")
+
+    #ccircuits = transpile(circuits, backend, optimization_level=3)
+    #job = backend.run(ccircuits, shots=20000)
+
+    #exit()
+   
+    qc_supermarq_bench = QAOAVanillaProxy(5)
+
+    ham = qc_supermarq_bench.hamiltonian
+    qc_supermarq = qc_supermarq_bench.circuit()
+    qc_qiskit = cirq_to_qiskit(qc_supermarq)
+
+    #cqc_qiskit = transpile(qc_qiskit, backend, optimization_level=3)
+    #job = backend.run(cqc_qiskit, shots=20000)
+
+    #print(qc_qiskit)
+
+    qernel = Qernel(qc_qiskit)
 
     qaoa_analysis = QAOAAnalysisPass()
     qaoa_analysis.run(qernel)
+    new_ham = qernel.get_metadata()["J"]
 
-    cut_circuit = test_transformation_passes(qernel)
-    qernels = test_virtualization(cut_circuit)
+    #cut_circuit = test_transformation_passes(qernel)
+    #qernels = test_virtualization(cut_circuit)
 
-    for q in qernels:
-        print(q.get_circuit())
+    #for q in qernels:
+        #qc_small = q.get_circuit()
+        #print(qc_small)
+        #cqc_small = transpile(qc_small, backend, optimization_level=3)
+        #job = backend.run(cqc_small, shots=20000)
 
-    backend = FakeLagos()
-    qc = transpile(qernels[0].get_circuit(), backend)
-    print(qc)
 
 
 main()

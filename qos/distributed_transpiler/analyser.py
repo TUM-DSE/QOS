@@ -228,32 +228,46 @@ class QAOAAnalysisPass(DAGAnalysisPass):
         return "QAOAAnalysisPass"
 
     def run(self, qernel: Qernel) -> None:
-        cgc_pass = QubitConnectivityGraphFromDAGPass()
-        cgc_pass.run(qernel)
-        cgc = qernel.get_metadata()['qubit_connectivity_graph']
+        qc = qernel.get_circuit()       
 
         qaoa_metadata = {
-            "h" : self.generate_h_from_graph(cgc),
-            "J" : self.generate_J_from_graph(cgc),
+            "h" : self.generate_h(qc),
+            "J" : self.generate_J(qc),
             "offset" : 0.0,
             "num_layers" : 1
         }
 
         qernel.edit_metadata(qaoa_metadata)
 
-    def generate_h_from_graph(self, graph: nx.Graph):
+    def generate_h(self, qc: QuantumCircuit):
         h = {}
 
-        for node in graph.nodes():
-            h[node] = 0.
+        for i in range(qc.num_qubits):
+            h[i] = 0.
         
         return h
     
-    def generate_J_from_graph(self, graph: nx.Graph):
+    def generate_J(self, qc: QuantumCircuit):
+        data = qc.data
         J = {}
+        prev_pair = None
 
-        for edge in graph.edges:
-            weight = random.choice([-1, 1])
-            J[edge] = weight
+        for i in range(qc.num_qubits):
+            for instr in data:
+                if instr.operation.name == 'cx':
+                    if instr.qubits[1].index == i:
+                        op1 = instr.qubits[0].index
+                        v = J.get((op1, i))
+                        if v is not None:
+                            continue
+                            #J[(op1, i)] = 0
+                        prev_pair = (op1, i)
+                if instr.operation.name == 'rz':
+                    if instr.qubits[0].index == i:    
+                        param = instr.operation.params[0]
 
+                        if param > 0:
+                            J[prev_pair] = 1
+                        else:
+                            J[prev_pair] = -1
         return J
