@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 import sys
 from qos.backends.types import QPU
 from qvm.qvm.virtual_circuit import VirtualCircuit
+from qvm.qvm.quasi_distr import *
 from qiskit import dagcircuit, QuantumCircuit
 from .dag import DAG
 
@@ -34,6 +35,7 @@ class Qernel(ABC):
     #qpu: QPU
     status: str
     metadata: Dict[str, Any]
+    results: Dict[str, Any] | QuasiDistr
     assigned_qpu: QPU
     #status: str
     transformations: List[Transformations]
@@ -113,6 +115,12 @@ class Qernel(ABC):
     
     def get_virtual_subqernels(self):
         return self.virtual_subqernels
+    
+    def get_results(self):
+        return self.results
+
+    def set_results(self, results: Dict[str, Any] | QuasiDistr):
+        self.results = results
 
     @property
     def best_layout(self):

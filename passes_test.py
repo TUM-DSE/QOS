@@ -7,11 +7,12 @@ from qiskit.providers.fake_provider import *
 from qiskit_ibm_provider import IBMProvider
 from qiskit import *
 from qos.types import Qernel
-from qos.virtualizer.virtualizer import GVInstatiator
+from qos.virtualizer.virtualizer import GVInstatiator, GVKnitter
 from qvm.qvm.virtual_circuit import generate_instantiations
 from qos.dag import dag_to_qcg
 import matplotlib.pyplot as plt
 from supermarq.benchmarks.qaoa_vanilla_proxy import *
+from supermarq.benchmarks.ghz import *
 from supermarq.converters import *
 from FrozenQubits.helper_qaoa import *
 
@@ -30,7 +31,7 @@ def test_analyses_passes(qernel: Qernel) -> None:
 
 
 def test_transformation_passes(qernel: Qernel) -> Qernel:
-    bisection_pass = GVBisectionPass(3)
+    bisection_pass = GVBisectionPass(4)
     optimal_decomposition_pass = GVOptimalDecompositionPass(3)
     circular_dependency_pass = CircularDependencyBreakerPass()
     greedy_dependency_breaker_pass = GreedyDependencyBreakerPass()
@@ -39,14 +40,14 @@ def test_transformation_passes(qernel: Qernel) -> Qernel:
     optimal_wire_cutting_pass = OptimalWireCuttingPass(4)
     frozen_qubits_pass = FrozenQubitsPass(1)
 
-    #result = bisection_pass.run(qernel, 10)
+    result = bisection_pass.run(qernel, 10)
     #result = optimal_decomposition_pass.run(qernel, 10)
     #result = circular_dependency_pass.run(qernel, 10)
     #result = greedy_dependency_breaker_pass.run(qernel, 10)
     #result = qubit_dependency_minimizer_pass.run(qernel, 10)
     #result = random_qubit_reuse_pass.run(qernel)
     #result = optimal_wire_cutting_pass.run(qernel, 10)
-    result = frozen_qubits_pass.run(qernel)
+    #result = frozen_qubits_pass.run(qernel)
 
     return result
 
@@ -64,6 +65,44 @@ def convert_hamiltonian(hamiltonian: List) -> dict:
         new_hamiltonian[(h[0], h[1])] = h[2]
 
     return new_hamiltonian
+
+def main2():
+    qc_supermarq_bench = GHZ(7)
+
+    qc_supermarq = qc_supermarq_bench.circuit()
+    qc_qiskit = cirq_to_qiskit(qc_supermarq)
+
+    qernel = Qernel(qc_qiskit)
+
+    basic_pass = BasicAnalysisPass()
+    basic_pass.run(qernel)
+
+    cut_circuit = test_transformation_passes(qernel)
+    qernels = test_virtualization(cut_circuit)
+
+    backend = FakePerth()
+
+    to_run = []
+
+    for q in qernels:
+        qc_small = q.get_circuit()
+        #print(qc_small)
+        cqc_small = transpile(qc_small, backend, optimization_level=3)
+        to_run.append(cqc_small)
+
+    job = backend.run(to_run, shots=20000)
+    qernel.edit_metadata({"shots": 20000})
+    
+    results = job.result().get_counts()
+
+    sub_qernel = qernel.get_subqernels()[0]
+
+    for i,sq in enumerate(sub_qernel.get_subqernels()):
+        sq.set_results(results[i])
+
+    knitter = GVKnitter()
+    print(knitter.run(qernel))
+
 
 def main():
     #qc = random_circuit(5, 5, max_operands=2, measure=True)
@@ -151,4 +190,4 @@ def main():
     print("small_circuit_1:", average_score_1)
 
 
-main()
+main2()

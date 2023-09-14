@@ -37,6 +37,7 @@ class BasicAnalysisPass(AnalysisPass):
         to_return = {}
         to_return["depth"] = qc.depth()
         to_return["num_qubits"] = qc.num_qubits
+        to_return["num_clbits"] = qc.num_clbits
         to_return["num_nonlocal_gates"] = qc.num_nonlocal_gates()
         to_return['num_connected_components'] = qc.num_connected_components()    
         to_return['number_instructions'] = qc.size()

@@ -1,6 +1,8 @@
 from typing import Any, Dict, List
 from abc import ABC, abstractmethod
 import copy
+from multiprocessing import Pool
+
 from qos.types import Engine, Qernel
 import qos.database as db
 import pdb
@@ -8,6 +10,7 @@ from time import sleep
 from qiskit.circuit import QuantumCircuit
 
 from qvm.qvm.virtual_circuit import VirtualCircuit, generate_instantiations
+from qvm.qvm.quasi_distr import *
 from qos.tools import debugPrint
 
 
@@ -50,19 +53,21 @@ class GVInstatiator(Instantiator):
             vqc = vsq.get_circuit()
             assert isinstance(vqc, VirtualCircuit)
             for frag, frag_circuit in vqc.fragment_circuits.items():
-                new_qernel = Qernel()
-                new_qernel.set_circuit(frag)
-                new_qernel.edit_metadata(vsq.get_metadata())
-                vsq.add_virtual_subqernel(new_qernel)
+                new_vqernel = Qernel()
+                new_vqernel.set_circuit(frag)
+                new_vqernel.edit_metadata(vsq.get_metadata())               
 
                 instance_labels = vqc.get_instance_labels(frag)
                 instantiations = generate_instantiations(frag_circuit, instance_labels)
+
+                new_vqernel.edit_metadata({"num_instantiations": len(instantiations)})
+                vsq.add_virtual_subqernel(new_vqernel)
+
                 for c in instantiations:
                     new_qernel = Qernel()
                     new_qernel.set_circuit(c)
                     new_qernel.edit_metadata(vsq.get_metadata())
-                    instantiated_sub_qernel.add_subqernel(new_qernel)                        
-
+                    instantiated_sub_qernel.add_subqernel(new_qernel)   
         
         return instantiated_sub_qernel.get_subqernels()
     
@@ -72,29 +77,29 @@ class GVInstatiator(Instantiator):
 
 class GVKnitter(Knitter):
     def run(self, qernel: Qernel) -> dict[str, int]:
-        v_qc = qernel.get_circuit()
-        assert isinstance(v_qc, VirtualCircuit)
+        to_return = {}
 
+        subqernels = qernel.get_subqernels()[0].get_subqernels()
+        root_virtual_subqernel = qernel.get_virtual_subqernels()[0]
+        virtual_subqernels = root_virtual_subqernel.get_virtual_subqernels()
 
-        to_return = []
-        qc = qernel.get_circuit()
-        sub_qernels = qernel.get_subqernels()
-        new_sub_qernels = []
+        results = {}
+        tmp_results = []
 
-        for i in range(len(sub_qernels)):
-            sub_kernel = sub_qernels.pop()
-            vqc = sub_kernel.get_circuit()
-            if isinstance(vqc, VirtualCircuit):
-                for frag, frag_circuit in vqc.fragment_circuits.items():
-                    instance_labels = vqc.get_instance_labels(frag)
-                    instantiations = generate_instantiations(frag_circuit, instance_labels)
-                    for c in instantiations:
-                        new_qernel = Qernel()
-                        new_qernel.set_circuit(c)
-                        new_sub_qernels.append(new_qernel)                        
-                        to_return.append(new_qernel)
+        for vsq in virtual_subqernels:
+            num_instantiations = vsq.get_metadata()["num_instantiations"]
+            for i in range(num_instantiations):
+                tmp_results.append(QuasiDistr.from_counts(subqernels[i].get_results()))
+            results[vsq.get_circuit()] = tmp_results
+            tmp_results = []
 
-        for nsq in new_sub_qernels:
-            qernel.add_subqernel(nsq)
+        clbits = qernel.get_metadata()["num_clbits"]
+        shots = qernel.get_metadata()["shots"]
+
+        with Pool() as pool:
+            to_return = root_virtual_subqernel.get_circuit().knit(results, pool).to_counts(clbits, shots)
         
         return to_return
+    
+    def results():
+        return None
