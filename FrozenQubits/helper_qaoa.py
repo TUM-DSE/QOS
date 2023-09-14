@@ -184,16 +184,15 @@ def _get_expectation_value_from_probs(hamiltonian, probabilities: Counter) -> fl
         expectation_value += probability * _get_energy_for_bitstring(hamiltonian, bitstring)
     return expectation_value
 
-    def circuit(self) -> QuantumCircuit:
-        """Generate a QAOA circuit for the Sherrington-Kirkpatrick model.
-        The ansatz structure is given by the form of the Hamiltonian and requires
-        interactions between every pair of qubits. We restrict the depth of this proxy
-        benchmark to p=1 to keep the classical simulation scalable.
-        """
-        gamma, beta = self.params
-        return self._gen_ansatz(gamma, beta)
+def score(circuit: QuantumCircuit, hamiltonian, counts: Mapping[str, float]) -> float:
+    ideal_counts = _get_ideal_counts(circuit)
+    total_shots = sum(counts.values())
+    experimental_counts = {k: v / total_shots for k, v in counts.items()}
 
+    ideal_value = _get_expectation_value_from_probs(hamiltonian, ideal_counts)
+    experimental_value = _get_expectation_value_from_probs(hamiltonian, experimental_counts)
 
+    return 1 - abs(ideal_value - experimental_value) / (2 * ideal_value)
 
 def bind_QAOA(primary_circuit, params, beta, gamma, 
                          beta_label='b', gamma_label='g'):

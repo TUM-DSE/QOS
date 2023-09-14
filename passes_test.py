@@ -7,12 +7,13 @@ from qiskit.providers.fake_provider import *
 from qiskit_ibm_provider import IBMProvider
 from qiskit import *
 from qos.types import Qernel
-from qos.virtualizer.virtualizer import GateVirtualizer
+from qos.virtualizer.virtualizer import GVInstatiator
 from qvm.qvm.virtual_circuit import generate_instantiations
 from qos.dag import dag_to_qcg
 import matplotlib.pyplot as plt
 from supermarq.benchmarks.qaoa_vanilla_proxy import *
 from supermarq.converters import *
+from FrozenQubits.helper_qaoa import *
 
 def test_analyses_passes(qernel: Qernel) -> None:
     basic_pass = BasicAnalysisPass()
@@ -50,11 +51,19 @@ def test_transformation_passes(qernel: Qernel) -> Qernel:
     return result
 
 def test_virtualization(qernel: Qernel) -> List[Qernel]:
-    gate_virtualizer = GateVirtualizer()
+    gate_virtualizer = GVInstatiator()
 
     results = gate_virtualizer.run(qernel)
 
     return results
+
+def convert_hamiltonian(hamiltonian: List) -> dict:
+    new_hamiltonian = {}
+
+    for h in hamiltonian:
+        new_hamiltonian[(h[0], h[1])] = h[2]
+
+    return new_hamiltonian
 
 def main():
     #qc = random_circuit(5, 5, max_operands=2, measure=True)
@@ -77,20 +86,24 @@ def main():
     #circuits = [qc_full, qc_frozen1, qc_frozen2]
 
     provider =  IBMProvider(instance="ibm-q-research-2/tu-munich-1/main")
-    backend = provider.get_backend("ibm_nairobi")
+    backend = provider.get_backend("ibm_perth")
+    #backend = FakePerth()
 
     #ccircuits = transpile(circuits, backend, optimization_level=3)
     #job = backend.run(ccircuits, shots=20000)
 
     #exit()
    
-    qc_supermarq_bench = QAOAVanillaProxy(4)
+    qc_supermarq_bench = QAOAVanillaProxy(7)
 
     qc_supermarq = qc_supermarq_bench.circuit()
     qc_qiskit = cirq_to_qiskit(qc_supermarq)
 
-    cqc_qiskit = transpile(qc_qiskit, backend, optimization_level=3)
-    job = backend.run(cqc_qiskit, shots=20000)
+    to_run = []
+
+    for i in range(5):
+        cqc_qiskit = transpile(qc_qiskit, backend, optimization_level=3)
+        to_run.append(cqc_qiskit)
 
     print(qc_qiskit)
 
@@ -104,13 +117,38 @@ def main():
 
     for q in qernels:
         qc_small = q.get_circuit()
-        print(qc_small)
-        cqc_small = transpile(qc_small, backend, optimization_level=3)
-        job = backend.run(cqc_small, shots=20000)
-        #results = job.result()
+        #print(qc_small)
+        #print(q.get_metadata()["J"])
+        for i in range(5):
+            cqc_small = transpile(qc_small, backend, optimization_level=3)
+            to_run.append(cqc_small)
 
+    job = backend.run(to_run, shots=20000)
+    results = job.result().get_counts()
 
+    average_score = 0
+    proper_hamiltonian = convert_hamiltonian(qc_supermarq_bench.hamiltonian)
 
+    for i in range(5):
+        counts = results[i]
+        average_score = average_score + score(qc_qiskit, proper_hamiltonian, counts)
+    
+    average_score = average_score / 5
+    print("big circuit:", average_score)
+
+    average_score_0, average_score_1 = 0, 0
+
+    for i in range(5):
+        counts0 = results[i + 5]
+        counts1 = results[i + 10]
+        average_score_0 = average_score_0 + score(qernels[0].get_circuit(), qernels[0].get_metadata()["J"], counts0)
+        average_score_1 = average_score_1 + score(qernels[1].get_circuit(), qernels[1].get_metadata()["J"], counts1)
+    
+    average_score_0 = average_score_0 / 5
+    average_score_1 = average_score_1  / 5
+    
+    print("small_circuit_0:", average_score_0)
+    print("small_circuit_1:", average_score_1)
 
 
 main()

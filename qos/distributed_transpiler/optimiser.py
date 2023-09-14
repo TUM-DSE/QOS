@@ -105,7 +105,7 @@ class GVBisectionPass(GateVirtualizationPass):
         virtual_circuit = VirtualCircuit(new_circuit)
         sub_qernel = Qernel()
         sub_qernel.set_circuit(virtual_circuit)    
-        q.add_subqernel(sub_qernel)    
+        q.add_virtual_subqernel(sub_qernel)    
 
         return q
 
@@ -125,7 +125,7 @@ class GVOptimalDecompositionPass(GateVirtualizationPass):
         virtual_circuit = VirtualCircuit(new_circuit)
         sub_qernel = Qernel()
         sub_qernel.set_circuit(virtual_circuit)    
-        q.add_subqernel(sub_qernel)    
+        q.add_virtual_subqernel(sub_qernel)    
 
         return q
 
@@ -140,7 +140,7 @@ class CircularDependencyBreakerPass(GateVirtualizationPass):
         virtual_circuit = VirtualCircuit(new_circuit)
         sub_qernel = Qernel()
         sub_qernel.set_circuit(virtual_circuit)    
-        q.add_subqernel(sub_qernel)    
+        q.add_virtual_subqernel(sub_qernel)    
 
         return q
     
@@ -155,7 +155,7 @@ class GreedyDependencyBreakerPass(GateVirtualizationPass):
         virtual_circuit = VirtualCircuit(new_circuit)
         sub_qernel = Qernel()
         sub_qernel.set_circuit(virtual_circuit)    
-        q.add_subqernel(sub_qernel)    
+        q.add_virtual_subqernel(sub_qernel)    
 
         return q
     
@@ -170,7 +170,7 @@ class QubitDependencyMinimizerPass(GateVirtualizationPass):
         virtual_circuit = VirtualCircuit(new_circuit)
         sub_qernel = Qernel()
         sub_qernel.set_circuit(virtual_circuit)    
-        q.add_subqernel(sub_qernel)    
+        q.add_virtual_subqernel(sub_qernel)    
 
         return q
     
@@ -194,7 +194,7 @@ class RandomQubitReusePass(QubitReusePass):
 
         sub_qernel = Qernel()
         sub_qernel.set_circuit(virtual_circuit)    
-        q.add_subqernel(sub_qernel)
+        q.add_virtual_subqernel(sub_qernel)
 
         return q
 
@@ -214,7 +214,7 @@ class OptimalWireCuttingPass(WireCuttingPass):
         virtual_circuit = VirtualCircuit(new_circuit)
         sub_qernel = Qernel()
         sub_qernel.set_circuit(virtual_circuit)    
-        q.add_subqernel(sub_qernel)    
+        q.add_virtual_subqernel(sub_qernel)    
 
         return q
     
@@ -252,7 +252,14 @@ class FrozenQubitsPass(QubitFreezingPass):
             new_circuit = bind_QAOA(new_circuit, new_QAOA['params'], beta, gamma)
             virtual_circuit = VirtualCircuit(new_circuit)
             sub_qernel = Qernel()
-            sub_qernel.set_circuit(virtual_circuit)    
-            q.add_subqernel(sub_qernel)    
+            sub_qernel.set_circuit(virtual_circuit)
+            qaoa_metadata = {
+                "h" : sub_problem['h'],
+                "J" : sub_problem['J'],
+                "offset" : sub_problem['offset'],
+                "num_layers" : 1
+            }
+            sub_qernel.set_metadata(qaoa_metadata)
+            q.add_virtual_subqernel(sub_qernel)    
 
         return q

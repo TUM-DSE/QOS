@@ -65,6 +65,7 @@ class Qernel(ABC):
             self.metadata = metadata
         self.matching = []
         self.subqernels: List[Qernel] = []
+        self.virtual_subqernels: List[Qernel] = []
         self.dependencies: List[Qernel] = []
         self.args["status"] = "PENDING"
 
@@ -92,8 +93,26 @@ class Qernel(ABC):
     def add_subqernel(self, q) -> None:
         self.subqernels.append(q)
 
+    def add_virtual_subqernel(self, q) -> None:
+        self.virtual_subqernels.append(q)
+
+    def add_virtual_subqernel(self, q) -> None:
+        self.virtual_subqernels.append(q)
+
     def get_subqernels(self):
         return self.subqernels
+    
+    def get_virtual_subqernels(self):
+        vsqs = []
+
+        for sq in self.subqernels:
+            if isinstance(sq.get_circuit(), VirtualCircuit):
+                vsqs.append(sq)
+        
+        return vsqs
+    
+    def get_virtual_subqernels(self):
+        return self.virtual_subqernels
 
     @property
     def best_layout(self):
