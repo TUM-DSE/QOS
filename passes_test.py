@@ -31,7 +31,7 @@ def test_analyses_passes(qernel: Qernel) -> None:
 
 
 def test_transformation_passes(qernel: Qernel) -> Qernel:
-    bisection_pass = GVBisectionPass(4)
+    bisection_pass = GVBisectionPass(3)
     optimal_decomposition_pass = GVOptimalDecompositionPass(3)
     circular_dependency_pass = CircularDependencyBreakerPass()
     greedy_dependency_breaker_pass = GreedyDependencyBreakerPass()
@@ -92,7 +92,7 @@ def main2():
 
     job = backend.run(to_run, shots=20000)
     qernel.edit_metadata({"shots": 20000})
-    
+
     results = job.result().get_counts()
 
     sub_qernel = qernel.get_subqernels()[0]
@@ -101,6 +101,7 @@ def main2():
         sq.set_results(results[i])
 
     knitter = GVKnitter()
+    print("---------------------------------------")
     print(knitter.run(qernel))
 
 

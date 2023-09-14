@@ -86,10 +86,12 @@ class GVKnitter(Knitter):
         results = {}
         tmp_results = []
 
+        counter = 0
         for vsq in virtual_subqernels:
             num_instantiations = vsq.get_metadata()["num_instantiations"]
             for i in range(num_instantiations):
-                tmp_results.append(QuasiDistr.from_counts(subqernels[i].get_results()))
+                tmp_results.append(QuasiDistr.from_counts(subqernels[counter].get_results()))
+                counter = counter + 1
             results[vsq.get_circuit()] = tmp_results
             tmp_results = []
 
