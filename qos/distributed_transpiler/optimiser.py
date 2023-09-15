@@ -99,13 +99,21 @@ class GVBisectionPass(GateVirtualizationPass):
         return "BisectionPass"
     
     def run(self, q: Qernel, budget: int) -> Qernel:
-        circuit = q.get_circuit()
         bisection_pass = BisectionPass(self._size_to_reach)
-        new_circuit = bisection_pass.run(circuit, budget)
-        virtual_circuit = VirtualCircuit(new_circuit)
-        sub_qernel = Qernel()
-        sub_qernel.set_circuit(virtual_circuit)    
-        q.add_virtual_subqernel(sub_qernel)    
+        vsqs = q.get_virtual_subqernels()
+        if len(vsqs) > 0:
+            for vsq in vsqs:
+                qc = vsq.get_circuit()._circuit
+                new_circuit = bisection_pass.run(qc, budget)
+                virtual_circuit = VirtualCircuit(new_circuit)
+                vsq.set_circuit(virtual_circuit)
+        else:
+            qc = q.get_circuit()        
+            new_circuit = bisection_pass.run(qc, budget)
+            virtual_circuit = VirtualCircuit(new_circuit)
+            sub_qernel = Qernel()
+            sub_qernel.set_circuit(virtual_circuit)    
+            q.add_virtual_subqernel(sub_qernel)    
 
         return q
 
@@ -248,7 +256,7 @@ class FrozenQubitsPass(QubitFreezingPass):
         for sub_problem in sub_Ising_list:
             new_QAOA = pqc_QAOA(J=sub_problem['J'], h=sub_problem['h'], num_layers=num_layers)
             new_circuit = new_QAOA['qc']
-            beta, gamma =_gen_angles(sub_problem['J'])
+            beta, gamma =_gen_angles(new_circuit, sub_problem['J'])
             new_circuit = bind_QAOA(new_circuit, new_QAOA['params'], beta, gamma)
             virtual_circuit = VirtualCircuit(new_circuit)
             sub_qernel = Qernel()
@@ -257,7 +265,8 @@ class FrozenQubitsPass(QubitFreezingPass):
                 "h" : sub_problem['h'],
                 "J" : sub_problem['J'],
                 "offset" : sub_problem['offset'],
-                "num_layers" : 1
+                "num_layers" : 1,
+                "num_clbits": new_circuit.num_clbits
             }
             sub_qernel.set_metadata(qaoa_metadata)
             q.add_virtual_subqernel(sub_qernel)    

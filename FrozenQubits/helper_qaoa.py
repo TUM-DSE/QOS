@@ -142,26 +142,27 @@ def _gen_ansatz(hamiltonian: dict[int, float], gamma: float, beta: float) -> Qua
 
     return qc
 
-def _get_opt_angles(hamiltonian: dict[int, float]) -> Tuple[List, float]:
-    def f(params: List, hamiltonian: dict[int, float]) -> float:
+def _get_opt_angles(pqc: QuantumCircuit, hamiltonian = dict) -> Tuple[List, float]:
+    def f(params: List, pqc: QuantumCircuit, hamiltonian = dict) -> float:
         gamma, beta = params
-        circ = _gen_ansatz(hamiltonian, gamma, beta)
+        #circ = _gen_ansatz(hamiltonian, gamma, beta)
+        circ = bind_QAOA(pqc, {'g_1': pqc.parameters[1], 'b_1': pqc.parameters[0]}, beta, gamma)
         probs = _get_ideal_counts(circ)
         objective_value = _get_expectation_value_from_probs(hamiltonian, probs)
 
         return -objective_value  # because we are minimizing instead of maximizing
 
     init_params = [np.random.uniform() * 2 * np.pi, np.random.uniform() * 2 * np.pi]
-    out = opt.minimize(f, init_params, args=(hamiltonian), method="COBYLA")
+    out = opt.minimize(f, init_params, args=(pqc,hamiltonian), method="COBYLA")
 
     return out["x"], out["fun"]
 
-def _gen_angles(hamiltonian: dict[int, float]) -> List:
+def _gen_angles(pqc: QuantumCircuit, hamiltonian = dict) -> List:
     # Classically simulate the variational optimization 5 times,
     # return the parameters from the best performing simulation
     best_params, best_cost = [], 10.0
     for _ in range(10):
-        params, cost = _get_opt_angles(hamiltonian)
+        params, cost = _get_opt_angles(pqc, hamiltonian)
         if cost < best_cost:
             best_params = params
             best_cost = cost
@@ -205,8 +206,8 @@ def bind_QAOA(primary_circuit, params, beta, gamma,
         mapping[params[_beta]]=beta[p]
         try:
             new_circuit=new_circuit.bind_parameters(mapping)
-        except:
-            pass                                                
+        except Exception as e:
+            print(e)                                                
         mapping={}
         _gamma= f'{gamma_label}_{p+1}'
         mapping[params[_gamma]]=gamma[p]

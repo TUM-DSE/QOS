@@ -45,11 +45,11 @@ class GVInstatiator(Instantiator):
     
     def run(self, qernel: Qernel) -> list[Qernel]:
         qc = qernel.get_circuit()
-        virtual_sub_qernels = qernel.get_virtual_subqernels()
-        instantiated_sub_qernel = Qernel()
-        qernel.add_subqernel(instantiated_sub_qernel)
+        virtual_sub_qernels = qernel.get_virtual_subqernels()      
 
         for vsq in virtual_sub_qernels:
+            instantiated_sub_qernel = Qernel(vsq.get_circuit()._circuit)
+            qernel.add_subqernel(instantiated_sub_qernel)
             vqc = vsq.get_circuit()
             assert isinstance(vqc, VirtualCircuit)
             for frag, frag_circuit in vqc.fragment_circuits.items():
@@ -69,23 +69,45 @@ class GVInstatiator(Instantiator):
                     new_qernel.edit_metadata(vsq.get_metadata())
                     instantiated_sub_qernel.add_subqernel(new_qernel)   
         
-        return instantiated_sub_qernel.get_subqernels()
+        return qernel
     
     def results():
         return None
 
 
 class GVKnitter(Knitter):
-    def run(self, qernel: Qernel) -> dict[str, int]:
-        to_return = {}
+    def run(self, qernel: Qernel) -> None:
+        #subqernels = qernel.get_subqernels()[0].get_subqernels()
+        #root_virtual_subqernel = qernel.get_virtual_subqernels()[0]
+        #virtual_subqernels = root_virtual_subqernel.get_virtual_subqernels()
+        virtual_subqernels = qernel.get_virtual_subqernels()
 
-        subqernels = qernel.get_subqernels()[0].get_subqernels()
-        root_virtual_subqernel = qernel.get_virtual_subqernels()[0]
-        virtual_subqernels = root_virtual_subqernel.get_virtual_subqernels()
+        for i, vsq in enumerate(virtual_subqernels):
+            subqernels = qernel.get_subqernels()[i].get_subqernels()
+            results = {}
+            tmp_results = []
 
-        results = {}
-        tmp_results = []
+            counter = 0
+            virtual_child_subqernels = vsq.get_virtual_subqernels()
 
+            for vcsq in virtual_child_subqernels:
+                num_instantiations = vcsq.get_metadata()["num_instantiations"]
+                for j in range(num_instantiations):
+                    tmp_results.append(QuasiDistr.from_counts(subqernels[counter].get_results()))
+                    counter = counter + 1
+                results[vcsq.get_circuit()] = tmp_results
+
+                tmp_results = []
+
+            clbits = vsq.get_metadata()["num_clbits"]
+            shots = vsq.get_metadata()["shots"]
+
+            with Pool() as pool:
+               vsq.set_results(vsq.get_circuit().knit(results, pool).to_counts(clbits, shots))
+
+        #results = {}
+        #tmp_results = []
+        """"
         counter = 0
         for vsq in virtual_subqernels:
             num_instantiations = vsq.get_metadata()["num_instantiations"]
@@ -102,6 +124,7 @@ class GVKnitter(Knitter):
             to_return = root_virtual_subqernel.get_circuit().knit(results, pool).to_counts(clbits, shots)
         
         return to_return
+        """
     
     def results():
         return None
