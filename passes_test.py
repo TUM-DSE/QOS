@@ -32,7 +32,7 @@ def test_analyses_passes(qernel: Qernel) -> None:
 
 
 def test_transformation_passes(qernel: Qernel) -> Qernel:
-    bisection_pass = GVBisectionPass(3)
+    bisection_pass = GVBisectionPass(5)
     #optimal_decomposition_pass = GVOptimalDecompositionPass(3)
     #circular_dependency_pass = CircularDependencyBreakerPass()
     #greedy_dependency_breaker_pass = GreedyDependencyBreakerPass()
@@ -143,11 +143,12 @@ def main3():
     print("Our Hamiltonian:", qernel_frozen2.get_metadata()["J"])
 
 def main4():
-    qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_7_1^P=1.qasm")
+    qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_12_1^P=1.qasm")
+    qc_full_properties = load_pickle("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_7_1^P=1.pkl")
     print(qc_full)
     #provider =  IBMProvider(instance="ibm-q-research-2/tu-munich-1/main")
-    #backend = provider.get_backend("ibm_perth")
-    backend = FakePerth()
+    #backend = provider.get_backend("ibm_nairobi")
+    backend = FakeGuadalupe()
 
     qernel = Qernel(qc_full)
 
@@ -176,11 +177,14 @@ def main4():
     results = job.result().get_counts()
 
     counts = results[0]
+
     print("big circuit:", score(qernel.get_circuit(), qernel.get_metadata()["J"], counts))
 
-    for i, sq in enumerate(qernel.get_subqernels()):
-        for j, q in enumerate(sq.get_subqernels()):
-            q.set_results(results[i * j])
+    counter = 1
+    for sq in qernel.get_subqernels():
+        for q in sq.get_subqernels():
+            q.set_results(results[counter])
+            counter = counter + 1
         
     knitting = GVKnitter()
     knitting.run(qernel)          
@@ -189,7 +193,7 @@ def main4():
     sqs = qernel.get_subqernels()
 
     print("small_circuit_0:", score(sqs[0].get_circuit(), vsqs[0].get_metadata()["J"], vsqs[0].get_results()))
-    print("small_circuit_1:", score(sqs[1].get_circuit(), vsqs[0].get_metadata()["J"], vsqs[1].get_results()))
+    print("small_circuit_1:", score(sqs[1].get_circuit(), vsqs[1].get_metadata()["J"], vsqs[1].get_results()))
 
     exit()
 

@@ -77,9 +77,6 @@ class GVInstatiator(Instantiator):
 
 class GVKnitter(Knitter):
     def run(self, qernel: Qernel) -> None:
-        #subqernels = qernel.get_subqernels()[0].get_subqernels()
-        #root_virtual_subqernel = qernel.get_virtual_subqernels()[0]
-        #virtual_subqernels = root_virtual_subqernel.get_virtual_subqernels()
         virtual_subqernels = qernel.get_virtual_subqernels()
 
         for i, vsq in enumerate(virtual_subqernels):
@@ -96,35 +93,14 @@ class GVKnitter(Knitter):
                     tmp_results.append(QuasiDistr.from_counts(subqernels[counter].get_results()))
                     counter = counter + 1
                 results[vcsq.get_circuit()] = tmp_results
-
                 tmp_results = []
 
             clbits = vsq.get_metadata()["num_clbits"]
             shots = vsq.get_metadata()["shots"]
-
+    
             with Pool() as pool:
                vsq.set_results(vsq.get_circuit().knit(results, pool).to_counts(clbits, shots))
 
-        #results = {}
-        #tmp_results = []
-        """"
-        counter = 0
-        for vsq in virtual_subqernels:
-            num_instantiations = vsq.get_metadata()["num_instantiations"]
-            for i in range(num_instantiations):
-                tmp_results.append(QuasiDistr.from_counts(subqernels[counter].get_results()))
-                counter = counter + 1
-            results[vsq.get_circuit()] = tmp_results
-            tmp_results = []
-
-        clbits = qernel.get_metadata()["num_clbits"]
-        shots = qernel.get_metadata()["shots"]
-
-        with Pool() as pool:
-            to_return = root_virtual_subqernel.get_circuit().knit(results, pool).to_counts(clbits, shots)
-        
-        return to_return
-        """
     
     def results():
         return None

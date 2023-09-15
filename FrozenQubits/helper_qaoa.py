@@ -188,12 +188,15 @@ def _get_expectation_value_from_probs(hamiltonian, probabilities: Counter) -> fl
 def score(circuit: QuantumCircuit, hamiltonian, counts: Mapping[str, float]) -> float:
     ideal_counts = _get_ideal_counts(circuit)
     total_shots = sum(counts.values())
-    experimental_counts = {k: v / total_shots for k, v in counts.items()}
+    experimental_counts = Counter({k: v / total_shots for k, v in counts.items()})
 
     ideal_value = _get_expectation_value_from_probs(hamiltonian, ideal_counts)
     experimental_value = _get_expectation_value_from_probs(hamiltonian, experimental_counts)
 
-    return 1 - abs(ideal_value - experimental_value) / (2 * ideal_value)
+    return_val_1 = 1 - abs((ideal_value - experimental_value) / (2 * ideal_value))
+    return_val_2 = 100 * abs((ideal_value - experimental_value) / ideal_value)
+
+    return (return_val_1, return_val_2)
 
 def bind_QAOA(primary_circuit, params, beta, gamma, 
                          beta_label='b', gamma_label='g'):
