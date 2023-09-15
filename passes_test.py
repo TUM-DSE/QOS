@@ -1,3 +1,4 @@
+import os
 from qos.distributed_transpiler.analyser import *
 from qos.distributed_transpiler.optimiser import *
 from qiskit.circuit.random import random_circuit
@@ -105,6 +106,41 @@ def main2():
     print(knitter.run(qernel))
 
 
+def main3():
+    qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/sk/gridsearch_100/ideal/3_4_1^P=1.qasm")
+    qc_frozen1 = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/sk/gridsearch_100/ideal/3_4_1^M=1_0^P=1.qasm")
+    qc_frozen2 = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/sk/gridsearch_100/ideal/3_4_1^M=1_1^P=1.qasm")
+    
+    qc_full_properties = load_pickle("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/sk/gridsearch_100/ideal/3_4_1^P=1.pkl")
+    qc_frozen1_properties = load_pickle("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/sk/gridsearch_100/ideal/3_4_1^M=1_0^P=1.pkl")
+    qc_frozen2_properties = load_pickle("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/sk/gridsearch_100/ideal/3_4_1^M=1_1^P=1.pkl")
+    print(qc_full)
+    qernel_full = Qernel(qc_full)
+    qernel_frozen1 = Qernel(qc_frozen1)
+    qernel_frozen2 = Qernel(qc_frozen2)
+
+    qaoa_analysis = QAOAAnalysisPass()
+
+    qaoa_analysis.run(qernel_full)
+    qaoa_analysis.run(qernel_frozen1)
+    qaoa_analysis.run(qernel_frozen2)
+
+    print("Original circit")
+    print(qc_full)
+    print("FrozenQubits Hamiltonian:", qc_full_properties["J"])
+    print("Our Hamiltonian:", qernel_full.get_metadata()["J"])
+
+
+    print("Small 1:")
+    print(qc_frozen1)
+    print("FrozenQubits Hamiltonian:", qc_frozen1_properties["J"])
+    print("Our Hamiltonian:", qernel_frozen1.get_metadata()["J"])
+
+    print("Small 2:")
+    print(qc_frozen2)
+    print("FrozenQubits Hamiltonian:", qc_frozen2_properties["J"])
+    print("Our Hamiltonian:", qernel_frozen2.get_metadata()["J"])
+
 def main():
     #qc = random_circuit(5, 5, max_operands=2, measure=True)
     #qc = TwoLocal(5, entanglement='circular', rotation_blocks=["ry"], entanglement_blocks="rzz",reps=1)
@@ -120,6 +156,8 @@ def main():
     #qc_frozen1 = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/sk/gridsearch_100/ideal/3_4_1^M=1_0^P=1.qasm")
     #qc_frozen2 = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/sk/gridsearch_100/ideal/3_4_1^M=1_1^P=1.qasm")
     #print(qc_full)
+
+
     #print(qc_frozen1)
     #print(qc_frozen2)   
 
@@ -191,4 +229,4 @@ def main():
     print("small_circuit_1:", average_score_1)
 
 
-main2()
+main3()

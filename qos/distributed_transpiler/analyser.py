@@ -252,6 +252,7 @@ class QAOAAnalysisPass(DAGAnalysisPass):
         data = qc.data
         J = {}
         prev_pair = None
+        prev_op = None
 
         for i in range(qc.num_qubits):
             for instr in data:
@@ -263,7 +264,10 @@ class QAOAAnalysisPass(DAGAnalysisPass):
                             continue
                             #J[(op1, i)] = 0
                         prev_pair = (op1, i)
+                        prev_op = 'cx'
                 if instr.operation.name == 'rz':
+                    if prev_op != 'cx':
+                        continue
                     if instr.qubits[0].index == i:    
                         param = instr.operation.params[0]
 
@@ -271,4 +275,6 @@ class QAOAAnalysisPass(DAGAnalysisPass):
                             J[prev_pair] = 1
                         else:
                             J[prev_pair] = -1
+
+                        prev_op = None
         return J
