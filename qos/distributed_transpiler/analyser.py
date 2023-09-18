@@ -59,7 +59,7 @@ class SupermarqFeaturesAnalysisPass(AnalysisPass):
         return "SupermarqFeaturesAnalysisPass"
 
     def run(self, qernel: Qernel) -> None:
-        qc = qernel.get_circuit()
+        qc = qernel.get_circuit().copy()
         supermarq_metadata = self.get_supermarq_metadata(qc)
         qernel.edit_metadata(supermarq_metadata)
 

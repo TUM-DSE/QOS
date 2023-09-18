@@ -27,32 +27,32 @@ def test_analyses_passes(qernel: Qernel) -> None:
     dg = DependencyGraphFromDAGPass()
     dg.run(qernel)
 
-    qaoa_analysis = QAOAAnalysisPass()
-    qaoa_analysis.run(qernel)
+    return qernel
+    #qaoa_analysis = QAOAAnalysisPass()
+    #qaoa_analysis.run(qernel)
 
 
 def test_transformation_passes(qernel: Qernel) -> Qernel:
-    bisection_pass = GVBisectionPass(5)
+    bisection_pass = GVBisectionPass(4)
     #optimal_decomposition_pass = GVOptimalDecompositionPass(3)
     #circular_dependency_pass = CircularDependencyBreakerPass()
     #greedy_dependency_breaker_pass = GreedyDependencyBreakerPass()
     #qubit_dependency_minimizer_pass = QubitDependencyMinimizerPass()
     #random_qubit_reuse_pass = RandomQubitReusePass(3)
     #optimal_wire_cutting_pass = OptimalWireCuttingPass(4)
-    frozen_qubits_pass = FrozenQubitsPass(1)
+    #frozen_qubits_pass = FrozenQubitsPass(1)
 
-    #result = bisection_pass.run(qernel, 10)
+    
     #result = optimal_decomposition_pass.run(qernel, 10)
     #result = circular_dependency_pass.run(qernel, 10)
     #result = greedy_dependency_breaker_pass.run(qernel, 10)
     #result = qubit_dependency_minimizer_pass.run(qernel, 10)
     #result = random_qubit_reuse_pass.run(qernel)
     #result = optimal_wire_cutting_pass.run(qernel, 10)
-    qernel = frozen_qubits_pass.run(qernel)
+    #result = frozen_qubits_pass.run(qernel)
+    result = bisection_pass.run(qernel, 10)
 
-    qernel = bisection_pass.run(qernel, 10)
-
-    return qernel
+    return result
 
 def test_virtualization(qernel: Qernel) -> Qernel:
     gate_virtualizer = GVInstatiator()
@@ -142,9 +142,9 @@ def main3():
     print("FrozenQubits Hamiltonian:", qc_frozen2_properties["J"])
     print("Our Hamiltonian:", qernel_frozen2.get_metadata()["J"])
 
-def main4():
-    qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_12_1^P=1.qasm")
-    qc_full_properties = load_pickle("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_7_1^P=1.pkl")
+def FrozenQubitsAndQVMExample():
+    qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_9_1^P=1.qasm")
+    #qc_full_properties = load_pickle("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_7_1^P=1.pkl")
     print(qc_full)
     #provider =  IBMProvider(instance="ibm-q-research-2/tu-munich-1/main")
     #backend = provider.get_backend("ibm_nairobi")
@@ -157,7 +157,7 @@ def main4():
 
     qernel = test_transformation_passes(qernel)
     qernel = test_virtualization(qernel)
-
+    
     to_run = []
 
     cqc_qiskit = transpile(qc_full, backend, optimization_level=3)
@@ -166,7 +166,6 @@ def main4():
     for sq in qernel.get_subqernels():
         for q in sq.get_subqernels():
             qc_small = q.get_circuit()
-            #print(qc_small)
             cqc_small = transpile(qc_small, backend, optimization_level=3)
             to_run.append(cqc_small)
 
@@ -194,6 +193,109 @@ def main4():
 
     print("small_circuit_0:", score(sqs[0].get_circuit(), vsqs[0].get_metadata()["J"], vsqs[0].get_results()))
     print("small_circuit_1:", score(sqs[1].get_circuit(), vsqs[1].get_metadata()["J"], vsqs[1].get_results()))
+
+    exit()
+
+def testGVWithGHZ():
+    #provider =  IBMProvider(instance="ibm-q-research-2/tu-munich-1/main")
+    #backend = provider.get_backend("ibm_nairobi")
+    backend = FakeGuadalupe()
+    qc_supermarq_bench = GHZ(16)
+
+    qc_supermarq = qc_supermarq_bench.circuit()
+    qc_qiskit = cirq_to_qiskit(qc_supermarq)
+    #qc_qiskit.measure_all(inplace=True)
+
+    qernel = Qernel(qc_qiskit)
+
+    qernel = test_analyses_passes(qernel)
+    qernel = test_transformation_passes(qernel)
+    qernel = test_virtualization(qernel)
+
+  
+
+    to_run = []
+    cqc_qiskit = transpile(qc_qiskit, backend, optimization_level=3)
+    to_run.append(cqc_qiskit)
+
+    for sq in qernel.get_subqernels():
+        for q in sq.get_subqernels():
+            qc_small = q.get_circuit()
+            #print(qc_small)
+            cqc_small = transpile(qc_small, backend, optimization_level=3)
+            to_run.append(cqc_small)
+
+    job = backend.run(to_run, shots=20000)
+
+    #print(job.result())
+    results = job.result().get_counts()
+
+    for vsq in qernel.get_virtual_subqernels():
+        vsq.edit_metadata({"shots": 20000})
+
+    counts = results[0]
+
+    print("big circuit:", qc_supermarq_bench.score(counts))
+
+    counter = 1
+    for sq in qernel.get_subqernels():
+        for q in sq.get_subqernels():
+            q.set_results(results[counter])
+            counter = counter + 1     
+    
+    knitting = GVKnitter()
+    knitting.run(qernel)          
+
+    vsqs = qernel.get_virtual_subqernels()
+
+    print("small_circuit:", qc_supermarq_bench.score(vsqs[0].get_results()))
+
+    exit()
+
+
+def testFrozenQubits():
+    qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_7_1^P=1.qasm")
+    print(qc_full)
+    provider =  IBMProvider(instance="ibm-q-research-2/tu-munich-1/main")
+    backend = provider.get_backend("ibm_nairobi")
+    #backend = FakeGuadalupe()
+
+    qernel = Qernel(qc_full)
+
+    qaoa_analysis = QAOAAnalysisPass()
+    qaoa_analysis.run(qernel)
+
+    frozen_qubits_pass = FrozenQubitsPass(1)
+    qernel = frozen_qubits_pass.run(qernel)
+
+    to_run = []
+
+    cqc_qiskit = transpile(qc_full, backend, optimization_level=3)
+    to_run.append(cqc_qiskit)
+
+    for sq in qernel.get_subqernels():
+        qc_small = sq.get_circuit()
+        print(qc_small)
+        cqc_small = transpile(qc_small, backend, optimization_level=3)
+        to_run.append(cqc_small)
+
+    job = backend.run(to_run, shots=20000)
+    results = job.result().get_counts()
+
+    counts = results[0]
+
+    print("big circuit:", score(qernel.get_circuit(), qernel.get_metadata()["J"], counts))
+
+    counter = 1
+    for sq in qernel.get_subqernels():
+        sq.set_results(results[counter])
+        counter = counter + 1     
+    
+    vsqs = qernel.get_virtual_subqernels()
+    sqs = qernel.get_subqernels()
+
+    print("small_circuit_0:", score(sqs[0].get_circuit(), vsqs[0].get_metadata()["J"], sqs[0].get_results()))
+    print("small_circuit_1:", score(sqs[1].get_circuit(), vsqs[1].get_metadata()["J"], sqs[1].get_results()))
 
     exit()
 
@@ -284,6 +386,6 @@ def main():
     
     print("small_circuit_0:", average_score_0)
     print("small_circuit_1:", average_score_1)
+    
 
-
-main4()
+testGVWithGHZ()

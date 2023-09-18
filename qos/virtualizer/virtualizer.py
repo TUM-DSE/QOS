@@ -51,6 +51,7 @@ class GVInstatiator(Instantiator):
             instantiated_sub_qernel = Qernel(vsq.get_circuit()._circuit)
             qernel.add_subqernel(instantiated_sub_qernel)
             vqc = vsq.get_circuit()
+
             assert isinstance(vqc, VirtualCircuit)
             for frag, frag_circuit in vqc.fragment_circuits.items():
                 new_vqernel = Qernel()

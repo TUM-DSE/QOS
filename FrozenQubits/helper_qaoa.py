@@ -190,6 +190,8 @@ def score(circuit: QuantumCircuit, hamiltonian, counts: Mapping[str, float]) -> 
     total_shots = sum(counts.values())
     experimental_counts = Counter({k: v / total_shots for k, v in counts.items()})
 
+    return hellinger_fidelity(ideal_counts, experimental_counts)
+
     ideal_value = _get_expectation_value_from_probs(hamiltonian, ideal_counts)
     experimental_value = _get_expectation_value_from_probs(hamiltonian, experimental_counts)
 

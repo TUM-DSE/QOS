@@ -113,6 +113,7 @@ class GVBisectionPass(GateVirtualizationPass):
             virtual_circuit = VirtualCircuit(new_circuit)
             sub_qernel = Qernel()
             sub_qernel.set_circuit(virtual_circuit)    
+            sub_qernel.set_metadata(q.get_metadata())
             q.add_virtual_subqernel(sub_qernel)    
 
         return q
