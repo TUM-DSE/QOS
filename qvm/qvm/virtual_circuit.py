@@ -48,9 +48,14 @@ class VirtualCircuit:
         return list(itertools.product(*inst_l))
 
     def knit(self, results: dict[Fragment, list[QuasiDistr]], pool: Pool) -> QuasiDistr:
-        if len(self._vgate_instrs) == 0:
-            return next(iter(results.values()))[0]
+        #if len(self._vgate_instrs) == 0:
+            #merged_results = self._fast_merge(results, pool)
+
+        #return merged_results
         merged_results = self._merge(results, pool)
+
+        if len(self._vgate_instrs) == 0:
+            return merged_results[0]
         vgates = [instr.operation for instr in self._vgate_instrs]
         clbit_idx = self._circuit.num_clbits + len(vgates) - 1
         while len(vgates) > 0:
@@ -141,12 +146,15 @@ class VirtualCircuit:
         self, fragment: Fragment, results: list[QuasiDistr]
     ) -> list[QuasiDistr]:
         labeled_results = dict(zip(self.get_instance_labels(fragment), results))
+
         frag_results = []
         for global_label in self._global_inst_labels():
             frag_instance_label = self._global_to_fragment_inst_label(
                 fragment, global_label
             )
+
             frag_results.append(labeled_results[frag_instance_label])
+
         return frag_results
 
     def _merge(
@@ -156,6 +164,15 @@ class VirtualCircuit:
             self._fragment_results(frag, distrs) for frag, distrs in results.items()
         ]
         return _merge_distr_lists(tuple(distr_lists), pool)
+    
+    def _fast_merge(self, results: dict[Fragment, list[QuasiDistr]], pool: Pool) -> list[QuasiDistr]:
+        for frag, distr in results.items():
+            print(distr)
+        exit()
+        distr_lists = [
+            self._fragment_results(frag, distrs) for frag, distrs in results.items()
+        ]
+
 
 
 def generate_instantiations(

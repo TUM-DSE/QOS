@@ -33,14 +33,14 @@ def test_analyses_passes(qernel: Qernel) -> None:
 
 
 def test_transformation_passes(qernel: Qernel) -> Qernel:
-    bisection_pass = GVBisectionPass(4)
+    bisection_pass = GVBisectionPass(5)
     #optimal_decomposition_pass = GVOptimalDecompositionPass(3)
     #circular_dependency_pass = CircularDependencyBreakerPass()
     #greedy_dependency_breaker_pass = GreedyDependencyBreakerPass()
     #qubit_dependency_minimizer_pass = QubitDependencyMinimizerPass()
     #random_qubit_reuse_pass = RandomQubitReusePass(3)
     #optimal_wire_cutting_pass = OptimalWireCuttingPass(4)
-    #frozen_qubits_pass = FrozenQubitsPass(1)
+    frozen_qubits_pass = FrozenQubitsPass(1)
 
     
     #result = optimal_decomposition_pass.run(qernel, 10)
@@ -49,7 +49,7 @@ def test_transformation_passes(qernel: Qernel) -> Qernel:
     #result = qubit_dependency_minimizer_pass.run(qernel, 10)
     #result = random_qubit_reuse_pass.run(qernel)
     #result = optimal_wire_cutting_pass.run(qernel, 10)
-    #result = frozen_qubits_pass.run(qernel)
+    result = frozen_qubits_pass.run(qernel)
     result = bisection_pass.run(qernel, 10)
 
     return result
@@ -143,9 +143,9 @@ def main3():
     print("Our Hamiltonian:", qernel_frozen2.get_metadata()["J"])
 
 def FrozenQubitsAndQVMExample():
-    qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_9_1^P=1.qasm")
+    qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_12_1^P=1.qasm")
     #qc_full_properties = load_pickle("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_7_1^P=1.pkl")
-    print(qc_full)
+    #print(qc_full)
     #provider =  IBMProvider(instance="ibm-q-research-2/tu-munich-1/main")
     #backend = provider.get_backend("ibm_nairobi")
     backend = FakeGuadalupe()
@@ -166,6 +166,7 @@ def FrozenQubitsAndQVMExample():
     for sq in qernel.get_subqernels():
         for q in sq.get_subqernels():
             qc_small = q.get_circuit()
+            #print(qc_small)
             cqc_small = transpile(qc_small, backend, optimization_level=3)
             to_run.append(cqc_small)
 
@@ -183,6 +184,7 @@ def FrozenQubitsAndQVMExample():
     for sq in qernel.get_subqernels():
         for q in sq.get_subqernels():
             q.set_results(results[counter])
+            #print(results[counter])
             counter = counter + 1
         
     knitting = GVKnitter()
@@ -199,8 +201,8 @@ def FrozenQubitsAndQVMExample():
 def testGVWithGHZ():
     #provider =  IBMProvider(instance="ibm-q-research-2/tu-munich-1/main")
     #backend = provider.get_backend("ibm_nairobi")
-    backend = FakeGuadalupe()
-    qc_supermarq_bench = GHZ(16)
+    backend = FakeKolkata()
+    qc_supermarq_bench = GHZ(14)
 
     qc_supermarq = qc_supermarq_bench.circuit()
     qc_qiskit = cirq_to_qiskit(qc_supermarq)
@@ -388,4 +390,4 @@ def main():
     print("small_circuit_1:", average_score_1)
     
 
-testGVWithGHZ()
+FrozenQubitsAndQVMExample()

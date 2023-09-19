@@ -98,9 +98,11 @@ class GVKnitter(Knitter):
 
             clbits = vsq.get_metadata()["num_clbits"]
             shots = vsq.get_metadata()["shots"]
-    
+
             with Pool() as pool:
-               vsq.set_results(vsq.get_circuit().knit(results, pool).to_counts(clbits, shots))
+               final_results = vsq.get_circuit().knit(results, pool)
+
+            vsq.set_results(final_results.to_counts(clbits, shots))
 
     
     def results():
