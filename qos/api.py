@@ -2,7 +2,7 @@ from typing import Any, Dict, List
 from qos.types import Qernel
 from .distributed_transpiler.optimiser import Optimiser
 import qos.database as database
-from qos.distributed_transpiler.analyser import Analyser
+import qos.distributed_transpiler.analyser as Analyser
 import redis
 import logging
 #from qos.types import QCircuit
@@ -15,7 +15,7 @@ from qos.engines.multiprogrammer import Multiprogrammer
 import os
 from qos.tools import debugPrint
 from .dag import DAG
-
+import yaml
 
 class QOS:
     """Main API that will be exposed to the user"""
@@ -92,6 +92,16 @@ class QOS:
 
     def worker_start(self, qernel: Qernel) -> None:
         # pdb.set_trace()
+        with open('config' + ".yml", "r") as config:
+            configs = yaml.safe_load(config)
+
+        # Working on the config file
+        print(configs.get("passes"))
+
+        exit(1)
+        
+        
+
         qernel = Analyser.analyse(qernel)
         self.optimiser.submit(qernel)
         

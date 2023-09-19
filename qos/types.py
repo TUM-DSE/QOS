@@ -6,6 +6,8 @@ from qvm.qvm.virtual_circuit import VirtualCircuit
 from qvm.qvm.quasi_distr import *
 from qiskit import dagcircuit, QuantumCircuit
 from .dag import DAG
+from qos.distributed_transpiler.types import AnalysisPass
+from qos.distributed_transpiler.types import TransformationPass
 
 
 # This should contain any kind of circuit, qiskit circuit or circ, etc
@@ -38,7 +40,8 @@ class Qernel(ABC):
     results: Dict[str, Any] | QuasiDistr
     assigned_qpu: QPU
     #status: str
-    transformations: List[Transformations]
+    analysis: List[AnalysisPass]
+    transformations: List[TransformationPass]
     
     # * This is the circuit provider that was submitted by the client
     # * so we can return the result using the same API
