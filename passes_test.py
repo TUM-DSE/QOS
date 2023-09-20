@@ -1,6 +1,8 @@
 import os
 from qos.distributed_transpiler.analyser import *
 from qos.distributed_transpiler.optimiser import *
+from qos.distributed_transpiler.run import *
+
 from qiskit.circuit.random import random_circuit
 from qiskit.circuit import QuantumCircuit, ClassicalRegister
 from qiskit.circuit.library import TwoLocal
@@ -400,5 +402,15 @@ def main():
     print("small_circuit_0:", average_score_0)
     print("small_circuit_1:", average_score_1)
     
+def testDistributedTranspiler():
+    dt = DistributedTranspiler(methods=["QF"])
 
-FrozenQubitsAndQVMExample()
+    qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_7_1^P=1.qasm")
+    print(qc_full)
+    backend = FakeGuadalupe()
+
+    qernel = Qernel(qc_full)
+
+    dt.run(qernel)
+
+testDistributedTranspiler()

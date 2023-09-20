@@ -221,6 +221,37 @@ class QubitConnectivityGraphFromDAGPass(DAGAnalysisPass):
 
         qernel.edit_metadata(dependency_graph_metadata)
 
+class IsQAOACircuitPass(DAGAnalysisPass):
+    def __init__(self) -> None:
+        pass
+
+    def name(self) -> str:
+        return "IsQAOACircuitPass"
+    
+    def run(self, qernel: Qernel) -> bool:
+        qc = qernel.get_circuit()
+
+        must_have_ops = ["cx", "h", "rz", "rx"]
+        checklist = {}
+
+        ops = qc.count_ops()
+
+        for op, v in ops:
+            if op in must_have_ops:
+                checklist[op] = True
+            else:
+                return False
+            
+        for op in must_have_ops:
+            try:
+                if checklist.get(op) == None:
+                    return False
+            except:
+                return False
+            
+        return True
+
+
 class QAOAAnalysisPass(DAGAnalysisPass):
     def __init__(self) -> None:
         pass

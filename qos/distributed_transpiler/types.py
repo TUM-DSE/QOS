@@ -1,7 +1,4 @@
 from abc import ABC, abstractmethod
-
-from qiskit import QuantumCircuit
-
 from qos.types import Qernel
 
 class DistributedTranspilerPass(ABC):
