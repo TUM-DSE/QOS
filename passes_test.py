@@ -330,7 +330,6 @@ def main():
     #qc_frozen2 = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/sk/gridsearch_100/ideal/3_4_1^M=1_1^P=1.qasm")
     #print(qc_full)
 
-
     #print(qc_frozen1)
     #print(qc_frozen2)   
 
@@ -344,7 +343,7 @@ def main():
     #job = backend.run(ccircuits, shots=20000)
 
     #exit()
-   
+
     #qc_supermarq_bench = QAOAVanillaProxy(7)
 
     #qc_supermarq = qc_supermarq_bench.circuit()
