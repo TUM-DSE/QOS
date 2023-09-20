@@ -17,12 +17,25 @@ from qiskit.converters import circuit_to_dag
 from qvm.qvm.compiler.dag import *
 
 
+class Analyser(Engine):
+    def __init__(self) -> None:
+        pass
+
+    def run(qernel: Qernel) -> int:
+        for i in qernel.analysis:
+           analyser = eval(i)()
+           analyser.run(qernel)
+
+        print("Analysis done")
+
+        return qernel
+
 class BasicAnalysisPass(AnalysisPass):
 
     def __init__(self) -> None:
         pass
 
-    def name(self) -> str:
+    def name(self):
         return "BasicAnalysisPass"
 
     def run(self, qernel: Qernel) -> None:

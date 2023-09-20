@@ -2,7 +2,7 @@ from typing import Any, Dict, List
 from qos.types import Qernel
 from .distributed_transpiler.optimiser import Optimiser
 import qos.database as database
-import qos.distributed_transpiler.analyser as Analyser
+from qos.distributed_transpiler.analyser import Analyser
 import redis
 import logging
 #from qos.types import QCircuit
@@ -53,14 +53,15 @@ class QOS:
 
         #newQC = QCircuit()
         newQernel = Qernel()
+        newQernel.circuit = circuit
 
         # * Here the circuits from different providers are converted into DAGS
-        if type(circuit) == QuantumCircuit:
-            newQernel.provider = "qiskit"
-            newQernel.circuit = DAG(circuit)
-        else:
-            print("Circuit provider not supported yet")
-            exit(1)
+        #if type(circuit) == QuantumCircuit:
+        #    newQernel.provider = "qiskit"
+        #    newQernel.circuit = DAG(circuit)
+        #else:
+        #    print("Circuit provider not supported yet")
+        #    exit(1)
 
         # Adds the qernel to the database
         qernelId = database.addQernel(newQernel)
@@ -95,13 +96,20 @@ class QOS:
         with open('config' + ".yml", "r") as config:
             configs = yaml.safe_load(config)
 
-        # Working on the config file
-        print(configs.get("passes"))
+        passes = configs.get("config")['passes']
+        passes = configs.get("config")['presets'][passes]
 
-        exit(1)
+        qernel.analysis = passes['analysis']
+        qernel.transformations = passes['transformations']
+
+        print(qernel.analysis)
+        print(qernel.transformations)
+
+        qernel = Analyser.run(qernel)
+        qernel = Optimiser.run(qernel)
+        return 0
         
         
 
-        qernel = Analyser.analyse(qernel)
         self.optimiser.submit(qernel)
         
