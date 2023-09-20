@@ -118,3 +118,14 @@ class OptimalWireCutter(VirtualizationPass):
         #show num_cutted_wires/1.
         """
         return asp
+
+    def get_budget(self, circuit: QuantumCircuit) -> int:
+        qc_copy = circuit.copy()
+
+        dag = DAG(qc_copy)
+        num_cuts = self._cut_wires(dag)
+        self._wire_cuts_to_moves(dag, num_cuts)
+        dag.fragment()
+        new_circuit = dag.to_circuit()
+
+        return num_virtual_gates(new_circuit)

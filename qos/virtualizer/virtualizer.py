@@ -54,6 +54,7 @@ class GVInstatiator(Instantiator):
 
             assert isinstance(vqc, VirtualCircuit)
             for frag, frag_circuit in vqc.fragment_circuits.items():
+
                 new_vqernel = Qernel()
                 new_vqernel.set_circuit(frag)
                 new_vqernel.edit_metadata(vsq.get_metadata())               

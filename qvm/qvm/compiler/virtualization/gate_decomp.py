@@ -29,6 +29,16 @@ class BisectionPass(VirtualizationPass):
             partitions.remove(largest_fragment)
             partitions += list(bisect(qcg.subgraph(largest_fragment)))
         return _decompose_qubit_sets(dag, partitions)
+    
+    def get_budget(self, circuit: QuantumCircuit) -> int:
+        qc_copy = circuit.copy()
+
+        dag = DAG(qc_copy)
+        self._recursive_bisection(dag)
+        dag.fragment()
+        v_circuit = dag.to_circuit()
+
+        return num_virtual_gates(v_circuit)
 
 
 class OptimalDecompositionPass(VirtualizationPass):
@@ -95,6 +105,15 @@ class OptimalDecompositionPass(VirtualizationPass):
             qubit_sets[partition_idx].add(dag.qubits[qubit_idx])
         return _decompose_qubit_sets(dag, qubit_sets)
 
+    def get_budget(self, circuit: QuantumCircuit) -> int:
+        qc_copy = circuit.copy()
+
+        dag = DAG(qc_copy)
+        self._optimal_decomposition(dag)
+        dag.fragment()
+        v_circuit = dag.to_circuit()
+
+        return num_virtual_gates(v_circuit)
 
 def _decompose_qubit_sets(dag: DAG, qubit_sets: list[set[Qubit]]) -> int:
     vgates = 0

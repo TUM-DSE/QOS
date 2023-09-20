@@ -235,8 +235,10 @@ class IsQAOACircuitPass(DAGAnalysisPass):
         checklist = {}
 
         ops = qc.count_ops()
-
-        for op, v in ops:
+ 
+        for op, v in ops.items():
+            if op == "measure" or op == "barrier":
+                continue
             if op in must_have_ops:
                 checklist[op] = True
             else:
@@ -250,7 +252,6 @@ class IsQAOACircuitPass(DAGAnalysisPass):
                 return False
             
         return True
-
 
 class QAOAAnalysisPass(DAGAnalysisPass):
     def __init__(self) -> None:

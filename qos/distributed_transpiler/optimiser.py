@@ -117,6 +117,24 @@ class GVBisectionPass(GateVirtualizationPass):
             q.add_virtual_subqernel(sub_qernel)    
 
         return q
+    
+    def cost(self, q: Qernel) -> int:
+        optimal_bisection_pass = BisectionPass(self._size_to_reach)
+        vsqs = q.get_virtual_subqernels()
+        cost = 0
+
+        if len(vsqs) > 0:
+            highest_cost = 0
+            for vsq in vsqs:
+                qc = vsq.get_circuit()._circuit
+                cost = optimal_bisection_pass.get_budget(qc)
+                if cost > highest_cost:
+                    highest_cost = cost
+        else:
+            qc = q.get_circuit()        
+            cost = optimal_bisection_pass.get_budget(qc) 
+
+        return cost
 
 class GVOptimalDecompositionPass(GateVirtualizationPass):
     _size_to_reach: int
@@ -147,6 +165,24 @@ class GVOptimalDecompositionPass(GateVirtualizationPass):
             q.add_virtual_subqernel(sub_qernel)    
 
         return q
+    
+    def cost(self, q: Qernel) -> int:
+        optimal_decomposition_pass = OptimalDecompositionPass(self._size_to_reach)
+        vsqs = q.get_virtual_subqernels()
+        cost = 0
+
+        if len(vsqs) > 0:
+            highest_cost = 0
+            for vsq in vsqs:
+                qc = vsq.get_circuit()._circuit
+                cost = optimal_decomposition_pass.get_budget(qc)
+                if cost > highest_cost:
+                    highest_cost = cost
+        else:
+            qc = q.get_circuit()        
+            cost = optimal_decomposition_pass.get_budget(qc) 
+
+        return cost
 
 class CircularDependencyBreakerPass(GateVirtualizationPass):
     def name(self):
@@ -235,11 +271,12 @@ class RandomQubitReusePass(QubitReusePass):
     def run(self, q: Qernel) -> Qernel:
         random_qubit_reuser_pass = QubitReuser(self._size_to_reach)
         vsqs = q.get_virtual_subqernels()
+        sqs = q.get_subqernels()
 
         if len(vsqs) > 0:
             for vsq in vsqs:
-                qc = vsq.get_circuit()
-                random_qubit_reuser_pass.run(virtual_circuit)
+                vqc = vsq.get_circuit()
+                random_qubit_reuser_pass.run(vqc)
                 #vsq.set_circuit(virtual_circuit)
         else:
             qc = q.get_circuit()
@@ -281,6 +318,24 @@ class OptimalWireCuttingPass(WireCuttingPass):
             q.add_virtual_subqernel(sub_qernel)    
 
         return q
+    
+    def cost(self, q: Qernel) -> int:
+        optimal_wire_cutting_pass = OptimalWireCutter(self._size_to_reach)
+        vsqs = q.get_virtual_subqernels()
+        cost = 0
+
+        if len(vsqs) > 0:
+            highest_cost = 0
+            for vsq in vsqs:
+                qc = vsq.get_circuit()._circuit
+                cost = optimal_wire_cutting_pass.get_budget(qc)
+                if cost > highest_cost:
+                    highest_cost = cost
+        else:
+            qc = q.get_circuit()        
+            cost = optimal_wire_cutting_pass.get_budget(qc) 
+
+        return cost
     
 class FrozenQubitsPass(QubitFreezingPass):
     _qubits_to_freeze: int

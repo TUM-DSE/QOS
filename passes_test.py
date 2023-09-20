@@ -34,7 +34,6 @@ def test_analyses_passes(qernel: Qernel) -> None:
     #qaoa_analysis = QAOAAnalysisPass()
     #qaoa_analysis.run(qernel)
 
-
 def test_transformation_passes(qernel: Qernel) -> Qernel:
     bisection_pass = GVBisectionPass(5)
     #optimal_decomposition_pass = GVOptimalDecompositionPass(3)
@@ -268,7 +267,6 @@ def testGVWithGHZ():
 
     exit()
 
-
 def testFrozenQubits():
     qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_7_1^P=1.qasm")
     print(qc_full)
@@ -403,14 +401,26 @@ def main():
     print("small_circuit_1:", average_score_1)
     
 def testDistributedTranspiler():
-    dt = DistributedTranspiler(methods=["QF"])
+    dt = DistributedTranspiler(size_to_reach=4, budget=3, methods=["GV", "WC", "QR"])
 
-    qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_7_1^P=1.qasm")
+    #qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_7_1^P=1.qasm")
+    
+    qc_supermarq_bench = GHZ(12)
+
+    qc_supermarq = qc_supermarq_bench.circuit()
+    qc_full = cirq_to_qiskit(qc_supermarq)
+
     print(qc_full)
     backend = FakeGuadalupe()
 
     qernel = Qernel(qc_full)
 
     dt.run(qernel)
+
+    qernel = test_virtualization(qernel)
+
+    for sqs in qernel.get_subqernels():
+        for q in sqs.get_subqernels():
+            print(q.get_circuit())
 
 testDistributedTranspiler()
