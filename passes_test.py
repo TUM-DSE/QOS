@@ -7,6 +7,7 @@ from qiskit.circuit.library import TwoLocal
 from qiskit.providers.fake_provider import *
 from qiskit_ibm_provider import IBMProvider
 from qiskit import *
+from qiskit.result import marginal_counts
 from qos.types import Qernel
 from qos.virtualizer.virtualizer import GVInstatiator, GVKnitter
 from qvm.qvm.virtual_circuit import generate_instantiations
@@ -143,7 +144,7 @@ def main3():
     print("Our Hamiltonian:", qernel_frozen2.get_metadata()["J"])
 
 def FrozenQubitsAndQVMExample():
-    qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_12_1^P=1.qasm")
+    qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_9_1^P=1.qasm")
     #qc_full_properties = load_pickle("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_7_1^P=1.pkl")
     #print(qc_full)
     #provider =  IBMProvider(instance="ibm-q-research-2/tu-munich-1/main")
@@ -158,40 +159,51 @@ def FrozenQubitsAndQVMExample():
     qernel = test_transformation_passes(qernel)
     qernel = test_virtualization(qernel)
     
-    to_run = []
+    to_run_0 = []
+    to_run_1 = []
 
     cqc_qiskit = transpile(qc_full, backend, optimization_level=3)
-    to_run.append(cqc_qiskit)
+    job = backend.run(cqc_qiskit, shots=20000)
+    big_results = job.result().get_counts()
 
-    for sq in qernel.get_subqernels():
-        for q in sq.get_subqernels():
-            qc_small = q.get_circuit()
-            #print(qc_small)
-            cqc_small = transpile(qc_small, backend, optimization_level=3)
-            to_run.append(cqc_small)
+    sqs = qernel.get_subqernels()
+
+    for q in sqs[0].get_subqernels():
+        qc_small = q.get_circuit()
+        #print(qc_small)
+        cqc_small = transpile(qc_small, backend, optimization_level=3)
+        to_run_0.append(cqc_small)
+    for q in sqs[1].get_subqernels():
+        qc_small = q.get_circuit()
+        #print(qc_small)
+        cqc_small = transpile(qc_small, backend, optimization_level=3)
+        to_run_1.append(cqc_small)
 
     for vsq in qernel.get_virtual_subqernels():
         vsq.edit_metadata({"shots": 20000})
 
-    job = backend.run(to_run, shots=20000)
-    results = job.result().get_counts()
+    job_0 = backend.run(to_run_0, shots=20000)
+    results_0 = job_0.result().get_counts()
+    job_1 = backend.run(to_run_1, shots=20000)
+    results_1 = job_1.result().get_counts()
 
-    counts = results[0]
+    print("big circuit:", score(qernel.get_circuit(), qernel.get_metadata()["J"], big_results))
 
-    print("big circuit:", score(qernel.get_circuit(), qernel.get_metadata()["J"], counts))
+    sqs = qernel.get_subqernels()
 
-    counter = 1
-    for sq in qernel.get_subqernels():
-        for q in sq.get_subqernels():
-            q.set_results(results[counter])
-            #print(results[counter])
-            counter = counter + 1
-        
+    for i, q in enumerate(sqs[0].get_subqernels()):
+        q.set_results(results_0[i])
+
+    for i, q in enumerate(sqs[1].get_subqernels()):
+        q.set_results(results_1[i])
+
+    
     knitting = GVKnitter()
     knitting.run(qernel)          
-    
+   
     vsqs = qernel.get_virtual_subqernels()
     sqs = qernel.get_subqernels()
+
 
     print("small_circuit_0:", score(sqs[0].get_circuit(), vsqs[0].get_metadata()["J"], vsqs[0].get_results()))
     print("small_circuit_1:", score(sqs[1].get_circuit(), vsqs[1].get_metadata()["J"], vsqs[1].get_results()))
