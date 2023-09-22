@@ -20,7 +20,7 @@ class Scheduler(Engine):
     def __init__(self) -> int:
         pass
 
-    def submit(self, qernel: Qernel, policy) -> None:
+    def run(self, qernel: Qernel, policy) -> None:
 
         self.logger.log(10, "Got new qernel to be scheduled")
         # results = {"test": 43}
