@@ -11,7 +11,7 @@ from qiskit_ibm_provider import IBMProvider
 from qiskit import *
 from qiskit.result import marginal_counts
 from qos.types import Qernel
-from qos.virtualizer.virtualizer import GVInstatiator, GVKnitter
+from qos.distributed_transpiler.virtualizer import GVInstatiator, GVKnitter
 from qvm.qvm.virtual_circuit import generate_instantiations
 from qos.dag import dag_to_qcg
 import matplotlib.pyplot as plt
@@ -401,12 +401,11 @@ def main():
     print("small_circuit_1:", average_score_1)
     
 def testDistributedTranspiler():
-    dt = DistributedTranspiler(size_to_reach=4, budget=3, methods=["GV", "WC", "QR"])
+    dt = DistributedTranspiler(size_to_reach=3, budget=2, methods=["GV", "WC", "QR"])
 
-    #qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_7_1^P=1.qasm")
+    #qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_12_1^P=1.qasm")
     
     qc_supermarq_bench = GHZ(12)
-
     qc_supermarq = qc_supermarq_bench.circuit()
     qc_full = cirq_to_qiskit(qc_supermarq)
 

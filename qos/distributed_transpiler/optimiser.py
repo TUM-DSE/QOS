@@ -4,7 +4,7 @@ import pdb
 from time import sleep
 import networkx as nx
 
-from qos.virtualizer.virtualizer import Virtualizer
+from qos.distributed_transpiler.virtualizer import Virtualizer
 from qos.distributed_transpiler.types import TransformationPass
 from qos.types import Engine, Qernel
 import qos.database as db

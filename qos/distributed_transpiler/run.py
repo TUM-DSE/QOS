@@ -6,7 +6,7 @@ class DistributedTranspiler():
     methods: dict[str, bool]
     size_to_reach: int
 
-    def __init__(self, size_to_reach: int, budget: int = 5, methods: List[str] = []) -> None:
+    def __init__(self, size_to_reach: int = 7, budget: int = 4, methods: List[str] = []) -> None:
         self.size_to_reach = size_to_reach
         self.budget = budget
         self.methods = {
@@ -17,7 +17,6 @@ class DistributedTranspiler():
         }
 
         for method in methods:
-            assert(self.methods.get(method) is not None)
             self.methods[method] = True
 
     def estimateOptimalCuttingMethod(self, q: Qernel):
@@ -76,13 +75,20 @@ class DistributedTranspiler():
         return q
 
     def run(self, q: Qernel):
-        #qc = q.get_circuit()
         analysis_pass = BasicAnalysisPass()
         supermarq_features_pass = SupermarqFeaturesAnalysisPass()
 
         analysis_pass.run(q)
         supermarq_features_pass.run(q)
-        #qc_metadata = q.get_metadata()
+
+        flag = True
+        for method in self.methods.values():
+            if method:
+                flag = False
+        
+        if flag:
+            for k in self.methods.keys():
+                self.methods[k] = True
 
         if self.methods["QF"]:
             is_qaoa_pass = IsQAOACircuitPass()
@@ -94,23 +100,21 @@ class DistributedTranspiler():
                 qaoa_analysis_pass.run(q)
                 q = QF_pass.run(q)
 
-                if self.methods["GV"] and self.methods["WC"]:
-                    best = self.estimateOptimalCuttingMethod(q)
-                    best = self.findOptimalCuttingMethod(q, self.size_to_reach)
+            if self.methods["GV"] and self.methods["WC"]:
+                best = self.findOptimalCuttingMethod(q, self.size_to_reach)
 
-                    if best == "GV":
-                        q = self.applyGV(q, self.size_to_reach)
-                    else:
-                        q = self.applyWC(q, self.size_to_reach)   
-                
-                elif self.methods["GV"]:
+                if best == "GV":
                     q = self.applyGV(q, self.size_to_reach)
+                else:
+                    q = self.applyWC(q, self.size_to_reach)   
+            
+            elif self.methods["GV"]:
+                q = self.applyGV(q, self.size_to_reach)
 
-                elif self.methods["WC"]:
-                    q = self.applyWC(q, self.size_to_reach)
+            elif self.methods["WC"]:
+                q = self.applyWC(q, self.size_to_reach)
         
         elif self.methods["GV"] and self.methods["WC"]:
-            best = self.estimateOptimalCuttingMethod(q)
             best = self.findOptimalCuttingMethod(q, self.size_to_reach)
 
             if best == "GV":
