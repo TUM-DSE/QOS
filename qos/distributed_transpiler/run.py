@@ -100,6 +100,8 @@ class DistributedTranspiler():
                 qaoa_analysis_pass.run(q)
                 q = QF_pass.run(q)
 
+                self.budget = self.budget - 1
+
             if self.methods["GV"] and self.methods["WC"]:
                 best = self.findOptimalCuttingMethod(q, self.size_to_reach)
 
