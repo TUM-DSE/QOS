@@ -3,7 +3,7 @@ import random
 from qos.types import Engine, Qernel
 from qos.distributed_transpiler.types import AnalysisPass
 from abc import ABC, abstractmethod
-from qos.engines.multiprogrammer import Multiprogrammer
+#from qos.kernel.multiprogrammer import Multiprogrammer
 import qos.database as db
 from qiskit.providers.fake_provider import *
 import mapomatic as mm

@@ -4,12 +4,13 @@ import qos.database as db
 from qos.types import Backend, Qernel
 import pdb
 import logging
-from qos.engines.scheduler import Scheduler
+from qos.kernel.scheduler import Scheduler
 from qos.tools import check_layout_overlap, size_overflow, bundle_qernels
 import queue
 from multiprocessing import Process
 from time import sleep
 import os
+import numpy as np
 
 pipe_name = "multiprog_fifo.pipe"
 
@@ -27,6 +28,58 @@ class Multiprogrammer(Engine):
         #return
         self.queue = []
         self.done_queue = []
+
+    def get_matching_score(self, q1: Qernel, q2: Qernel, weighted: bool = False, weights: List[float] = []) -> float:
+        score = 0
+
+        depthDiff = self.depthComparison(q1, q2)
+        entanglementDiff = self.entanglementComparison(q1, q2)
+        measurementDiff = self.measurementComparison(q1, q2)
+        parallelismDiff = self.parallelismComparison(q1, q2)
+
+        if weighted:            
+            score = weights[0] * depthDiff + weights[1] * entanglementDiff + weights[2] * measurementDiff + weights[3] * parallelismDiff
+        else:
+            score = (depthDiff + entanglementDiff + measurementDiff + parallelismDiff) / 4
+    
+        return score
+    
+
+    def depthComparison(self, q1: Qernel, q2: Qernel) -> float:
+        metadata_1 = q1.get_metadata()
+        metadata_2 = q2.get_metadata()
+
+        depthDiff = np.abs(metadata_1["depth"] - metadata_2["depth"])
+        
+        k = 0.05
+
+        depthFactor = np.exp(-k * depthDiff)
+                   
+        return depthFactor
+    
+    def entanglementComparison(self, q1: Qernel, q2: Qernel) -> float:
+        metadata_1 = q1.get_metadata()
+        metadata_2 = q2.get_metadata()
+
+        entanglement_result = (1 - metadata_1["entanglement_ratio"]) * (1 - metadata_2["entanglement_ratio"])
+
+        return entanglement_result
+    
+    def measurementComparison(self, q1: Qernel, q2: Qernel) -> float:
+        metadata_1 = q1.get_metadata()
+        metadata_2 = q2.get_metadata()
+
+        measurement_result = (1 - metadata_1["measurement"]) * (1 - metadata_2["measurement"])
+
+        return measurement_result
+    
+    def parallelismComparison(self, q1: Qernel, q2: Qernel) -> float:
+        metadata_1 = q1.get_metadata()
+        metadata_2 = q2.get_metadata()
+
+        parallelism_result = (1 - metadata_1["parallelism"]) * (1 - metadata_2["parallelism"])
+
+        return parallelism_result
 
     #def submit(self, qernel: Qernel):
     #
@@ -70,10 +123,12 @@ class Multiprogrammer(Engine):
             all_qernels = []
 
             for q in qernels:
-                if q.subqernels != []:
-                    for subq in q.subqernels:
-                        if subq.subqernels != []:
-                            for subsubq in subq.subqernels:
+                sub_qernels = q.get_subqernels()
+                if sub_qernels != []:
+                    for subq in sub_qernels:
+                        subsub_qernels = subq.get_subqernels()
+                        if subsub_qernels != []:
+                            for subsubq in subsub_qernels:
                                 all_qernels.append(subsubq)
                         else:
                             all_qernels.append(subq)

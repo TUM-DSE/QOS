@@ -1,5 +1,5 @@
-from qos.engines.matcher import Matcher
-from qos.engines.multiprogrammer import Multiprogrammer
+from qos.kernel.matcher import Matcher
+from qos.kernel.multiprogrammer import Multiprogrammer
 import os
 from qiskit.circuit.random import random_circuit
 from qos.types import Qernel

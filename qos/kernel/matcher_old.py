@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 from qos.types import Engine, Qernel
-from qos.engines.multiprogrammer import Multiprogrammer
-from qos.engines.multiprogrammer import pipe_name as multiprog_pipe_name
+from qos.kernel.multiprogrammer import Multiprogrammer
+from qos.kernel.multiprogrammer import pipe_name as multiprog_pipe_name
 import qos.database as db
 from qiskit.providers.fake_provider import *
 import mapomatic as mm
@@ -228,65 +228,37 @@ class Matcher(Engine):
         logger = logging.getLogger(__name__)
         logging.basicConfig(level=10)
 
-        if qernel.subqernels != []:
-            for i in qernel.subqernels:
-                if i.subqernels != []:
-                    for j in i.subqernels:
-                        #tmpqernel = db.getQernel(i)
-                        #qc = QuantumCircuit.from_qasm_str(tmpqernel.circuit.decode("utf-8"))
-                        #qc_dag = DAG
-                        #qc = qc_dag.to_circuit()
-                        # print(self.match(qc, cost_function=self.trivialConstFunction))
-                        # print("-------------------------")
-                        # print(self.match(qc, cost_function=None))
-                        # print("-------------------------")
-                        this = self.match(j.circuit, cost_function=None)
-                        # print(this)
-                        # print("-------------")
+        for i in qernel.subqernels:
 
-                        if this != 1:
-                            j.matching = this
-                            #tmpqernel.matching = this
-                            #db.setQernelField(tmpqernel.id, "matching", str(this))
-                        else:
-                            print("Matching failed")
-                            return 1
-                else:
-                    this = self.match(i.circuit, cost_function=None)
-                    # print(this)
-                    # print("-------------")
+            tmpqernel = db.getQernel(i)
 
-                    if this != 1:
-                        i.matching = this
-                        #tmpqernel.matching = this
-                        #db.setQernelField(tmpqernel.id, "matching", str(this))
-                    else:
-                        print("Matching failed")
-                        return 1
-        else:
-            this = self.match(qernel.circuit, cost_function=None)
+            #qc = QuantumCircuit.from_qasm_str(tmpqernel.circuit.decode("utf-8"))
+            qc_dag = DAG
+            qc = qc_dag.to_circuit()
+
+            # print(self.match(qc, cost_function=self.trivialConstFunction))
+            # print("-------------------------")
+            # print(self.match(qc, cost_function=None))
+            # print("-------------------------")
+            this = self.match(qc, cost_function=None)
             # print(this)
             # print("-------------")
 
             if this != 1:
-                qernel.matching = this
-                #tmpqernel.matching = this
-                #db.setQernelField(tmpqernel.id, "matching", str(this))
-            else:
-                print("Matching failed")
-                return 1
-
-
+                tmpqernel.matching = this
+                db.setQernelField(tmpqernel.id, "matching", str(this))
 
         # Send to multiprogrammer
 
-        #multiprogFifo = open(multiprog_pipe_name, "w")
-        #message = str(qernel.id) + "\n"
-        #logger.log(10, "Sending qernel to multiprogrammer")
-        #multiprogFifo.write(message)
-        ## multiprog = Multiprogrammer()
-        ## multiprog.submit(qernel)
-        #return 0
+        multiprogFifo = open(multiprog_pipe_name, "w")
+        message = str(qernel.id) + "\n"
+        logger.log(10, "Sending qernel to multiprogrammer")
+        multiprogFifo.write(message)
+
+        # multiprog = Multiprogrammer()
+        # multiprog.submit(qernel)
+
+        return 0
 
     # This is to submit a single qernel instead of a whole qernel with subqernels
     def submit_single(self, qernel: Qernel) -> int:
@@ -306,6 +278,3 @@ class Matcher(Engine):
         multiprog.submit(qernel)
 
         return 0
-    
-    def results(self):
-        pass
