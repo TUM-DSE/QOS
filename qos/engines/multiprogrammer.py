@@ -1,9 +1,11 @@
-from typing import List
+from qos.types import Engine
+from typing import Any, Dict, List
 import qos.database as db
 from qos.types import Backend, Qernel
 import pdb
 import logging
 from qos.engines.scheduler import Scheduler
+from qos.tools import check_layout_overlap, size_overflow, bundle_qernels
 import queue
 from multiprocessing import Process
 from time import sleep
@@ -11,18 +13,20 @@ import os
 
 pipe_name = "multiprog_fifo.pipe"
 
-def check_layout_overlap(layout1: List, layout2: List) -> bool:
-    for i in range(0, len(layout1)):
-        if layout1[i] in layout2:
-            return True
-    return False
 
 
-class Multiprogrammer:
+
+class Multiprogrammer(Engine):
+
+    timeout = 5
+    window_size = 5
+    
     def __init__(self) -> None:
-        Process(target=self.window_monitor).start()
-        sleep(2)
-        return
+        #Process(target=self.window_monitor).start()
+        #sleep(2)
+        #return
+        self.queue = []
+        self.done_queue = []
 
     #def submit(self, qernel: Qernel):
     #
@@ -35,27 +39,60 @@ class Multiprogrammer:
     #
     #    return 0
 
-    def window_monitor(self):
-        # pdb.set_trace()
-        os.mkfifo(pipe_name)
-        openfifo = open(pipe_name, "r")
+    #def window_monitor(self):
+    #    # pdb.set_trace()
+    #    #os.mkfifo(pipe_name)
+    #    #openfifo = open(pipe_name, "r")
 
-        while True:
-            print("Waiting for message")
-            line = openfifo.readline()
-            if not line:
-                continue
-            else:
-                print(
-                    line + "received message"
-                )
-                # ? This probably can just be the qernel id, and then we can get the qernel from the database?
-                qernel = db.getQernel(int(line))
-                self.multiprogram(qernel, self._restrict_policy)
+    #    while True:
+    #        print("Waiting for message")
+    #        line = openfifo.readline()
+    #        if not line:
+    #            continue
+    #        else:
+    #            print(
+    #                line + "received message"
+    #            )
+    #            # ? This probably can just be the qernel id, and then we can get the qernel from the database?
+    #            qernel = db.getQernel(int(line))
+    #            self.multiprogram(qernel, self._restrict_policy)
 
-    def multiprogram(self, qernel: Qernel, merge_policy):
-        this = merge_policy(qernel, 0.1)
-        return this
+    def run(self, qernels: List[Qernel] | Qernel, merge_policy_level=0) -> List[Qernel]:
+
+        if merge_policy_level == 0:
+            merge_policy = self._restrict_policy
+        else:
+            print("Merge policy not supported yet")
+            exit(1)
+
+        if isinstance(qernels, list):
+
+            all_qernels = []
+
+            for q in qernels:
+                if q.subqernels != []:
+                    for subq in q.subqernels:
+                        if subq.subqernels != []:
+                            for subsubq in subq.subqernels:
+                                all_qernels.append(subsubq)
+                        else:
+                            all_qernels.append(subq)
+
+                else:
+                    all_qernels.append(q)
+            
+                #if len(self.queue) > self.window_size:
+                #    self.done_queue.append(self.queue.pop())
+
+            merge_policy(all_qernels, 0.1)
+            return self.done_queue
+
+        else:
+            this = merge_policy(qernels, 0.1)
+            return this
+    
+    def results(self) -> None:
+        pass
 
     # Merging policies:
 
@@ -65,20 +102,69 @@ class Multiprogrammer:
     #   Example: The window has 5 circuits E, D, C, B, A and the new circuits are F, G, H.
     #   1. Consider merging F or G or H with E, D, C, B, A, by this order. Lets consider that F could be merged with A
     #   2. The new circuits left are G and H, move the window by two circuits, this is because the new circuits need to enter the window and the size of the window is fixed
-    def _restrict_policy(self, new_qernel: Qernel, error_limit: float) -> None:
+
+    
+
+    def _restrict_policy(self, new_qernels: Qernel | List[Qernel] , error_limit: float, matching_cycles=1, max_bundle=2) -> None:
         # self.logger.log(10, "Running Restrict policy")
-        window = db.currentWindow()
+        #window = db.currentWindow()
 
-        for i in window[::-1]:
-            # ! This is not supposed to go through the subqernels, just the matchings, fix this
-            for j in new_qernel.subqernels:
-                if j.best_qpu == i.best_qpu and not check_layout_overlap(
-                    j.best_layout(), i.best_layout()
-                ):
-                    print("Multiprogramming match found!!")
-                else:
-                    print("No match found")
+        # This is whole algorithm very very unclean, but it works for now
+        # To make this more compact we could simply trasverse the qernel and append all qernels in list and then go through the list
+        cycles = [(0,0), (1,0), (0,1), (1,1), (2,0), (0,2), (2,1), (1,2), (2,2), (3,0), (0,3), (3,1), (1,3), (3,2), (2,3), (3,3)]
 
+        if isinstance(new_qernels, Qernel):
+            #TODO
+            return
+
+        #There is a caveat here, if a qernel has been merged the matching will always be the same, so it might make some repeated checks
+
+        next = 0
+
+        #If the incoming qernel has subqernel, loop through them
+        for q in new_qernels:
+            for cycle in range(0, matching_cycles):
+                if next == 1:
+                    next = 0
+                    break
+                if self.queue == []:
+                    break
+                for queue in self.queue[::-1]:
+                    incoming_qpu = q.matching[cycles[cycle][0]][1]
+                    queue_qpu = queue.matching[cycles[cycle][1]][1] if queue.match == None else queue.match[1]
+                    incoming_map = q.matching[cycles[cycle][0]][0]
+                    queue_map = queue.matching[cycles[cycle][1]][0] if queue.match == None else queue.match[0]
+                    incoming_fid = q.matching[cycles[cycle][0]][2]
+                    queue_fid = queue.matching[cycles[cycle][1]][2] if queue.match == None else queue.match[2]
+                    #The first element of the matching is the ideal mapping, the second is the qpu and the third is the estimated fidelity
+                    if incoming_qpu == queue_qpu and not check_layout_overlap(incoming_map, queue_map) and not size_overflow(q, queue, incoming_qpu) and not (((incoming_fid + queue_fid) / 2) > error_limit):
+                                    
+                        print("Multiprogramming match found!")
+                        tmp = bundle_qernels(q, queue, (incoming_map, incoming_qpu, incoming_fid))
+                                    
+                        if tmp == 0:
+                        # This is the case that the qernel on the queue already was a bundled qernel and the new qernel was just added to the bundle, nothing more to do.
+                            tmp = queue
+                        
+                        else:
+                        #This is the case that the qernel on the queue was a normal qernel and a new bundled qernel was created this new qernel is going to substitute the original qernel on the queue
+                            self.queue.remove(queue)
+                            self.queue.insert(0,tmp)
+                                        
+                        if len(tmp.src_qernels) >= max_bundle:
+                        #If the bundled qernel already has the max bundle size, then it jumps the queue and is scheduled
+                            self.done_queue.insert(0,tmp)
+                            self.queue.remove(tmp)
+
+                        next = 1
+                        break
+
+            self.queue.insert(0,q)
+
+            if len(self.queue) > self.window_size:
+                self.done_queue.insert(0,self.queue.pop())
+
+        self.done_queue = self.queue + self.done_queue
         return 0
 
     def _base_policy(self, newQernel: Qernel, error_limit: float) -> None:
@@ -106,15 +192,3 @@ class Multiprogrammer:
         return 0
 
         # for i in window[0,-1]():
-
-
-#  def __merge_qernels(self, qc1: QCircuit, q2: QCircuit) -> QCircuit:
-# toReturn = Qernel(q1.num_qubits + q2.num_qubits, q1.num_clbits + q2.num_clbits)
-# qubits1 = [*range(0, q1.num_qubits)]
-# clbits1 = [*range(0, q1.num_clbits)]
-# qubits2 = [*range(q1.num_qubits, q1.num_qubits + q2.num_qubits)]
-# clbits2 = [*range(q1.num_clbits, q1.num_clbits + q2.num_clbits)]
-
-# toReturn.compose(q1, qubits=qubits1, clbits=clbits1, inplace=True)
-# toReturn.compose(q2, qubits=qubits2, clbits=clbits2, inplace=True)
-# return toReturn

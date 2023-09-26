@@ -18,6 +18,38 @@ def debugPrint():
     return
 
 
+def check_layout_overlap(layout1: List, layout2: List) -> bool:
+    for i in range(0, len(layout1)):
+        if layout1[i] in layout2:
+            return True
+    return False
+
+def size_overflow(new_qernel:Qernel, queued_qernel:Qernel, match_qpu:str) -> bool:
+    max_qubits = db.getQPU_fromname(match_qpu).max_qubits
+    if new_qernel.circuit.num_qubits + queued_qernel.circuit.num_qubits > max_qubits:
+        return True
+    else:
+        return False
+    
+def bundle_qernels(new_qernel:Qernel, queued_qernel:Qernel, queued_matching=tuple) -> None:
+        
+        if queued_qernel.src_qernels == []:
+            bundled_qernel = Qernel(queued_qernel.circuit)
+            bundled_qernel.append_circuit(new_qernel.circuit)
+            bundled_qernel.src_qernels.append(queued_qernel)
+            bundled_qernel.src_qernels.append(new_qernel)
+            bundled_qernel.match = queued_matching
+
+            return bundled_qernel
+        else:
+            queued_qernel.append_circuit(new_qernel.circuit)
+            queued_qernel.src_qernels.append(new_qernel)
+
+            return 0
+
+
+
+
 class dict2obj(object):
     def __init__(self, d):
         for k, v in d.items():

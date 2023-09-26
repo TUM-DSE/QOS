@@ -12,6 +12,7 @@ from multiprocessing import Process
 import pdb
 from qos.engines.multiprogrammer import pipe_name as multiprog_pipe_name
 from qos.engines.multiprogrammer import Multiprogrammer
+import qos.distributed_transpiler.run as DT
 import os
 from qos.tools import debugPrint
 from .dag import DAG
@@ -38,7 +39,7 @@ class QOS:
         self.logger.log(10, "Checking if multiprogrammer is running")
         # pdb.set_trace()
 
-        #We before starting the system again we need to delete the pipe file, otherwise the Multiprogrammer
+        #We before starting the system again we need to delete the pipe file, otherwise         print(configs.get("passes"))the Multiprogrammer
         #wont open the file for reading and the Matcher will stall on the open for writting
         if not os.path.exists(multiprog_pipe_name):
             self.logger.log(10, "Multiprogrammer not running, starting it")
@@ -92,14 +93,11 @@ class QOS:
 
     def worker_start(self, qernel: Qernel) -> None:
         # pdb.set_trace()
-        with open('config' + ".yml", "r") as config:
-            configs = yaml.safe_load(config)
 
-        # Working on the config file
-        print(configs.get("passes"))
-
-        exit(1)
+        dist_transpiler = DT.DistributedTranspiler(qernel, 5)
+        qernel = dist_transpiler.run()
         
+        #-------
         
 
         qernel = Analyser.analyse(qernel)

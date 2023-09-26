@@ -34,11 +34,14 @@ class Transformations:
 
 class Qernel(ABC):
     id: int
+
     #qpu: QPU
     status: str
     metadata: Dict[str, Any]
     results: Dict[str, Any] | QuasiDistr
     assigned_qpu: QPU
+    src_qernels: List[tuple] #List[tuple(Qernel,int)], int is the number of qbits for that fragment
+    
     #status: str
     #analysis: List[AnalysisPass]
     #transformations: List[TransformationPass]
@@ -49,6 +52,7 @@ class Qernel(ABC):
     circuit: QuantumCircuit | VirtualCircuit
     dag = DAG
     matching: List[tuple]
+    match: tuple
     args: Dict[str, Any]
 
     def __init__(self, qc: QuantumCircuit | VirtualCircuit = None, metadata: dict[str, Any] = None) -> None:
@@ -69,13 +73,18 @@ class Qernel(ABC):
         else:
             self.metadata = metadata
         self.matching = []
+        self.match = None
         self.subqernels: List[Qernel] = []
         self.virtual_subqernels: List[Qernel] = []
         self.dependencies: List[Qernel] = []
         self.args["status"] = "PENDING"
+        self.src_qernels = []
 
     def set_metadata(self, metadata):
         self.metadata = metadata
+
+    def is_bundle(self) -> bool:
+        return self.src_qernels != []
 
     def get_metadata(self) -> dict[str, Any]:
         return self.metadata
@@ -91,6 +100,18 @@ class Qernel(ABC):
             return self.dag.to_circuit()
         else:
             return self.circuit
+        
+    def append_circuit(self, qc: QuantumCircuit) -> None:
+        toReturn = QuantumCircuit( self.circuit.num_qubits + qc.num_qubits, self.circuit.num_clbits + qc.num_clbits)
+        qubits1 = [*range(0, self.circuit.num_qubits)]
+        clbits1 = [*range(0, self.circuit.num_clbits)]
+        qubits2 = [*range(self.circuit.num_qubits, self.circuit.num_qubits + qc.num_qubits)]
+        clbits2 = [*range(self.circuit.num_clbits, self.circuit.num_clbits + qc.num_clbits)]
+    
+        toReturn.compose(self.circuit, qubits=qubits1, clbits=clbits1, inplace=True)
+        toReturn.compose(qc, qubits=qubits2, clbits=clbits2, inplace=True)
+    
+        self.circuit = toReturn
         
     def get_dag(self) -> DAG:
         return self.dag
@@ -124,14 +145,6 @@ class Qernel(ABC):
 
     def set_results(self, results: Dict[str, Any] | QuasiDistr):
         self.results = results
-
-    @property
-    def best_layout(self):
-        return self.matching[0][0]
-
-    @property
-    def best_qpu(self):
-        return self.matching[0][1]
 
     # TODO - Doesnt work, needs to be fixed and added a few more properties
     def __format__(self, __format_spec: str) -> str:
