@@ -20,6 +20,7 @@ class QPU(ABC):
     shots: int
     alias: str
     args: Dict[str, Any]
+    local_queue: List[tuple]  # The local queue will store a tuple of estimated execution time and the time when the circuit was submitted
 
     def __init__(self) -> None:
         self.name = ""

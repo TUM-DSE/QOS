@@ -3,10 +3,13 @@ import jsonpickle
 import os
 from qos.types import Engine, Qernel
 from qos.backends.types import QPU
+from qiskit.providers.fake_provider import *
 import logging
 import redis
+import time
 import pdb
-from qos.tools import redisToQPU, redisToQernel, redisToInt
+import ast
+from qos.tools import redisToQPU, redisToQernel, redisToInt, average_gate_times, estimate_execution_time, qpuProperties
 
 MAXJOBS = 1000
 WINDOWSIZE = 3
@@ -77,6 +80,14 @@ def getQernelField(id: int, field: str):
         )
     return info
 
+def getQPUField(id: int, field: str):
+    qpuId = qpuIdGen(id)
+    with redis.Redis() as db:
+        info = db.hget(
+            qpuId,
+            field,
+        )
+    return info
 
 def updateQernel(id: int, qernel: Qernel):
     qernelId = qernelIdGen(id)
@@ -142,7 +153,7 @@ def getLastQPUid():
 #    return newId
 
 
-def getQPU_fromname(name: str) -> QPU:
+def getQPUFromName(name: str) -> QPU:
     with redis.Redis() as db:
         for i in range(1, redisToInt(db.get("qpuCounter")) + 1):
             qpu = getQPU(i)
@@ -180,6 +191,14 @@ def dumpDB(self):
 
 def deleteQernel(self, qid: int):
     pass
+
+def QPU_queue_eta(self, qpu: QPU):
+    #last[0] is the execution time, last[1] is the submitted time
+    #if last[0]+last[1] > time.time() then the qpu is busy and the ETA is the submitted time of the last qernel plus the execution time, otherwise the ETA is 0
+    #If the ETA is more than 0 and the qpu is busy then the submitted time will be the time in the future when the qpu will be free and the incoming qernel is going to be executed
+    last = qpu.local_queue[-1]
+    eta = last[0]+last[1]-time.time() if last[0]+last[1] > time.time() else 0
+    return eta
 
 
 def moveWindow(self):
@@ -224,3 +243,40 @@ def findFreeQernelId(self):
         for i in range(MAXJOBS):
             if not db.sismember("qernelList", i):
                 return i
+
+
+def getQPUIdFromName(name: str) -> int:
+    with redis.Redis() as db:
+        for i in range(1, redisToInt(db.get("qpuCounter")) + 1):
+            qpu = getQPU(i)
+            if qpu.alias == name:
+                return i
+    return None
+
+
+def submitQernel(qernel: Qernel) -> int:
+
+    #The match is tuple that contains the choosen qpu, the ideal mapping and the predicted fidelity, by this order
+    #The qpu is identified by its name
+    qpuId = getQPUIdFromName(qernel.match[1])
+    backend = getQPU(qpuId)
+
+    #The original time is in nanoseconds, it is converted to miliseconds
+    #The time() also returns nanoseconds
+    circuit_eta = estimate_execution_time(qernel)/1000000
+
+    #print("Estimated execution time: " + str(circuit_eta/1000000))
+
+    with redis.Redis() as db:
+        local_queue = getQPUField(qpuId, "local_queue")
+        if local_queue == None:
+            local_queue = [(qernel.id, circuit_eta, time.time()/1000000)]
+        else:
+            local_queue = eval(local_queue)
+            local_queue.append((qernel.id, circuit_eta, time.time()/1000000))
+
+        #print(local_queue)
+
+        setQPUField(qpuId, "local_queue", str(local_queue))
+
+    return circuit_eta  

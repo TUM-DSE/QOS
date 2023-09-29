@@ -12,12 +12,6 @@ from qiskit.providers.fake_provider import *
 from qiskit.providers.basicaer import QasmSimulatorPy
 
 
-def debugPrint():
-    subqernels = db.getQernelField(1, "subqernels")
-    print(subqernels)
-    return
-
-
 def check_layout_overlap(layout1: List, layout2: List) -> bool:
     for i in range(0, len(layout1)):
         if layout1[i] in layout2:
@@ -85,9 +79,15 @@ def redisToQPU(qid: int, redisDict: Dict[str, Any]) -> QPU:
     decodedDict = decodeRedisDict(redisDict)
     newqpuInfo = QPU()
     newqpuInfo.id = qid
-    newqpuInfo.provider = decodedDict["provider"]
+    newqpuInfo.provider = decodedDict['provider']
     newqpuInfo.name = decodedDict["name"]
     newqpuInfo.alias = decodedDict["alias"]
+
+    try:
+        newqpuInfo.local_queue = ast.literal_eval(decodedDict["local_queue"])
+    except:
+        newqpuInfo.local_queue = []
+    
     decodedDict.pop("name")
     newqpuInfo.args = decodedDict
     return newqpuInfo
@@ -144,9 +144,15 @@ def redisToQernel(jid: int, redisDict: Dict[str, Any]) -> QPU:
     return newQernel
 
 
-def qpuProperties(qpuId: int):
-    tmpqpu = db.getQPU(qpuId)
-    print(tmpqpu.alias)
+def qpuProperties(qpu: int | str | QPU) -> Dict[str, Any]:
+    if isinstance(qpu, int):
+        tmpqpu = db.getQPU(qpu)
+    elif isinstance(qpu, str):
+        tmpqpu = db.getQPUFromName(qpu)
+    else:
+        tmpqpu = qpu
+
+    #print(tmpqpu.alias)
     backend = eval(tmpqpu.name)()
     # backend = db.getQPU_fromname(tmpqpu.alias)
     return backend.properties().to_dict()
@@ -155,15 +161,23 @@ def qpuProperties(qpuId: int):
 def predict_queue_time(qpuId: int) -> int:
 
     tmpqpu = db.getQPU(qpuId)
-    print(tmpqpu.alias)
+    #print(tmpqpu.alias)
     backend = eval(tmpqpu.name)()
     # backend = db.getQPU_fromname(tmpqpu.alias)
-    print(backend.properties().to_dict())
+    #print(backend.properties().to_dict())
 
     return 0
 
 
-def estimate_execution_time(circ: str, avg_gate_times: Dict, backend: QPU) -> int:
+def estimate_execution_time(qernel:Qernel) -> int:
+
+    circ = qernel.circuit.qasm()
+    shots = qernel.args["shots"]
+
+    backend = db.getQPUFromName(qernel.match[1])
+
+    avg_gate_times = average_gate_times(qpuProperties(backend))
+    
     exec_time = 0
     qc = QuantumCircuit.from_qasm_str(circ)
     qc = backend.transpile(circuit=qc, opt_level=0)
@@ -176,7 +190,7 @@ def estimate_execution_time(circ: str, avg_gate_times: Dict, backend: QPU) -> in
     for i, j in long_chain_gates.items():
         exec_time += avg_gate_times[i] * j
 
-    return exec_time
+    return exec_time*shots
 
 
 def average_gate_times(hw_properties: Dict):
