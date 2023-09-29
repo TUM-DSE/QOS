@@ -179,7 +179,7 @@ class GVOptimalDecompositionPass(GateVirtualizationPass):
         if len(vsqs) > 0:
             highest_cost = 0
             for vsq in vsqs:
-                qc = vsq.get_circuit()._circuit
+                qc = vsq.get_circuit()
                 cost = optimal_decomposition_pass.get_budget(qc)
                 if cost > highest_cost:
                     highest_cost = cost
@@ -283,7 +283,7 @@ class RandomQubitReusePass(QubitReusePass):
                 qc = vsq.get_circuit()
                 virtual_circuit = VirtualCircuit(qc)
                 random_qubit_reuser_pass.run(virtual_circuit)
-                #vsq.set_circuit(virtual_circuit)
+                vsq.set_circuit(virtual_circuit)
         else:
             qc = q.get_circuit()
             virtual_circuit = VirtualCircuit(qc)        

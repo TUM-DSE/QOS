@@ -451,4 +451,4 @@ def testDistributedTranspiler():
         for q in sqs.get_subqernels():
             print(q.get_circuit())
 
-main2()
+testDistributedTranspiler()
