@@ -11,8 +11,6 @@ from qiskit.circuit import QuantumCircuit
 
 from qvm.qvm.virtual_circuit import VirtualCircuit, generate_instantiations
 from qvm.qvm.quasi_distr import *
-from qos.tools import debugPrint
-
 
 class Virtualizer(Engine):
     @abstractmethod

@@ -1,6 +1,8 @@
 import yaml
 import qos.database as db
 from qos.backends.types import QPU
+import logging
+
 
 
 def load_qpus(qpu_file: str):
@@ -25,5 +27,7 @@ def load_qpus(qpu_file: str):
 # print("Available QPUs:")
 # for i in range(1, 5):
 #    print(getQPU(i))
+
+logging.basicConfig(level=50)
 
 load_qpus("qpus_available")

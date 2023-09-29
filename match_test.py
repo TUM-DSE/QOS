@@ -3,38 +3,44 @@ from qos.kernel.multiprogrammer import Multiprogrammer
 import os
 from qiskit.circuit.random import random_circuit
 from qos.types import Qernel
+import logging
 import pdb
+import matplotlib.pyplot as plt
 
 def main():
     
-    try:    
-        os.system(f'python qpus_available.py')
+    try:
+        os.system(f'redis-cli flushall')   
+        os.system(f'python load_qpus.py')
     except FileNotFoundError:
       print(f"Error: The file does not exist.")
+
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(level=50)
 
     matcher = Matcher()
     
     qernel1 = Qernel()
-    qernel1.provider = "0"
+    qernel1.id = "0"
     
     qc = random_circuit(5, 5, max_operands=2, measure=True)
     subqernel1 = Qernel(qc)
-    subqernel1.provider = "1"
+    subqernel1.id = "1"
 
     qc = random_circuit(5, 5, max_operands=2, measure=True)
     subqernel2 = Qernel(qc)
-    subqernel2.provider = "2"
+    subqernel2.id = "2"
 
     qernel1.subqernels.append(subqernel1)
     qernel1.subqernels.append(subqernel2)
 
     qc = random_circuit(5, 5, max_operands=2, measure=True)
     subsubqernel1 = Qernel(qc)
-    subsubqernel1.provider = "3"
+    subsubqernel1.id = "3"
 
     qc = random_circuit(5, 5, max_operands=2, measure=True)
     subsubqernel2 = Qernel(qc)
-    subsubqernel2.provider = "4"
+    subsubqernel2.id = "4"
 
     subqernel2.subqernels.append(subsubqernel1)
     subqernel2.subqernels.append(subsubqernel2)
@@ -42,26 +48,26 @@ def main():
     matcher.run(qernel1)
     
     qernel2= Qernel()
-    qernel2.provider = "5"
+    qernel2.id = "5"
     
     qc = random_circuit(5, 5, max_operands=2, measure=True)
     subqernel1 = Qernel(qc)
-    subqernel1.provider = "6"
+    subqernel1.id = "6"
 
     qc = random_circuit(5, 5, max_operands=2, measure=True)
     subqernel2 = Qernel(qc)
-    subqernel2.provider = "7"
+    subqernel2.id = "7"
 
     qernel2.subqernels.append(subqernel1)
     qernel2.subqernels.append(subqernel2)
 
     qc = random_circuit(5, 5, max_operands=2, measure=True)
     subsubqernel1 = Qernel(qc)
-    subsubqernel1.provider = "8"
+    subsubqernel1.id = "8"
 
     qc = random_circuit(5, 5, max_operands=2, measure=True)
     subsubqernel2 = Qernel(qc)
-    subsubqernel2.provider = "9"
+    subsubqernel2.id = "9"
 
     subqernel2.subqernels.append(subsubqernel1)
     subqernel2.subqernels.append(subsubqernel2)
@@ -69,26 +75,26 @@ def main():
     matcher.run(qernel2)
     
     qernel3 = Qernel()
-    qernel3.provider = "10"
+    qernel3.id = "10"
     
     qc = random_circuit(5, 5, max_operands=2, measure=True)
     subqernel1 = Qernel(qc)
-    subqernel1.provider = "11"
+    subqernel1.id = "11"
 
     qc = random_circuit(5, 5, max_operands=2, measure=True)
     subqernel2 = Qernel(qc)
-    subqernel2.provider = "12"
+    subqernel2.id = "12"
 
     qernel3.subqernels.append(subqernel1)
     qernel3.subqernels.append(subqernel2)
 
     qc = random_circuit(5, 5, max_operands=2, measure=True)
     subsubqernel1 = Qernel(qc)
-    subsubqernel1.provider = "13"
+    subsubqernel1.id = "13"
 
     qc = random_circuit(5, 5, max_operands=2, measure=True)
     subsubqernel2 = Qernel(qc)
-    subsubqernel2.provider = "14"
+    subsubqernel2.id = "14"
 
     subqernel2.subqernels.append(subsubqernel1)
     subqernel2.subqernels.append(subsubqernel2)
@@ -97,15 +103,24 @@ def main():
 
     qc = random_circuit(5, 5, max_operands=2, measure=True)
     qernel4 = Qernel(qc)
-    qernel4.provider = "15"
+    qernel4.id = "15"
 
     matcher.run(qernel4)
     
     multi = Multiprogrammer()
 
-    #pdb.set_trace()
     bundled_queue = multi.run([qernel1, qernel2, qernel3, qernel4])
 
-    
+
+    sched = Scheduler()
+
+    dist = sched.run(bundled_queue)
+
+    #pdb.set_trace()
+    #plot dist as a bar chart and save to file
+    plt.bar(range(len(dist)), [i[1] for i in dist], align='center')
+    plt.xticks(range(len(dist)), [i[0] for i in dist])
+    plt.savefig('dist.png')
+    plt.show()
 
 main()

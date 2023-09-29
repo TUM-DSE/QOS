@@ -11,7 +11,6 @@ from qos.distributed_transpiler.virtualizer import Virtualizer
 from qos.distributed_transpiler.types import TransformationPass
 from qos.types import Engine, Qernel
 import qos.database as db
-from qos.tools import debugPrint
 
 from qvm.qvm.compiler.virtualization import BisectionPass, OptimalDecompositionPass
 from qvm.qvm.compiler.virtualization.reduce_deps import CircularDependencyBreaker, GreedyDependencyBreaker, QubitDependencyMinimizer
@@ -49,7 +48,6 @@ class Optimiser(Engine):
         #Virtualizer.submit(qernel)
 
         # print("----------------------------Transformer: ")
-        # debugPrint()
         # pdb.set_trace()
 
         return qernel

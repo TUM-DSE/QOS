@@ -202,6 +202,8 @@ class Matcher(Engine):
 
         small_qc = mm.deflate_circuit(trans_qc)
 
+#        pdb.set_trace()
+
         this = mm.best_overall_layout(
             small_qc, self._qpus, successors=True, cost_function=cost_function
         )

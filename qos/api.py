@@ -14,7 +14,6 @@ from qos.kernel.multiprogrammer import pipe_name as multiprog_pipe_name
 from qos.kernel.multiprogrammer import Multiprogrammer
 import qos.distributed_transpiler.run as DT
 import os
-from qos.tools import debugPrint
 from .dag import DAG
 import yaml
 
