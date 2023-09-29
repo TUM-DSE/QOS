@@ -8,8 +8,11 @@ from qiskit.circuit import QuantumCircuit, ClassicalRegister
 from qiskit.circuit.library import TwoLocal
 from qiskit.providers.fake_provider import *
 from qiskit_ibm_provider import IBMProvider
+from qiskit_ibm_runtime import QiskitRuntimeService
 from qiskit import *
 from qiskit.result import marginal_counts
+from qiskit_aer import AerSimulator
+
 from qos.types import Qernel
 from qos.distributed_transpiler.virtualizer import GVInstatiator, GVKnitter
 from qvm.qvm.virtual_circuit import generate_instantiations
@@ -35,24 +38,26 @@ def test_analyses_passes(qernel: Qernel) -> None:
     #qaoa_analysis.run(qernel)
 
 def test_transformation_passes(qernel: Qernel) -> Qernel:
-    bisection_pass = GVBisectionPass(5)
+    bisection_pass = GVBisectionPass(4)
     #optimal_decomposition_pass = GVOptimalDecompositionPass(3)
     #circular_dependency_pass = CircularDependencyBreakerPass()
     #greedy_dependency_breaker_pass = GreedyDependencyBreakerPass()
     #qubit_dependency_minimizer_pass = QubitDependencyMinimizerPass()
     #random_qubit_reuse_pass = RandomQubitReusePass(3)
-    #optimal_wire_cutting_pass = OptimalWireCuttingPass(4)
-    frozen_qubits_pass = FrozenQubitsPass(1)
+    #optimal_wire_cutting_pass = OptimalWireCuttingPass(3)
+    #frozen_qubits_pass = FrozenQubitsPass(1)conda
+    #test_pass = TestPass(3)
+    #result = test_pass.run(qernel, 10)
 
-    
+    result = bisection_pass.run(qernel, 10)
     #result = optimal_decomposition_pass.run(qernel, 10)
     #result = circular_dependency_pass.run(qernel, 10)
     #result = greedy_dependency_breaker_pass.run(qernel, 10)
     #result = qubit_dependency_minimizer_pass.run(qernel, 10)
     #result = random_qubit_reuse_pass.run(qernel)
     #result = optimal_wire_cutting_pass.run(qernel, 10)
-    result = frozen_qubits_pass.run(qernel)
-    result = bisection_pass.run(qernel, 10)
+    #result = frozen_qubits_pass.run(qernel)
+    
 
     return result
 
@@ -72,7 +77,7 @@ def convert_hamiltonian(hamiltonian: List) -> dict:
     return new_hamiltonian
 
 def main2():
-    qc_supermarq_bench = GHZ(7)
+    qc_supermarq_bench = GHZ(16)
 
     qc_supermarq = qc_supermarq_bench.circuit()
     qc_qiskit = cirq_to_qiskit(qc_supermarq)
@@ -82,32 +87,48 @@ def main2():
     basic_pass = BasicAnalysisPass()
     basic_pass.run(qernel)
 
-    cut_circuit = test_transformation_passes(qernel)
-    qernels = test_virtualization(cut_circuit)
+    qernel = test_transformation_passes(qernel)
+    qernel = test_virtualization(qernel)
 
-    backend = FakePerth()
-
+    backend = FakeGuadalupe()
+    #backend = AerSimulator()
     to_run = []
 
-    for q in qernels:
-        qc_small = q.get_circuit()
-        #print(qc_small)
-        cqc_small = transpile(qc_small, backend, optimization_level=3)
-        to_run.append(cqc_small)
+    tqc_qiskit = transpile(qc_qiskit, backend, optimization_level=3)
+    to_run.append(tqc_qiskit)
+
+    sq_list = qernel.get_subqernels()
+    for q in sq_list:
+        ssqq = q.get_subqernels()
+        #print(len(ssqq))
+        for q in ssqq:
+            qc_small = q.get_circuit()
+            cqc_small = transpile(qc_small, backend, optimization_level=3)
+            to_run.append(cqc_small)
+            print(q.get_circuit())
 
     job = backend.run(to_run, shots=20000)
+
+    for vsq in qernel.get_virtual_subqernels():
+        vsq.edit_metadata({"shots": 20000})
     qernel.edit_metadata({"shots": 20000})
 
     results = job.result().get_counts()
 
     sub_qernel = qernel.get_subqernels()[0]
 
-    for i,sq in enumerate(sub_qernel.get_subqernels()):
-        sq.set_results(results[i])
+    counter = 1
+    for i, sq in enumerate(sub_qernel.get_subqernels()):
+        sq.set_results(results[counter])
+        counter = counter + 1
 
     knitter = GVKnitter()
-    print("---------------------------------------")
-    print(knitter.run(qernel))
+    knitter.run(qernel)
+
+    vsqs = qernel.get_virtual_subqernels() 
+
+    print("Full circuit: ", qc_supermarq_bench.score(results[0]))
+    print("Small circuits: ", qc_supermarq_bench.score(vsqs[0].get_results()))
 
 def main3():
     qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/sk/gridsearch_100/ideal/3_4_1^P=1.qasm")
@@ -212,10 +233,10 @@ def FrozenQubitsAndQVMExample():
     exit()
 
 def testGVWithGHZ():
-    #provider =  IBMProvider(instance="ibm-q-research-2/tu-munich-1/main")
-    #backend = provider.get_backend("ibm_nairobi")
-    backend = FakeKolkata()
-    qc_supermarq_bench = GHZ(14)
+    provider =  IBMProvider(instance="ibm-q/open/main")
+    backend = provider.get_backend("ibm_brisbane")
+    #backend = FakeKolkata()
+    qc_supermarq_bench = GHZ(240)
 
     qc_supermarq = qc_supermarq_bench.circuit()
     qc_qiskit = cirq_to_qiskit(qc_supermarq)
@@ -227,11 +248,12 @@ def testGVWithGHZ():
     qernel = test_transformation_passes(qernel)
     qernel = test_virtualization(qernel)
 
-  
 
     to_run = []
-    cqc_qiskit = transpile(qc_qiskit, backend, optimization_level=3)
-    to_run.append(cqc_qiskit)
+
+    #for i in range(5):
+     #   cqc_qiskit = transpile(qc_qiskit, backend, optimization_level=3)
+      #  to_run.append(cqc_qiskit)
 
     for sq in qernel.get_subqernels():
         for q in sq.get_subqernels():
@@ -242,17 +264,23 @@ def testGVWithGHZ():
 
     job = backend.run(to_run, shots=20000)
 
-    #print(job.result())
+    #service = QiskitRuntimeService()
+    #job = service.job("cma3bjpq34zg008d3ggg")
     results = job.result().get_counts()
 
     for vsq in qernel.get_virtual_subqernels():
         vsq.edit_metadata({"shots": 20000})
 
-    counts = results[0]
+    #average = 0
 
-    print("big circuit:", qc_supermarq_bench.score(counts))
+    ideal_dist = {b * 120: 0.5 for b in ["0", "1"]}
 
-    counter = 1
+    #for i in range(5):
+        #average = average + hellinger_fidelity(ideal_dist, results[i])
+
+    #print("120-q GHZ fidelity:", "{:.3f}".format(average / 5))
+
+    counter = 5
     for sq in qernel.get_subqernels():
         for q in sq.get_subqernels():
             q.set_results(results[counter])
@@ -261,17 +289,18 @@ def testGVWithGHZ():
     knitting = GVKnitter()
     knitting.run(qernel)          
 
-    vsqs = qernel.get_virtual_subqernels()
+    vsqs = qernel.get_virtual_subqernels() 
 
-    print("small_circuit:", qc_supermarq_bench.score(vsqs[0].get_results()))
+    print("4 x 60q GHZ fidelity:", "{:.3f}".format(hellinger_fidelity(ideal_dist, vsqs[0].get_results())))
 
     exit()
 
 def testFrozenQubits():
-    qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_7_1^P=1.qasm")
+    qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/3_24_1^P=1.qasm")
     print(qc_full)
-    provider =  IBMProvider(instance="ibm-q-research-2/tu-munich-1/main")
-    backend = provider.get_backend("ibm_nairobi")
+
+    provider =  IBMProvider(instance="ibm-q/open/main")
+    backend = provider.get_backend("ibm_brisbane")
     #backend = FakeGuadalupe()
 
     qernel = Qernel(qc_full)
@@ -422,4 +451,4 @@ def testDistributedTranspiler():
         for q in sqs.get_subqernels():
             print(q.get_circuit())
 
-testDistributedTranspiler()
+main2()

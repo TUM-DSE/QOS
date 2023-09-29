@@ -172,9 +172,6 @@ class Matcher(Engine):
 
                 elif item[0].name == "delay":
                     q0 = sch_circ.find_bit(item[1][0]).index
-                    # Ignore delays that occur before gates
-                    # This assumes you are in ground state and errors
-                    # do not occur.
                     if q0 in touched:
                         time = item[0].duration * dt
                         fid *= 1 - self.idle_error(time, t1s[q0], t2s[q0])
@@ -185,14 +182,6 @@ class Matcher(Engine):
         return out
 
     def idle_error(self, time, t1, t2):
-        """Compute the approx. idle error from T1 and T2
-        Parameters:
-            time (float): Delay time in sec
-            t1 (float): T1 time in sec
-            t2, (float): T2 time in sec
-        Returns:
-            float: Idle error
-        """
         t2 = min(t1, t2)
         rate1 = 1 / t1
         rate2 = 1 / t2

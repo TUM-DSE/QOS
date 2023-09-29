@@ -83,6 +83,7 @@ class DAG(nx.DiGraph):
         instr = self.get_node_instr(node)
         instr.operation = VIRTUAL_GATE_TYPES[instr.operation.name](instr.operation)
 
+
     def to_circuit(self) -> QuantumCircuit:
         order = list(nx.topological_sort(self))
         circuit = QuantumCircuit(*self._qregs, *self._cregs)

@@ -30,17 +30,14 @@ class DistributedTranspiler():
         else:
             return "GV"
         
-    def findOptimalCuttingMethod(self, q: Qernel, size_to_reach: int):
+    def computeCuttingCosts(self, q: Qernel, size_to_reach: int):
         gv_pass = GVOptimalDecompositionPass(size_to_reach)
         wc_pass = OptimalWireCuttingPass(size_to_reach)
 
         gv_cost = gv_pass.cost(q) ** 6
         wc_cost = wc_pass.cost(q) ** 8
 
-        if gv_cost < wc_cost:
-            return "GV"
-        else:
-            return "WC"
+        return {"GV": gv_cost, "WC": wc_cost}
     
     def applyGV(self, q: Qernel, size_to_reach: int):
         if self.methods["GV"]:
@@ -103,13 +100,21 @@ class DistributedTranspiler():
                 self.budget = self.budget - 1
 
             if self.methods["GV"] and self.methods["WC"]:
-                best = self.findOptimalCuttingMethod(q, self.size_to_reach)
+                lower_limit = self.size_to_reach
+                upper_limit = q.get_circuit().num_qubits - 1
+                size_to_reach = lower_limit
 
-                if best == "GV":
-                    q = self.applyGV(q, self.size_to_reach)
+                costs = self.computeCuttingCosts(q, lower_limit)
+
+                while size_to_reach > lower_limit and size_to_reach < upper_limit and self.budget > 0:
+                    if costs["GV"] > self.budget and costs["WC"] > self.budget:
+                        pass
+                
                 else:
-                    q = self.applyWC(q, self.size_to_reach)   
-            
+                    if costs["GV"] < costs["WC"]:
+                        q = self.applyGV(q, self.size_to_reach)
+                    else:
+                        q = self.applyWC(q, self.size_to_reach)            
             elif self.methods["GV"]:
                 q = self.applyGV(q, self.size_to_reach)
 

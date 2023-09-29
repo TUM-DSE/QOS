@@ -17,6 +17,7 @@ class OptimalWireCutter(VirtualizationPass):
     def run(self, circuit: QuantumCircuit, budget: int) -> QuantumCircuit:
         dag = DAG(circuit)
         num_cuts = self._cut_wires(dag)
+        new_circuit = dag.to_circuit()
         self._wire_cuts_to_moves(dag, num_cuts)
         dag.fragment()
         new_circuit = dag.to_circuit()
@@ -28,6 +29,7 @@ class OptimalWireCutter(VirtualizationPass):
         min_num_fragments = len(dag.qubits) // self._size_to_reach
         min_num_fragments = max(min_num_fragments, 2)
         partitions: dict[int, int] | None = None
+        edges = list(dag.edges())
         while partitions is None:
             if min_num_fragments > len(dag.qubits):
                 raise ValueError("Could not find a solution (internal error)")
@@ -43,7 +45,7 @@ class OptimalWireCutter(VirtualizationPass):
                 dag.remove_edge(u, v)
                 qubits = set(dag.get_node_instr(u).qubits) & set(
                     dag.get_node_instr(v).qubits
-                )
+                )                
                 for qubit in qubits:
                     new_instr = CircuitInstruction(WireCut(), [qubit])
                     w = dag.add_instr_node(new_instr)

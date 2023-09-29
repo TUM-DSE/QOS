@@ -198,7 +198,7 @@ def _instantiate_fragment(
     new_circuit = QuantumCircuit(
         *fragment_circuit.qregs, *(fragment_circuit.cregs + [config_register])
     )
-    for instr in fragment_circuit:
+    for instr in fragment_circuit:        
         op, qubits, clbits = instr.operation, instr.qubits, instr.clbits
         if isinstance(op, VirtualGateEndpoint):
             vgate_idx = op.vgate_idx

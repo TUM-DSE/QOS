@@ -148,8 +148,13 @@ class Multiprogrammer(Engine):
     
     def results(self) -> None:
         pass
+  
 
-    # Merging policies:
+    def test_policy(self, qernels: List[Qernel]) -> None:
+        for q in qernels:
+            return q
+
+     # Merging policies:
 
     # 1. Restrist policy: Only merge if the best QPU for two circuits is the same and their best layouts dont overlap
     #   Start by considering one of the new circuits with the oldest circuits on the window
@@ -157,9 +162,7 @@ class Multiprogrammer(Engine):
     #   Example: The window has 5 circuits E, D, C, B, A and the new circuits are F, G, H.
     #   1. Consider merging F or G or H with E, D, C, B, A, by this order. Lets consider that F could be merged with A
     #   2. The new circuits left are G and H, move the window by two circuits, this is because the new circuits need to enter the window and the size of the window is fixed
-
     
-
     def _restrict_policy(self, new_qernels: Qernel | List[Qernel] , error_limit: float, matching_cycles=1, max_bundle=2) -> None:
         # self.logger.log(10, "Running Restrict policy")
         #window = db.currentWindow()

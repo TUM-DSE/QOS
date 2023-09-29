@@ -4,6 +4,9 @@ import pdb
 from time import sleep
 import networkx as nx
 
+from qiskit.circuit.library import Barrier
+from qiskit.circuit import *
+
 from qos.distributed_transpiler.virtualizer import Virtualizer
 from qos.distributed_transpiler.types import TransformationPass
 from qos.types import Engine, Qernel
@@ -15,6 +18,7 @@ from qvm.qvm.compiler.virtualization.reduce_deps import CircularDependencyBreake
 from qvm.qvm.compiler.distr_transpiler import QubitReuser
 from qvm.qvm.compiler.virtualization.wire_decomp import OptimalWireCutter
 from qvm.qvm import VirtualCircuit
+from qvm.qvm.compiler.dag import *
 
 from FrozenQubits.helper_FrozenQubits import drop_hotspot_node, halt_qubits
 from FrozenQubits.helper_qaoa import pqc_QAOA, bind_QAOA, _gen_angles
@@ -101,18 +105,19 @@ class GVBisectionPass(GateVirtualizationPass):
     def run(self, q: Qernel, budget: int) -> Qernel:
         bisection_pass = BisectionPass(self._size_to_reach)
         vsqs = q.get_virtual_subqernels()
+
         if len(vsqs) > 0:
             for vsq in vsqs:
-                qc = vsq.get_circuit()._circuit
+                qc = vsq.get_circuit()
                 new_circuit = bisection_pass.run(qc, budget)
-                virtual_circuit = VirtualCircuit(new_circuit)
-                vsq.set_circuit(virtual_circuit)
+                #virtual_circuit = VirtualCircuit(new_circuit)
+                vsq.set_circuit(new_circuit)
         else:
             qc = q.get_circuit()        
             new_circuit = bisection_pass.run(qc, budget)
-            virtual_circuit = VirtualCircuit(new_circuit)
+            #virtual_circuit = VirtualCircuit(new_circuit)
             sub_qernel = Qernel()
-            sub_qernel.set_circuit(virtual_circuit)    
+            sub_qernel.set_circuit(new_circuit)    
             sub_qernel.set_metadata(q.get_metadata())
             q.add_virtual_subqernel(sub_qernel)    
 
@@ -126,7 +131,7 @@ class GVBisectionPass(GateVirtualizationPass):
         if len(vsqs) > 0:
             highest_cost = 0
             for vsq in vsqs:
-                qc = vsq.get_circuit()._circuit
+                qc = vsq.get_circuit()
                 cost = optimal_bisection_pass.get_budget(qc)
                 if cost > highest_cost:
                     highest_cost = cost
@@ -151,16 +156,16 @@ class GVOptimalDecompositionPass(GateVirtualizationPass):
 
         if len(vsqs) > 0:
             for vsq in vsqs:
-                qc = vsq.get_circuit()._circuit
+                qc = vsq.get_circuit()
                 new_circuit = optimal_decomposition_pass.run(qc, budget)
-                virtual_circuit = VirtualCircuit(new_circuit)
-                vsq.set_circuit(virtual_circuit)
+                #virtual_circuit = VirtualCircuit(new_circuit)
+                vsq.set_circuit(new_circuit)
         else:
             qc = q.get_circuit()        
             new_circuit = optimal_decomposition_pass.run(qc, budget)
-            virtual_circuit = VirtualCircuit(new_circuit)
+            #virtual_circuit = VirtualCircuit(new_circuit)
             sub_qernel = Qernel()
-            sub_qernel.set_circuit(virtual_circuit)    
+            sub_qernel.set_circuit(new_circuit)    
             sub_qernel.set_metadata(q.get_metadata())
             q.add_virtual_subqernel(sub_qernel)    
 
@@ -196,14 +201,14 @@ class CircularDependencyBreakerPass(GateVirtualizationPass):
             for vsq in vsqs:
                 qc = vsq.get_circuit()._circuit
                 new_circuit = circular_dependency_breaker_pass.run(qc, budget)
-                virtual_circuit = VirtualCircuit(new_circuit)
-                vsq.set_circuit(virtual_circuit)
+                #virtual_circuit = VirtualCircuit(new_circuit)
+                vsq.set_circuit(new_circuit)
         else:
             qc = q.get_circuit()        
             new_circuit = circular_dependency_breaker_pass.run(qc, budget)
-            virtual_circuit = VirtualCircuit(new_circuit)
+            #virtual_circuit = VirtualCircuit(new_circuit)
             sub_qernel = Qernel()
-            sub_qernel.set_circuit(virtual_circuit)    
+            sub_qernel.set_circuit(new_circuit)    
             sub_qernel.set_metadata(q.get_metadata())
             q.add_virtual_subqernel(sub_qernel)    
 
@@ -221,14 +226,14 @@ class GreedyDependencyBreakerPass(GateVirtualizationPass):
             for vsq in vsqs:
                 qc = vsq.get_circuit()._circuit
                 new_circuit = greedy_dependency_breaker_pass.run(qc, budget)
-                virtual_circuit = VirtualCircuit(new_circuit)
-                vsq.set_circuit(virtual_circuit)
+                #virtual_circuit = VirtualCircuit(new_circuit)
+                vsq.set_circuit(new_circuit)
         else:
             qc = q.get_circuit()        
             new_circuit = greedy_dependency_breaker_pass.run(qc, budget)
-            virtual_circuit = VirtualCircuit(new_circuit)
+            #virtual_circuit = VirtualCircuit(new_circuit)
             sub_qernel = Qernel()
-            sub_qernel.set_circuit(virtual_circuit)    
+            sub_qernel.set_circuit(new_circuit)    
             sub_qernel.set_metadata(q.get_metadata())
             q.add_virtual_subqernel(sub_qernel)    
 
@@ -246,14 +251,14 @@ class QubitDependencyMinimizerPass(GateVirtualizationPass):
             for vsq in vsqs:
                 qc = vsq.get_circuit()._circuit
                 new_circuit = qubit_dependency_minimizer_pass.run(qc, budget)
-                virtual_circuit = VirtualCircuit(new_circuit)
-                vsq.set_circuit(virtual_circuit)
+                #virtual_circuit = VirtualCircuit(new_circuit)
+                vsq.set_circuit(new_circuit)
         else:
             qc = q.get_circuit()        
             new_circuit = qubit_dependency_minimizer_pass.run(qc, budget)
-            virtual_circuit = VirtualCircuit(new_circuit)
+            #virtual_circuit = VirtualCircuit(new_circuit)
             sub_qernel = Qernel()
-            sub_qernel.set_circuit(virtual_circuit)    
+            sub_qernel.set_circuit(new_circuit)    
             sub_qernel.set_metadata(q.get_metadata())
             q.add_virtual_subqernel(sub_qernel)    
 
@@ -271,12 +276,13 @@ class RandomQubitReusePass(QubitReusePass):
     def run(self, q: Qernel) -> Qernel:
         random_qubit_reuser_pass = QubitReuser(self._size_to_reach)
         vsqs = q.get_virtual_subqernels()
-        sqs = q.get_subqernels()
+        #sqs = q.get_subqernels()
 
         if len(vsqs) > 0:
             for vsq in vsqs:
-                vqc = vsq.get_circuit()
-                random_qubit_reuser_pass.run(vqc)
+                qc = vsq.get_circuit()
+                virtual_circuit = VirtualCircuit(qc)
+                random_qubit_reuser_pass.run(virtual_circuit)
                 #vsq.set_circuit(virtual_circuit)
         else:
             qc = q.get_circuit()
@@ -304,16 +310,50 @@ class OptimalWireCuttingPass(WireCuttingPass):
 
         if len(vsqs) > 0:
             for vsq in vsqs:
-                qc = vsq.get_circuit()._circuit
+                vqc = vsq.get_circuit()
+                qc = vqc._circuit
                 new_circuit = optimal_wire_cutting_pass.run(qc, budget)
+
+                """                
+                vgates = []
+                for d in new_circuit.data:
+                    label = d.operation.label
+                    if label is None:
+                        continue
+                    if 'v' in label:
+                        vgates.append(d)
+
+                vgate_pairs = {}
+
+                for vg in vgates:
+                    label = vg.operation.label
+                    parts = label.split('_')
+                    suffix = parts[-2]
+                    if suffix in vgate_pairs:
+                        vgate_pairs[suffix].append(vg)
+                    else:
+                        vgate_pairs[suffix] = [vg]
+ 
+                for vg_no, vg_list in vgate_pairs.items():
+                    op_name = vg_list[0].operation.label.split("_")[2]
+                    op_0 = vg_list[0].qubits[0]
+                    op_1 = vg_list[1].qubits[0]
+                    new_instr = CircuitInstruction(operation=VIRTUAL_GATE_TYPES[op_name](Instruction(name=op_name, num_qubits=2, num_clbits=0, params=[])), qubits=(op_0, op_1), clbits=())
+                    new_circuit.data.remove(vg_list[0])
+                    new_circuit.data.remove(vg_list[1])
+                    new_circuit.data.append(new_instr)
+                                   
+                print(new_circuit)
                 virtual_circuit = VirtualCircuit(new_circuit)
-                vsq.set_circuit(virtual_circuit)
+                print(virtual_circuit._circuit)
+                """
+                vsq.set_circuit(new_circuit)
         else:
             qc = q.get_circuit()        
             new_circuit = optimal_wire_cutting_pass.run(qc, budget)
-            virtual_circuit = VirtualCircuit(new_circuit)
+            #virtual_circuit = VirtualCircuit(new_circuit)
             sub_qernel = Qernel()
-            sub_qernel.set_circuit(virtual_circuit)    
+            sub_qernel.set_circuit(new_circuit)    
             sub_qernel.set_metadata(q.get_metadata())
             q.add_virtual_subqernel(sub_qernel)    
 
@@ -327,7 +367,7 @@ class OptimalWireCuttingPass(WireCuttingPass):
         if len(vsqs) > 0:
             highest_cost = 0
             for vsq in vsqs:
-                qc = vsq.get_circuit()._circuit
+                qc = vsq.get_circuit()
                 cost = optimal_wire_cutting_pass.get_budget(qc)
                 if cost > highest_cost:
                     highest_cost = cost
@@ -336,7 +376,7 @@ class OptimalWireCuttingPass(WireCuttingPass):
             cost = optimal_wire_cutting_pass.get_budget(qc) 
 
         return cost
-    
+
 class FrozenQubitsPass(QubitFreezingPass):
     _qubits_to_freeze: int
 
@@ -369,9 +409,9 @@ class FrozenQubitsPass(QubitFreezingPass):
             new_circuit = new_QAOA['qc']
             beta, gamma =_gen_angles(new_circuit, sub_problem['J'])
             new_circuit = bind_QAOA(new_circuit, new_QAOA['params'], beta, gamma)
-            virtual_circuit = VirtualCircuit(new_circuit)
+            #virtual_circuit = VirtualCircuit(new_circuit)
             sub_qernel = Qernel()
-            sub_qernel.set_circuit(virtual_circuit)
+            sub_qernel.set_circuit(new_circuit)
             qaoa_metadata = {
                 "h" : sub_problem['h'],
                 "J" : sub_problem['J'],
