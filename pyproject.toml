@@ -1,0 +1,30 @@
+[project]
+name = ""
+version = ""
+description = ""
+authors = [
+    {name = "FranciscoRomao", email = "francisco.romao@tum.de"},
+]
+dependencies = [
+    "qiskit",
+    "mapomatic",
+    "pyyaml",
+    "sortedcontainers",
+    "black",
+    "matplotlib",
+    "redis",
+    "networkx",
+    "jsonpickle",
+    "qiskit-ibm-provider",
+    "qiskit-aer",
+    "clingo",
+    "qiskit-optimization",
+]
+requires-python = ">=3.11"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"

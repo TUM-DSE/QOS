@@ -1,6 +1,11 @@
 # qos
 Quantum Operating System
 
+# Install python dependency packages
+`pip install pdm`
+`pdm install`
+
+
 # Log
 
 - The refactoring seems to be fine up until the Optimiser call of the Matcher
