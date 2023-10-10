@@ -277,7 +277,7 @@ def getQPUIdFromName(name: str) -> int:
     return None
 
 
-def submitQernel(qernel: Qernel) -> int:
+def mock_submitQernel(qernel: Qernel) -> int:
 
     #The match is tuple that contains the choosen qpu, the ideal mapping and the predicted fidelity, by this order
     #The qpu is identified by its name
@@ -292,6 +292,46 @@ def submitQernel(qernel: Qernel) -> int:
     #circuit_eta = estimate_execution_time(qernel)
     circuit_eta = better_estimate_execution_time(qernel)
     
+
+    #print("Estimated execution time: " + str(circuit_eta/1000000))
+
+    with redis.Redis() as db:
+        local_queue = getQPUField(qpuId, "local_queue")
+        if local_queue == None:
+            #local_queue = [(qernel.id, circuit_eta, time.time()/1000000)]
+            local_queue = [(qernel.id, circuit_eta, qernel.submit_time, 0, qernel.match[2])]
+        else:
+            local_queue = eval(local_queue)
+            #local_queue.append((qernel.id, circuit_eta, time.time()/1000000))
+            #If the new qernel submission time is greater than the last qernel submission time plus its ETA then the new qernel execution start time will its submission time, otherwise it will be the last qernel submission time plus its ETA
+            if qernel.submit_time > local_queue[-1][2] + local_queue[-1][1]:
+                waiting_time = 0
+                local_queue.append((qernel.id, circuit_eta, qernel.submit_time, waiting_time, qernel.match[2]))
+            else:
+                waiting_time = local_queue[-1][2] + local_queue[-1][1] - qernel.submit_time
+                local_queue.append((qernel.id, circuit_eta, local_queue[-1][2] + local_queue[-1][1], waiting_time, qernel.match[2]))
+
+        #print(local_queue)
+
+        setQPUField(qpuId, "local_queue", str(local_queue))
+
+    return circuit_eta  
+
+
+def submitQernel(qernel: Qernel) -> int:
+
+    #The match is tuple that contains the choosen qpu, the ideal mapping and the predicted fidelity, by this order
+    #The qpu is identified by its name
+
+    qpuId = getQPUIdFromName(qernel.match[1])
+    #backend = getQPU(qpuId)
+    #pdb.set_trace()
+
+    #The original time is in nanoseconds, it is converted to miliseconds
+    #The time() also returns nanoseconds
+    #circuit_eta = estimate_execution_time(qernel)/1000000
+    #circuit_eta = estimate_execution_time(qernel)
+    circuit_eta = better_estimate_execution_time(qernel)
 
     #print("Estimated execution time: " + str(circuit_eta/1000000))
 
