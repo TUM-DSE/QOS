@@ -4,7 +4,6 @@ import copy
 from multiprocessing import Pool
 
 from qos.types import Engine, Qernel
-import qos.database as db
 import pdb
 from time import sleep
 from qiskit.circuit import QuantumCircuit
@@ -43,7 +42,7 @@ class GVInstatiator(Instantiator):
     
     def run(self, qernel: Qernel) -> list[Qernel]:
         qc = qernel.get_circuit()
-        virtual_sub_qernels = qernel.get_virtual_subqernels()      
+        virtual_sub_qernels = qernel.get_virtual_subqernels()
 
         for vsq in virtual_sub_qernels:            
             vqc = vsq.get_circuit()

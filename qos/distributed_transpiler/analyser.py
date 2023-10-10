@@ -4,7 +4,6 @@ from qos.types import Engine, Qernel
 from qos.distributed_transpiler.types import AnalysisPass
 from abc import ABC, abstractmethod
 #from qos.kernel.multiprogrammer import Multiprogrammer
-import qos.database as db
 from qiskit.providers.fake_provider import *
 import mapomatic as mm
 import logging
@@ -233,7 +232,8 @@ class IsQAOACircuitPass(DAGAnalysisPass):
     def run(self, qernel: Qernel) -> bool:
         qc = qernel.get_circuit()
 
-        must_have_ops = ["cx", "h", "rz", "rx"]
+        must_have_ops_cx = ["cx", "h", "rz", "rx"]
+        must_have_ops_rzz = ["h", "rzz", "rx"]
         checklist = {}
 
         ops = qc.count_ops()
@@ -241,19 +241,29 @@ class IsQAOACircuitPass(DAGAnalysisPass):
         for op, v in ops.items():
             if op == "measure" or op == "barrier":
                 continue
-            if op in must_have_ops:
+            if op in must_have_ops_cx or op in must_have_ops_rzz:
                 checklist[op] = True
             else:
                 return False
             
-        for op in must_have_ops:
+        flag1 = True
+        flag2 = True
+
+        for op in must_have_ops_cx:
             try:
                 if checklist.get(op) == None:
-                    return False
+                    flag1 = False
             except:
-                return False
+                flag1 = False
+        
+        for op in must_have_ops_rzz:
+            try:
+                if checklist.get(op) == None:
+                    flag2 = False
+            except:
+                flag2 = False
             
-        return True
+        return flag1 or flag2
 
 class QAOAAnalysisPass(DAGAnalysisPass):
     def __init__(self) -> None:

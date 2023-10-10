@@ -295,6 +295,60 @@ def custom_plot_large_circuit_fidelities(dataframes: list[pd.DataFrame], titles:
 	#plt.tight_layout(pad=1)
 	plt.savefig(output_file, bbox_inches="tight")
 
+
+def custom_plot_small_circuit_relative_fidelities(dataframes: list[pd.DataFrame], titles: list[str],
+	ylabel: list[str],
+	xlabel: list[str],
+	output_file: str = "scalability_proposal.pdf"):
+
+	fig = plt.figure(figsize=COLUMN_FIGSIZE_2)
+
+	x = np.array(["QAOA-R2", "BV", "GHZ", "HS-1", "QAOA-P1", "QSVM", "TL-1", "VQE-1", "W-STATE"])
+	#x = dataframes[0]["bench_name"]
+
+	nrows = 1
+	ncols = 1
+	gs = gridspec.GridSpec(nrows=nrows, ncols=ncols)
+
+	axis = [fig.add_subplot(gs[i, j]) for i in range(nrows) for j in range(ncols)]
+
+	axis[0].set_ylabel(ylabel[0])
+	axis[0].set_xlabel(xlabel[0])
+	axis[0].set_yscale("log", base=2)
+	axis[0].set_ylim(1, 32)
+
+	#ytick_locations = [1e0, 1e1, 1e2, 1e3, 1e4, 1e5]
+	ytick_labels = ['0', '1', '2', '4', '8', '16', '32']
+	axis[0].set_yticklabels(ytick_labels)
+
+	#axis[0].axhline(1, color="red", linestyle="-", linewidth=2)
+	
+
+	y = np.array(
+		[
+			dataframes[0]["fidelity"] / dataframes[1]["fidelity"]
+		]
+	)
+
+	yerr = np.array(
+		[
+			dataframes[0]["fidelity_std"] / dataframes[1]["fidelity_std"]
+		]
+	)
+	
+	#print(y)
+	#print(yerr)
+	axis[0].set_xticklabels(x)
+	axis[0].grid(axis="y", linestyle="-", zorder=-1)
+
+	grouped_bar_plot(axis[0], y.T, yerr.T, [""], show_average_text=True, average_text_position=24)
+
+	axis[0].set_title(titles[0], fontsize=FONTSIZE, fontweight="bold")
+	
+	fig.text(0.5, 0.95, HIGHERISBETTER, ha="center", va="center", fontweight="bold", color="navy", fontsize=ISBETTER_FONTSIZE)
+
+	plt.savefig(output_file, bbox_inches="tight")
+
 def custom_plot_dataframes(
 	dataframes: list[pd.DataFrame],
 	keys: list[list[str]],

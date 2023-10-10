@@ -47,7 +47,6 @@ class DistributedTranspiler():
 
             if cost <= self.budget:
                 q = gv_pass.run(q, self.budget)
-                self.budget = self.budget - cost
         
         return q
     
@@ -59,7 +58,6 @@ class DistributedTranspiler():
 
             if cost <= self.budget:
                 q = wc_pass.run(q, self.budget)
-                self.budget = self.budget - cost
         
         return q
     
@@ -89,13 +87,14 @@ class DistributedTranspiler():
 
         if self.methods["QF"]:
             is_qaoa_pass = IsQAOACircuitPass()
+            budget = self.budget
 
             if is_qaoa_pass.run(q):
                 qaoa_analysis_pass = QAOAAnalysisPass()  
                 qaoa_analysis_pass.run(q)
 
                 metadata = q.get_metadata()
-                num_cnots = metadata["num_cnot_gates"]
+                num_cnots = metadata["num_nonlocal_gates"]
                 hotspots = list(metadata["hotspot_nodes"].values())
                 qubits_to_freeze = 0
 
@@ -103,29 +102,21 @@ class DistributedTranspiler():
                     if hotspots[i] / num_cnots >= 0.1:
                         qubits_to_freeze = qubits_to_freeze + 1
 
-                qubits_to_freeze = min(qubits_to_freeze, self.budget)
+                qubits_to_freeze = min(qubits_to_freeze, budget)
 
                 QF_pass = FrozenQubitsPass(qubits_to_freeze)
                 q = QF_pass.run(q)
 
-                self.budget = self.budget - qubits_to_freeze
+                budget = budget - qubits_to_freeze
 
             if self.methods["GV"] and self.methods["WC"]:
-                lower_limit = self.size_to_reach
-                upper_limit = q.get_circuit().num_qubits - 1
-                size_to_reach = lower_limit                
-
-                while size_to_reach >= lower_limit and size_to_reach < upper_limit and self.budget > 0:
-                    costs = self.computeCuttingCosts(q, size_to_reach)
-
-                    if costs["GV"] > self.budget and costs["WC"] > self.budget:
-                        size_to_reach = size_to_reach + 1              
+                costs = self.computeCuttingCosts(q, self.size_to_reach)
+                if costs["GV"] < budget or costs["WC"] < budget:
+                    if costs["GV"] < costs["WC"] or (costs["GV"] == 0 and costs["WC"] == 0):
+                        q = self.applyGV(q, self.size_to_reach)
                     else:
-                        if costs["GV"] < costs["WC"] or (costs["GV"] == 0 and costs["WC"] == 0):
-                            q = self.applyGV(q, size_to_reach)
-                        else:
-                            q = self.applyWC(q, size_to_reach)
-                        size_to_reach = size_to_reach - 1            
+                        q = self.applyWC(q, self.size_to_reach)
+          
             elif self.methods["GV"]:
                 q = self.applyGV(q, self.size_to_reach)
 
@@ -133,20 +124,13 @@ class DistributedTranspiler():
                 q = self.applyWC(q, self.size_to_reach)
         
         elif self.methods["GV"] and self.methods["WC"]:
-            lower_limit = self.size_to_reach
-            upper_limit = q.get_circuit().num_qubits
-            size_to_reach = lower_limit                
+            costs = self.computeCuttingCosts(q, self.size_to_reach)
 
-            while size_to_reach >= lower_limit and size_to_reach < upper_limit and self.budget > 0:
-                costs = self.computeCuttingCosts(q, size_to_reach)
-                if costs["GV"] > self.budget and costs["WC"] > self.budget:
-                    size_to_reach = size_to_reach + 1              
+            if costs["GV"] < budget or costs["WC"] < budget: 
+                if costs["GV"] < costs["WC"] or (costs["GV"] == 0 and costs["WC"] == 0):
+                    q = self.applyGV(q, self.size_to_reach)
                 else:
-                    if costs["GV"] < costs["WC"]:
-                        q = self.applyGV(q, size_to_reach)
-                    else:
-                        q = self.applyWC(q, size_to_reach)        
-                    size_to_reach = size_to_reach - 1
+                    q = self.applyWC(q, self.size_to_reach)
         elif self.methods["GV"]:
              q = self.applyGV(q, self.size_to_reach)
         elif self.methods["WC"]:

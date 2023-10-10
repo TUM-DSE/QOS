@@ -10,6 +10,7 @@ FONTSIZE = 12
 ISBETTER_FONTSIZE = FONTSIZE + 2
 WIDE_FIGSIZE = (13, 2.8)
 COLUMN_FIGSIZE = (6.5, 3.4)
+COLUMN_FIGSIZE_2 = (7.5, 4)
 
 plt.rcParams.update({"font.size": FONTSIZE})
 

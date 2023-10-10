@@ -10,7 +10,7 @@ from qiskit.circuit import *
 from qos.distributed_transpiler.virtualizer import Virtualizer
 from qos.distributed_transpiler.types import TransformationPass
 from qos.types import Engine, Qernel
-import qos.database as db
+#import qos.database as db
 
 from qvm.qvm.compiler.virtualization import BisectionPass, OptimalDecompositionPass
 from qvm.qvm.compiler.virtualization.reduce_deps import CircularDependencyBreaker, GreedyDependencyBreaker, QubitDependencyMinimizer
@@ -22,7 +22,7 @@ from qvm.qvm.compiler.dag import *
 from FrozenQubits.helper_FrozenQubits import drop_hotspot_node, halt_qubits
 from FrozenQubits.helper_qaoa import pqc_QAOA, bind_QAOA, _gen_angles
 
-
+"""
 class Optimiser(Engine):
     def __init__(self) -> None:
         pass
@@ -54,6 +54,8 @@ class Optimiser(Engine):
     
     def results(self) -> None:
         pass
+
+"""
 
 class GateVirtualizationPass(TransformationPass):
     @abstractmethod
