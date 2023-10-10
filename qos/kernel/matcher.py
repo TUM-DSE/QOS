@@ -66,29 +66,33 @@ class Matcher(Engine):
     _qpus = []
     _qpu_properties = {}
 
-    def __init__(self) -> None:
+    def __init__(self, qpus: list = None) -> None:
         max_qpu_id = 0
 
         max_qpu_id = db.getLastQPUid()
 
-        for i in range(1, max_qpu_id + 1):
-            qpu_name = db.getQPU(i).name
-            if "Fake" not in qpu_name:
-                continue
+        if qpus == None:
+            for i in range(1, max_qpu_id + 1):
+                qpu_name = db.getQPU(i).name
+                if "Fake" not in qpu_name:
+                    continue
 
-            backend = eval(qpu_name)()
-            self._qpu_properties[backend.name()] = {}
-            self._qpu_properties[backend.name()][
-                "medianReadoutError"
-            ] = self.getMedianReadoutError(backend)
+                backend = eval(qpu_name)()
+                self._qpu_properties[backend.name()] = {}
+                self._qpu_properties[backend.name()][
+                    "medianReadoutError"
+                ] = self.getMedianReadoutError(backend)
 
-            basis_gates = backend.configuration().basis_gates
-            for g in basis_gates:
-                self._qpu_properties[backend.name()][g] = self.getMedianGateError(
-                    backend, g
-                )
+                basis_gates = backend.configuration().basis_gates
+                for g in basis_gates:
+                    self._qpu_properties[backend.name()][g] = self.getMedianGateError(
+                        backend, g
+                    )
 
-            self._qpus.append(backend)
+                self._qpus.append(backend)
+        else:
+            for q in qpus:
+                self._qpus.append(q)
 
     def getMedianReadoutError(self, backend):
         props = backend.properties()
@@ -139,14 +143,16 @@ class Matcher(Engine):
         props = backend.properties()
         dt = backend.configuration().dt
         num_qubits = backend.configuration().num_qubits
+
         t1s = [props.qubit_property(qq, "T1")[0] for qq in range(num_qubits)]
         t2s = [props.qubit_property(qq, "T2")[0] for qq in range(num_qubits)]
+
         for layout in layouts:
             sch_circ = transpile(
                 circ,
                 backend,
                 initial_layout=layout,
-                optimization_level=0,
+                optimization_level=3,
                 scheduling_method="alap",
             )
             error = 0
@@ -191,8 +197,8 @@ class Matcher(Engine):
 
     def match(self, circuit: QuantumCircuit, cost_function=None) -> List:
 
-        logger = logging.getLogger(__name__)
-        logging.basicConfig(level=10)
+        #logger = logging.getLogger(__name__)
+        #logging.basicConfig(level=10)
 
         try:
             trans_qc = transpile(circuit, self._qpus[0], optimization_level=3)
@@ -204,11 +210,16 @@ class Matcher(Engine):
 
 #        pdb.set_trace()
 
-        this = mm.best_overall_layout(
-            small_qc, self._qpus, successors=True, cost_function=cost_function
+        if cost_function == None:
+            this = mm.best_overall_layout(
+            small_qc, self._qpus, successors=True, cost_function=self.accurate_cost_func
         )
+        else:
+            this = mm.best_overall_layout(
+                small_qc, self._qpus, successors=True, cost_function=cost_function, call_limit=500000
+            )
 
-        logger.log(10, "Matched circuit to backend")
+        #logger.log(10, "Matched circuit to backend")
 
         return this
 

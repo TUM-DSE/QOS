@@ -10,22 +10,28 @@ import copy
 from FrozenQubits.helper import *
 
 from qiskit import QuantumCircuit
+from qiskit_ibm_provider import IBMProvider
 from qiskit.circuit import Parameter
 from qiskit.quantum_info import hellinger_fidelity
-from qiskit.providers.aer import StatevectorSimulator
-from qiskit.quantum_info import Statevector
+from qiskit_aer import AerSimulator
 
 
 def _get_ideal_counts(circuit: QuantumCircuit) -> Counter:
     ideal_counts = {}
-    sv = Statevector.from_label("0" * circuit.num_qubits)
-    circuit_no_meas = circuit.remove_final_measurements(inplace=False)
-    sv = sv.evolve(circuit_no_meas)
 
-    for i, amplitude in enumerate(sv):
-        bitstring = f"{i:>0{circuit.num_qubits}b}"
-        probability = np.abs(amplitude) ** 2
-        ideal_counts[bitstring] = probability
+    if circuit.num_qubits <16:
+        ideal_counts = AerSimulator().run(circuit, shots=20000).result().get_counts()
+        
+    else:
+        provider = IBMProvider(instance="ibm-q/open/main")
+        backend = provider.get_backend("simulator_statevector")
+        
+        ideal_counts = (
+            backend.run(circuit, shots=20000).result().get_counts()
+        )
+        for k, v in ideal_counts.items():
+            ideal_counts[k] = v / 20000
+
     return Counter(ideal_counts)
 
  
@@ -185,7 +191,7 @@ def _get_expectation_value_from_probs(hamiltonian, probabilities: Counter) -> fl
         expectation_value += probability * _get_energy_for_bitstring(hamiltonian, bitstring)
     return expectation_value
 
-def score(circuit: QuantumCircuit, hamiltonian, counts: Mapping[str, float]) -> float:
+def score(circuit: QuantumCircuit, counts: Mapping[str, float], hamiltonian = None) -> float:
     ideal_counts = _get_ideal_counts(circuit)
     total_shots = sum(counts.values())
     experimental_counts = Counter({k: v / total_shots for k, v in counts.items()})

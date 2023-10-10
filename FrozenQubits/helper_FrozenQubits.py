@@ -27,6 +27,21 @@ def find_hotspot(adj):
             hotspot=v
     return hotspot
 
+def get_nodes_sorted_by_degree(adj):
+    if len(adj) <1:
+        print('The input adjacency is empty!')
+        return None
+    
+    nodes = {}
+
+    for v in adj:
+        nodes[v] = len(adj[v].keys())
+
+    nodes = dict(sorted(nodes.items(), key=lambda x:x[1], reverse=True))
+
+    return nodes
+
+
 def drop_hotspot_node(G, 
         target_node=None,
         list_of_fixed_vars=[], verbosity=1):

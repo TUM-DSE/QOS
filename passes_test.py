@@ -16,6 +16,8 @@ from qiskit_aer import AerSimulator
 from qos.types import Qernel
 from qos.distributed_transpiler.virtualizer import GVInstatiator, GVKnitter
 from qvm.qvm.virtual_circuit import generate_instantiations
+from qvm.examples.fid import calculate_fidelity
+from qvm.qvm.run import run_virtual_circuit
 from qos.dag import dag_to_qcg
 import matplotlib.pyplot as plt
 from supermarq.benchmarks.qaoa_vanilla_proxy import *
@@ -45,11 +47,11 @@ def test_transformation_passes(qernel: Qernel) -> Qernel:
     #qubit_dependency_minimizer_pass = QubitDependencyMinimizerPass()
     #random_qubit_reuse_pass = RandomQubitReusePass(3)
     #optimal_wire_cutting_pass = OptimalWireCuttingPass(3)
-    #frozen_qubits_pass = FrozenQubitsPass(1)conda
+    frozen_qubits_pass = FrozenQubitsPass(1)
     #test_pass = TestPass(3)
     #result = test_pass.run(qernel, 10)
 
-    result = bisection_pass.run(qernel, 10)
+    #result = bisection_pass.run(qernel, 10)
     #result = optimal_decomposition_pass.run(qernel, 10)
     #result = circular_dependency_pass.run(qernel, 10)
     #result = greedy_dependency_breaker_pass.run(qernel, 10)
@@ -131,104 +133,82 @@ def main2():
     print("Small circuits: ", qc_supermarq_bench.score(vsqs[0].get_results()))
 
 def main3():
-    qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/sk/gridsearch_100/ideal/3_4_1^P=1.qasm")
-    qc_frozen1 = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/sk/gridsearch_100/ideal/3_4_1^M=1_0^P=1.qasm")
-    qc_frozen2 = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/sk/gridsearch_100/ideal/3_4_1^M=1_1^P=1.qasm")
-    
-    qc_full_properties = load_pickle("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/sk/gridsearch_100/ideal/3_4_1^P=1.pkl")
-    qc_frozen1_properties = load_pickle("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/sk/gridsearch_100/ideal/3_4_1^M=1_0^P=1.pkl")
-    qc_frozen2_properties = load_pickle("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/sk/gridsearch_100/ideal/3_4_1^M=1_1^P=1.pkl")
-    print(qc_full)
-    qernel_full = Qernel(qc_full)
-    qernel_frozen1 = Qernel(qc_frozen1)
-    qernel_frozen2 = Qernel(qc_frozen2)
+    qcs = []
+    for i in range(4):
+        circ = QuantumCircuit.from_qasm_file("/home/manosgior/Documents/qos/"+str(i)+".qasm") 
+        qcs.append(circ)
+        print(circ)
 
-    qaoa_analysis = QAOAAnalysisPass()
+    optimal_decomposition_pass = OptimalDecompositionPass(4)
+    vqcs = []
 
-    qaoa_analysis.run(qernel_full)
-    qaoa_analysis.run(qernel_frozen1)
-    qaoa_analysis.run(qernel_frozen2)
+    for q in qcs:
+        vqcs.append(VirtualCircuit(optimal_decomposition_pass.run(q, 3)))
 
-    print("Original circit")
-    print(qc_full)
-    print("FrozenQubits Hamiltonian:", qc_full_properties["J"])
-    print("Our Hamiltonian:", qernel_full.get_metadata()["J"])
-
-
-    print("Small 1:")
-    print(qc_frozen1)
-    print("FrozenQubits Hamiltonian:", qc_frozen1_properties["J"])
-    print("Our Hamiltonian:", qernel_frozen1.get_metadata()["J"])
-
-    print("Small 2:")
-    print(qc_frozen2)
-    print("FrozenQubits Hamiltonian:", qc_frozen2_properties["J"])
-    print("Our Hamiltonian:", qernel_frozen2.get_metadata()["J"])
+    for vq in vqcs:
+        result, _ = run_virtual_circuit(vq, shots=20000)
+        print(calculate_fidelity(vq._circuit, result))
 
 def FrozenQubitsAndQVMExample():
-    qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_9_1^P=1.qasm")
+    qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/3_16_1^P=1.qasm")
     #qc_full_properties = load_pickle("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_7_1^P=1.pkl")
-    #print(qc_full)
-    #provider =  IBMProvider(instance="ibm-q-research-2/tu-munich-1/main")
-    #backend = provider.get_backend("ibm_nairobi")
+    print(qc_full)
+    #provider = IBMProvider(instance="ibm-q/open/main")
+    #backend = provider.get_backend("ibm_brisbane")
     backend = FakeGuadalupe()
 
     qernel = Qernel(qc_full)
 
-    qaoa_analysis = QAOAAnalysisPass()
-    qaoa_analysis.run(qernel)
+    dt = DistributedTranspiler(size_to_reach=4, budget=4, methods=["GV", "WC", "QR", "QF"])
+    dt.run(qernel)
 
-    qernel = test_transformation_passes(qernel)
+    print("DT finished")
+
     qernel = test_virtualization(qernel)
-    
-    to_run_0 = []
-    to_run_1 = []
+
+    to_run = []
 
     cqc_qiskit = transpile(qc_full, backend, optimization_level=3)
-    job = backend.run(cqc_qiskit, shots=20000)
-    big_results = job.result().get_counts()
+    to_run.append(cqc_qiskit)
+    #job = backend.run(cqc_qiskit, shots=20000)    
 
     sqs = qernel.get_subqernels()
 
-    for q in sqs[0].get_subqernels():
-        qc_small = q.get_circuit()
-        #print(qc_small)
-        cqc_small = transpile(qc_small, backend, optimization_level=3)
-        to_run_0.append(cqc_small)
-    for q in sqs[1].get_subqernels():
-        qc_small = q.get_circuit()
-        #print(qc_small)
-        cqc_small = transpile(qc_small, backend, optimization_level=3)
-        to_run_1.append(cqc_small)
+    for sq in sqs:
+        ssqs = sq.get_subqernels()
+        for q in ssqs:
+            qc_small = q.get_circuit()
+            cqc_small = transpile(qc_small, backend, optimization_level=3)
+            to_run.append(cqc_small)
 
     for vsq in qernel.get_virtual_subqernels():
         vsq.edit_metadata({"shots": 20000})
 
-    job_0 = backend.run(to_run_0, shots=20000)
-    results_0 = job_0.result().get_counts()
-    job_1 = backend.run(to_run_1, shots=20000)
-    results_1 = job_1.result().get_counts()
+    print("running")
+    job = backend.run(to_run, shots=20000)
+    results = job.result().get_counts()
 
-    print("big circuit:", score(qernel.get_circuit(), qernel.get_metadata()["J"], big_results))
+    big_results = results[0]
+
+    print("big circuit: ", score(qernel.get_circuit(), big_results))
 
     sqs = qernel.get_subqernels()
 
-    for i, q in enumerate(sqs[0].get_subqernels()):
-        q.set_results(results_0[i])
+    counter = 1
+    for sq in sqs:
+        ssqs = sq.get_subqernels()
+        for q in ssqs:
+            q.set_results(results[counter])
+            counter = counter + 1
 
-    for i, q in enumerate(sqs[1].get_subqernels()):
-        q.set_results(results_1[i])
-
-    
     knitting = GVKnitter()
     knitting.run(qernel)          
    
     vsqs = qernel.get_virtual_subqernels()
     sqs = qernel.get_subqernels()
 
-
-    print("small_circuit_0:", score(sqs[0].get_circuit(), vsqs[0].get_metadata()["J"], vsqs[0].get_results()))
-    print("small_circuit_1:", score(sqs[1].get_circuit(), vsqs[1].get_metadata()["J"], vsqs[1].get_results()))
+    for i,q in enumerate(sqs):
+        print("small_circuit: ", score(q.get_circuit(), vsqs[i].get_results()))
 
     exit()
 
@@ -451,4 +431,4 @@ def testDistributedTranspiler():
         for q in sqs.get_subqernels():
             print(q.get_circuit())
 
-testDistributedTranspiler()
+FrozenQubitsAndQVMExample()

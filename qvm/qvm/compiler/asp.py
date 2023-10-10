@@ -8,7 +8,7 @@ from .dag import DAG
 
 
 def dag_to_asp(dag: DAG) -> str:
-    #dag.remove_nodes_of_type(Barrier)
+    dag.remove_nodes_of_type(Barrier)
 
     qubits = dag.qubits
     asp = ""

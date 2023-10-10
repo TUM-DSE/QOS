@@ -1,9 +1,9 @@
-from util import *
+from benchmarks.plot.util import *
 
 HIGHERISBETTER = "Higher is better ↑"
 LOWERISBETTER = "Lower is better ↓"
 
-from get_average import get_average
+#from get_average import get_average
 
 
 
@@ -68,48 +68,14 @@ def plot_dep_min_stats() -> plt.Figure:
         color="midnightblue",
     )
 
-from util import calculate_figure_size, plot_lines, grouped_bar_plot, data_frames_to_y_yerr
-from data import SWAP_REDUCE_DATA, DEP_MIN_DATA, NOISE_SCALE_ALGIERS_DATA, SCALE_SIM_TIME, SCALE_SIM_MEMORY
+#from util import calculate_figure_size, plot_lines, grouped_bar_plot, data_frames_to_y_yerr
+#from data import SWAP_REDUCE_DATA, DEP_MIN_DATA, NOISE_SCALE_ALGIERS_DATA, SCALE_SIM_TIME, SCALE_SIM_MEMORY
 
 
 sns.set_theme(style="whitegrid", color_codes=True)
 colors = sns.color_palette("deep")
 
 plt.rcParams.update({"font.size": 12})
-
-
-def plot_swap_reduce() -> None:
-    dfs = [pd.read_csv(file) for file in SWAP_REDUCE_DATA.values()]
-    titles = list(SWAP_REDUCE_DATA.keys())
-
-    plot_dataframes(
-        dataframes=dfs,
-        keys=["num_cnots", "num_cnots_base"],
-        labels=["Ours", "Baseline"],
-        titles=titles,
-        ylabel="Number of CNOTs",
-        xlabel="Number of Qubits",
-        output_file="figures/swap_reduce/cnot.pdf",
-    )
-    plot_dataframes(
-        dataframes=dfs,
-        keys=["depth", "depth_base"],
-        labels=["Ours", "Baseline"],
-        titles=titles,
-        ylabel="Circuit Depth",
-        xlabel="Number of Qubits",
-        output_file="figures/swap_reduce/depth.pdf",
-    )
-
-    fig.text(
-        0.51,
-        0.98,
-        HIGHERISBETTER,
-        ha="center",
-        fontsize=ISBETTER_FONTSIZE,
-        fontweight="bold",
-        color="midnightblue",
-    )
 
 def insert_column(df):
     df['total_runtime'] = df['run_time'] + df['knit_time']
@@ -129,47 +95,6 @@ def dataframe_out_of_columns(dfs, lines, columns):
     merged_df.set_index("num_qubits", inplace = True)
 
     return merged_df
-
-def plot_endtoend_runtimes():
-	dfs = [pd.read_csv(file) for file in SCALE_SIM_TIME.values()]
-	dfs_mem = [pd.read_csv(file) for file in SCALE_SIM_MEMORY.values()]
- 
-	lines = [s.split("-")[-1] for s in SCALE_SIM_TIME.keys()]
-
-	titles = ["(a) Εnd-to-end Runtime", "(b) Runtime Breakdown", "(c) Memory Consumption"]
-
-	dfs = [insert_column(i) for i in dfs]
-	big_dfs = dataframe_out_of_columns(dfs, lines, ["total_runtime"])
-	
-	dfs_mem_new = pd.DataFrame()
-	dfs_mem_new["num_qubits"] = dfs_mem[0]["num_qubits"].copy()
-	dfs_mem_new["Baseline"] = dfs_mem[0]["h_fid"]
-	dfs_mem_new["QVM"] = dfs_mem[0]["h_fid_base"]
-	dfs_mem_new["CutQC"] = dfs_mem[0]["tv_fid"]
-	dfs_mem_new.set_index("num_qubits", inplace = True)
-	#print(dfs_mem_new)
-	
-	dfs_ratio = pd.DataFrame()
-	dfs_ratio["qpu_size"] = [15, 20, 25]
-	dfs_ratio.set_index("qpu_size")
-	
-	dfs_ratio["simulation"] = [d.loc[4].at['run_time'] for d in dfs]
-	dfs_ratio["knitting"] = [d.loc[4].at['knit_time'] for d in dfs]
-	
-	keys = dfs_ratio.keys()
-	keys = keys[1:]
-
-	custom_plot_dataframes(
-		dataframes=[big_dfs, dfs_ratio, dfs_mem_new],
-		keys=[big_dfs.keys(), keys, dfs_mem_new.keys()],
-		labels=[big_dfs.keys(), dfs_ratio["qpu_size"].tolist(), dfs_mem_new.keys()],
-		titles=titles,
-		ylabel=["Runtime [s]", "Runtime [s]", "Memory [GBs]"],
-		xlabel=["Number of Qubits", "QPU Size (Number of Qubits)", "Number of Qubits"],
-		output_file="figures/scale_sim/hamsim_1.pdf",
-		logscale=True,
-		nrows=1
-	)	
 
 hatches = [
     "/",
@@ -198,6 +123,120 @@ hatches = [
 	"#",
 	"%",
 ]
+
+def custom_plot_multiprogramming(	
+	titles: list[str],
+	ylabel: list[str],
+	xlabel: list[str],
+	output_file: str = "multi_programming.pdf",
+) -> None:
+	fig = plt.figure(figsize=COLUMN_FIGSIZE)
+
+	x = np.array([59, 74, 88])
+
+	nrows = 1
+	ncols = 1
+	gs = gridspec.GridSpec(nrows=nrows, ncols=ncols)
+
+	axis = [fig.add_subplot(gs[i, j]) for i in range(nrows) for j in range(ncols)]
+
+	axis[0].set_ylabel(ylabel[0])
+	axis[0].set_xlabel(xlabel[0])
+	axis[0].set_ylim(0, 1)
+
+	y = np.array(
+		[
+			[0.81, 0.88, 0.94],
+			[0.68, 0.83, 0.945],
+			[0.53, 0.78, 0.92]
+		]
+	)
+
+	yerr = np.array(
+		[
+			[0, 0, 0],
+			[0, 0, 0],
+			[0, 0, 0]
+		]
+	)
+	
+	axis[0].set_xticklabels(x)
+	axis[0].grid(axis="y", linestyle="-", zorder=-1)	
+	grouped_bar_plot(axis[0], y, yerr, ["No M/P", "Random M/P", "QOS M/P"])
+	axis[0].legend(loc="lower center", bbox_to_anchor=(0.5, -0.35), ncol=3)
+
+	#axis[0].set_yticks(np.logspace(1, 5, base=10, num=5, dtype='int'))
+	axis[0].set_title(titles[0], fontsize=FONTSIZE, fontweight="bold")
+	
+	fig.text(0.5, 1, HIGHERISBETTER, ha="center", va="center", fontweight="bold", color="navy", fontsize=ISBETTER_FONTSIZE)
+
+	#os.makedirs(os.path.dirname(output_file), exist_ok=True)
+	#plt.tight_layout(pad=1)
+	plt.savefig(output_file, bbox_inches="tight")
+
+def custom_plot_multiprogramming_relative(titles: list[str],
+	ylabel: list[str],
+	xlabel: list[str],
+	output_file: str = "multi_programming_relative.pdf",):
+
+	fig = plt.figure(figsize=WIDE_FIGSIZE)
+
+	x = np.array([59, 74, 88])
+
+	nrows = 1
+	ncols = 1
+	gs = gridspec.GridSpec(nrows=nrows, ncols=ncols)
+
+	axis = [fig.add_subplot(gs[i, j]) for i in range(nrows) for j in range(ncols)]
+
+	axis[0].set_ylabel(ylabel[0])
+	axis[0].set_xlabel(xlabel[0])
+	axis[0].set_ylim(0, 1.1)
+
+	y = np.array(
+		[
+			[0.98, 0.933, 0.94, 0.97, 0.98, 0.9456, 0.943, 0.96, 0.9452],
+			[0.945, 0.914, 0.92, 0.951, 0.967, 0.929, 0.918, 0.948, 0.923],
+			[0.913, 0.905, 0.903, 0.934, 0.938, 0.905, 0.897, 0.93, 0.901]
+		]
+	)
+
+	yerr = np.array(
+		[
+			[0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0]
+		]
+	)
+
+	axis[0].set_xticklabels(x)
+	axis[0].grid(axis="y", linestyle="-", zorder=-1)
+
+	grouped_bar_plot(axis[0], y, yerr, ["W-State", "QSV", "TL-1", "HS-1", "HS-2", "VQE-1", "VQE-2", "QAOA-B", "QAOA-2"], show_average_text=True, average_text_position=1.03)
+
+	axis[0].axhline(1, color="red", linestyle="-", linewidth=2)
+
+	#axis[0].legend(loc="lower center", bbox_to_anchor=(0.5, -0.35), ncol=3)
+	handles, labels = axis[0].get_legend_handles_labels()
+
+	fig.legend(
+        handles,
+        labels,
+        loc="lower center",
+        bbox_to_anchor=(0.5, -0.2),
+        ncol=9,
+        frameon=False,
+    )
+
+	#axis[0].set_yticks(np.logspace(1, 5, base=10, num=5, dtype='int'))
+	axis[0].set_title(titles[0], fontsize=FONTSIZE, fontweight="bold")
+	
+	fig.text(0.5, 1, HIGHERISBETTER, ha="center", va="center", fontweight="bold", color="navy", fontsize=ISBETTER_FONTSIZE)
+
+	#os.makedirs(os.path.dirname(output_file), exist_ok=True)
+	#plt.tight_layout(pad=1)
+	plt.savefig(output_file, bbox_inches="tight")
+
 
 def custom_plot_dataframes(
 	dataframes: list[pd.DataFrame],

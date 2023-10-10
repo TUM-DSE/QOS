@@ -4,6 +4,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.ticker as ticker
 from matplotlib import gridspec
+import os
 
 FONTSIZE = 12
 ISBETTER_FONTSIZE = FONTSIZE + 2
@@ -90,6 +91,7 @@ def grouped_bar_plot(
         for i, x_pos in enumerate(ax.get_xticks()):
             y_avg = np.average(y[i])
             text = f"{y_avg:.2f}"
+            print(text)
             ax.text(x_pos, average_text_position, text, ha="center")
 
 

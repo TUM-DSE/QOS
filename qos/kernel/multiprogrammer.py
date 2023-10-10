@@ -37,7 +37,7 @@ class Multiprogrammer(Engine):
         measurementDiff = self.measurementComparison(q1, q2)
         parallelismDiff = self.parallelismComparison(q1, q2)
 
-        if weighted:            
+        if weighted and sum(weights) > 0:            
             score = weights[0] * depthDiff + weights[1] * entanglementDiff + weights[2] * measurementDiff + weights[3] * parallelismDiff
         else:
             score = (depthDiff + entanglementDiff + measurementDiff + parallelismDiff) / 4

@@ -308,8 +308,7 @@ class OptimalWireCuttingPass(WireCuttingPass):
 
         if len(vsqs) > 0:
             for vsq in vsqs:
-                vqc = vsq.get_circuit()
-                qc = vqc._circuit
+                qc = vsq.get_circuit()
                 new_circuit = optimal_wire_cutting_pass.run(qc, budget)
 
                 """                

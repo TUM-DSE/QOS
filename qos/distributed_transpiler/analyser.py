@@ -16,6 +16,8 @@ import networkx as nx
 from qiskit.converters import circuit_to_dag
 from qvm.qvm.compiler.dag import *
 
+from FrozenQubits.helper_FrozenQubits import get_nodes_sorted_by_degree
+
 
 class BasicAnalysisPass(AnalysisPass):
 
@@ -261,13 +263,21 @@ class QAOAAnalysisPass(DAGAnalysisPass):
         return "QAOAAnalysisPass"
 
     def run(self, qernel: Qernel) -> None:
-        qc = qernel.get_circuit()       
+        qc = qernel.get_circuit()
+
+        h = self.generate_h(qc)
+        J = self.generate_J(qc)
+
+        G = nx.Graph()
+        G.add_edges_from(list(J.keys()))
+        G.add_nodes_from(list(h.keys()))
 
         qaoa_metadata = {
-            "h" : self.generate_h(qc),
-            "J" : self.generate_J(qc),
+            "h" : h,
+            "J" : J,
             "offset" : 0.0,
-            "num_layers" : 1
+            "num_layers" : 1,
+            "hotspot_nodes": get_nodes_sorted_by_degree(G.adj)
         }
 
         qernel.edit_metadata(qaoa_metadata)

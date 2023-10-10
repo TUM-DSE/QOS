@@ -91,13 +91,24 @@ class DistributedTranspiler():
             is_qaoa_pass = IsQAOACircuitPass()
 
             if is_qaoa_pass.run(q):
-                qaoa_analysis_pass = QAOAAnalysisPass()
-                QF_pass = FrozenQubitsPass(1)
-
+                qaoa_analysis_pass = QAOAAnalysisPass()  
                 qaoa_analysis_pass.run(q)
+
+                metadata = q.get_metadata()
+                num_cnots = metadata["num_cnot_gates"]
+                hotspots = list(metadata["hotspot_nodes"].values())
+                qubits_to_freeze = 0
+
+                for i in range(2):
+                    if hotspots[i] / num_cnots >= 0.1:
+                        qubits_to_freeze = qubits_to_freeze + 1
+
+                qubits_to_freeze = min(qubits_to_freeze, self.budget)
+
+                QF_pass = FrozenQubitsPass(qubits_to_freeze)
                 q = QF_pass.run(q)
 
-                self.budget = self.budget - 1
+                self.budget = self.budget - qubits_to_freeze
 
             if self.methods["GV"] and self.methods["WC"]:
                 lower_limit = self.size_to_reach
@@ -106,10 +117,11 @@ class DistributedTranspiler():
 
                 while size_to_reach >= lower_limit and size_to_reach < upper_limit and self.budget > 0:
                     costs = self.computeCuttingCosts(q, size_to_reach)
+
                     if costs["GV"] > self.budget and costs["WC"] > self.budget:
                         size_to_reach = size_to_reach + 1              
                     else:
-                        if costs["GV"] < costs["WC"]:
+                        if costs["GV"] < costs["WC"] or (costs["GV"] == 0 and costs["WC"] == 0):
                             q = self.applyGV(q, size_to_reach)
                         else:
                             q = self.applyWC(q, size_to_reach)
