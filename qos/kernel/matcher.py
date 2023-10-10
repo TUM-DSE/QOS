@@ -98,10 +98,7 @@ class Matcher(Engine):
                 for g in basis_gates:
                     self._qpu_properties[backend.name][g] = self.getMedianGateError(backend, g)
 
-                self._qpus.append(backend)
-        else:
-            for q in qpus:
-                self._qpus.append(q)
+            self._qpus.append(backend)
 
     def getMedianReadoutError(self, backend):
         props = backend.properties()
