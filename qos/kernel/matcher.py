@@ -14,6 +14,9 @@ import networkx as nx
 import pickle
 from networkx.readwrite import json_graph
 from qos.dag import DAG
+from qiskit_ibm_provider import IBMProvider
+from qos.secrets import IBM_TOKEN
+import mapomatic.layouts as mply
 
 gates = {
     "u3": 1,
@@ -58,6 +61,7 @@ gates = {
     "c3x": 1,
     "c3sqrtx": 1,
     "c4x": 1,
+    "ecr": 2,
 }
 
 
@@ -73,20 +77,26 @@ class Matcher(Engine):
 
         for i in range(1, max_qpu_id + 1):
             qpu_name = db.getQPU(i).name
-            if "Fake" not in qpu_name:
-                continue
-
-            backend = eval(qpu_name)()
-            self._qpu_properties[backend.name()] = {}
-            self._qpu_properties[backend.name()][
-                "medianReadoutError"
-            ] = self.getMedianReadoutError(backend)
-
-            basis_gates = backend.configuration().basis_gates
-            for g in basis_gates:
-                self._qpu_properties[backend.name()][g] = self.getMedianGateError(
-                    backend, g
-                )
+            qpu_alias = db.getQPU(i).alias
+    
+            if "Fake" in qpu_name:
+                backend = eval(qpu_name)()
+                self._qpu_properties[backend.name()] = {}
+                self._qpu_properties[backend.name()][
+                "medianReadoutError"] = self.getMedianReadoutError(backend)
+                basis_gates = backend.configuration().basis_gates
+                for g in basis_gates:
+                    self._qpu_properties[backend.name()][g] = self.getMedianGateError(backend, g)
+            else:
+                provider = IBMProvider(token=IBM_TOKEN)
+                print("Loading backend {} ({}/{})".format(qpu_alias, i, max_qpu_id))
+                backend = provider.get_backend(qpu_alias)
+                self._qpu_properties[backend.name] = {}
+                self._qpu_properties[backend.name][
+                "medianReadoutError"] = self.getMedianReadoutError(backend)
+                basis_gates = backend.configuration().basis_gates
+                for g in basis_gates:
+                    self._qpu_properties[backend.name][g] = self.getMedianGateError(backend, g)
 
             self._qpus.append(backend)
 
@@ -188,25 +198,82 @@ class Matcher(Engine):
         p_reset = 1 - np.exp(-time * rate1)
         p_z = (1 - p_reset) * (1 - np.exp(-time * (rate2 - rate1))) / 2
         return p_z + p_reset
+    
+    def best_overall_layoutv2(circuit, backends, successors=True, call_limit=int(3e7),
+                        cost_function=None):
+        """Find the best selection of qubits and system to run
+        the chosen circuit one.
+
+        Parameters:
+            circ (QuantumCircuit): Quantum circuit
+            backends (IBMQBackend or list): A single or list of backends.
+            successors (bool): Return list best mappings per backend passed.
+            call_limit (int): Maximum number of calls to VF2 mapper.
+            cost_function (callable): Custom cost function, default=None
+
+        Returns:
+            tuple: (best_layout, best_backend, best_error)
+            list: List of tuples for best match for each backend
+        """
+
+        if not isinstance(backends, list):
+            backends = [backends]
+
+        if cost_function is None:
+            cost_function = mply.default_cost
+
+        best_out = []
+
+        for backend in backends:
+            config = backend.configuration()
+
+            try:
+                trans_qc = transpile(circuit, backend, optimization_level=3)
+            except NameError as e:
+                print("[ERROR] - Can't transpile circuit on backend {}".format(backend.name()))
+                return 1
+
+            circ = mm.deflate_circuit(trans_qc)
+
+            circ_qubits = circ.num_qubits
+            circuit_gates = set(circ.count_ops()).difference({'barrier', 'reset', 'measure'})
+            if not circuit_gates.issubset(backend.configuration().basis_gates):
+                continue
+            num_qubits = config.num_qubits
+            if not config.simulator and circ_qubits <= num_qubits:
+                layouts = mply.matching_layouts(circ, config.coupling_map,
+                                           call_limit=call_limit)
+                layout_and_error = mply.evaluate_layouts(circ, layouts, backend,
+                                                    cost_function=cost_function)
+                if any(layout_and_error):
+                    layout = layout_and_error[0][0]
+                    error = layout_and_error[0][1]
+                    best_out.append((layout, config.backend_name, error))
+        best_out.sort(key=lambda x: x[2])
+        if successors:
+            return best_out
+        if best_out:
+            return best_out[0]
+        return best_out
 
     def match(self, circuit: QuantumCircuit, cost_function=None) -> List:
 
         logger = logging.getLogger(__name__)
         logging.basicConfig(level=10)
 
-        try:
-            trans_qc = transpile(circuit, self._qpus[0], optimization_level=3)
-        except NameError as e:
-            print("Can't transpile on this backend", e)
-            return 1
+        #try:
+        #    trans_qc = transpile(circuit, self._qpus[0], optimization_level=3)
+        #except NameError as e:
+        #    print("Can't transpile on this backend", e)
+        #    return 1
+        #
+        #small_qc = mm.deflate_circuit(trans_qc)
 
-        small_qc = mm.deflate_circuit(trans_qc)
+        #this = mm.best_overall_layout(
+        #    small_qc, self._qpus, successors=True, cost_function=cost_function
+        #)
 
-#        pdb.set_trace()
-
-        this = mm.best_overall_layout(
-            small_qc, self._qpus, successors=True, cost_function=cost_function
-        )
+        this = self.best_overall_layoutv2(circuit, self._qpus, successors=True, cost_function=cost_function)
 
         logger.log(10, "Matched circuit to backend")
 

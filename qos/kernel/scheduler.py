@@ -12,7 +12,7 @@ import pdb
 from qos.tools import predict_queue_time
 
 SHOTS_MULTIPLIER = 1
-FID_WEIGHT = 0.75
+FID_WEIGHT = 0.9
 UTIL_WEIGHT = 0
 
 def compute_score(fid1, fid2, eta1, eta2, util1, util2, fid_weight, util_weight):
@@ -46,19 +46,22 @@ class Scheduler(Engine):
             db.submitQernel(i)
         return
     
-    def _balanced_policy(self, qernels: Qernel | List[Qernel]) -> None:
+    def _balanced_policy(self, qernels: Qernel | List[Qernel], fid_weight=FID_WEIGHT, util_weight=UTIL_WEIGHT) -> None:
+
+        #pdb.set_trace()
 
         if not isinstance(qernels, list):
             qernels = [qernels]
         for qernel in qernels:
             current_best = qernel.matching[0]
 
-            #pdb.set_trace()
+            pdb.set_trace()
             for j in range(len(qernel.matching)):
                 if j >= len(qernel.matching)-1:
                     qernel.match = qernel.matching[j]
                     qernel.args["shots"] = 8192*SHOTS_MULTIPLIER
                     db.submitQernel(qernel)
+                    print("Submitted qernel {}".format(qernel.id))
                     break
 
                 fid1 = 1-qernel.matching[j][2]
@@ -67,15 +70,15 @@ class Scheduler(Engine):
                 #local_queue2 = db.getQPUField(qernel.matching[j+1][1], "local_queue")
                 earliest1 = db.QPU_earliest_free_time(qernel.matching[j][1])
                 earliest2 = db.QPU_earliest_free_time(qernel.matching[j+1][1])
-                eta1 = earliest1+1 if earliest1 > qernel.submit_time else qernel.submit_time+1
-                eta2 = earliest2+1 if earliest2 > qernel.submit_time else qernel.submit_time+1
+                eta1 = earliest1+1 if earliest1 > qernel.submit_time else qernel.submit_time+1/1000000000
+                eta2 = earliest2+1 if earliest2 > qernel.submit_time else qernel.submit_time+1/1000000000
 
                 #Adding 1 nanosecond to avoid division by zero, in case one of the qpus is already free, which means that the eta would be 0. 1 nanosecond is negligible
 
                 util1 = util_from_matching(qernel.matching[j][0], qernel.matching[j][1])
                 util2 = util_from_matching(qernel.matching[j+1][0], qernel.matching[j+1][1])
 
-                score = compute_score(fid1, fid2, eta1, eta2, util1, util2, FID_WEIGHT, UTIL_WEIGHT)
+                score = compute_score(fid1, fid2, eta1, eta2, util1, util2, fid_weight, util_weight)
 
                 #pdb.set_trace()
 
@@ -83,20 +86,21 @@ class Scheduler(Engine):
                     qernel.match = qernel.matching[j]
                     qernel.args["shots"] = 8192*SHOTS_MULTIPLIER
                     db.submitQernel(qernel)
+                    print("Submitted qernel {}".format(qernel.id))
                     break
                 else:
                     continue
         return
     
 
-    def run(self, qernels: Qernel|List[Qernel], policy = _balanced_policy) -> None:
+    def run(self, qernels: Qernel|List[Qernel], policy = _balanced_policy, fid_weight=FID_WEIGHT, util_weigth=UTIL_WEIGHT) -> None:
 
         if policy == "bestqpu":
             policy = self._bestqpu_policy
             policy(qernels)  # Assign qpus to the subqernels
         elif policy == "balanced":
             policy = self._balanced_policy
-            policy(qernels)
+            policy(qernels, fid_weight, util_weigth)
         
         '''
         for i in qernels.subqernels:

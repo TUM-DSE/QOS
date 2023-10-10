@@ -70,11 +70,13 @@ class Matcher(Engine):
         max_qpu_id = 0
 
         max_qpu_id = db.getLastQPUid()
+        pdb.set_trace()
 
         for i in range(1, max_qpu_id + 1):
             qpu_name = db.getQPU(i).name
-            if "Fake" not in qpu_name:
-                continue
+            #if "Fake" not in qpu_name:
+            #    continue
+            pdb.set_trace()
 
             backend = eval(qpu_name)()
             self._qpu_properties[backend.name()] = {}
