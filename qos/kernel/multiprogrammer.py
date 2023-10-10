@@ -139,6 +139,7 @@ class Multiprogrammer(Engine):
                 #if len(self.queue) > self.window_size:
                 #    self.done_queue.append(self.queue.pop())
 
+
             merge_policy(all_qernels, 0.1)
             return self.done_queue
 

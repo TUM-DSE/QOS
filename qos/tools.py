@@ -10,6 +10,10 @@ import logging
 from qiskit.converters import circuit_to_dag
 from qiskit.providers.fake_provider import *
 from qiskit.providers.basicaer import QasmSimulatorPy
+from qiskit_ibm_provider import IBMProvider
+from qiskit.compiler import transpile
+from qos.time_estimator.basic_estimator import CircuitEstimator
+from qos.secrets import IBM_TOKEN
 
 
 def check_layout_overlap(layout1: List, layout2: List) -> bool:
@@ -168,6 +172,23 @@ def predict_queue_time(qpuId: int) -> int:
 
     return 0
 
+def better_estimate_execution_time(qernel: Qernel) -> float:
+    provider = IBMProvider(token=IBM_TOKEN)
+
+    #backends = provider.backends(min_num_qubits=16, filters=lambda b: b.num_qubits <= 127, simulator=False, operational=True)
+
+    #pdb.set_trace()
+
+    backend = provider.get_backend(qernel.match[1])
+    #pdb.set_trace()
+    
+    #backend = [i for i in backends if i.name=='ibm_cairo'][0]
+
+    #backend = fake_provider.FakeKolkataV2()
+
+    tcircuit = transpile(qernel.circuit, backend)
+
+    return CircuitEstimator().estimate_execution_time(tcircuit, backend)
 
 def estimate_execution_time(qernel:Qernel) -> int:
 

@@ -40,6 +40,7 @@ class Qernel(ABC):
     metadata: Dict[str, Any]
     results: Dict[str, Any] | QuasiDistr
     assigned_qpu: QPU
+    submit_time: float
     local_queue: List[tuple] #The local queue will store a tuple of estimated execution time and the time when the circuit was submitted
     src_qernels: List[tuple] #List[tuple(Qernel,int)], int is the number of qbits for that fragment
     
