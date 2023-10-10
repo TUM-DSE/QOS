@@ -98,10 +98,7 @@ class Matcher(Engine):
                 for g in basis_gates:
                     self._qpu_properties[backend.name][g] = self.getMedianGateError(backend, g)
 
-                self._qpus.append(backend)
-        else:
-            for q in qpus:
-                self._qpus.append(q)
+            self._qpus.append(backend)
 
     def getMedianReadoutError(self, backend):
         props = backend.properties()
@@ -278,16 +275,7 @@ class Matcher(Engine):
         #    small_qc, self._qpus, successors=True, cost_function=cost_function
         #)
 
-#        pdb.set_trace()
-
-        if cost_function == None:
-            this = mm.best_overall_layout(
-            small_qc, self._qpus, successors=True, cost_function=self.accurate_cost_func
-        )
-        else:
-            this = mm.best_overall_layout(
-                small_qc, self._qpus, successors=True, cost_function=cost_function, call_limit=500000
-            )
+        this = self.best_overall_layoutv2(circuit, self._qpus, successors=True, cost_function=cost_function)
 
         #logger.log(10, "Matched circuit to backend")
 

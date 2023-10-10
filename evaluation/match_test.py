@@ -1,5 +1,6 @@
 from qos.kernel.matcher import Matcher
 from qos.kernel.multiprogrammer import Multiprogrammer
+from qos.kernel.scheduler import Scheduler 
 import os
 from qiskit.circuit.random import random_circuit
 from qos.types import Qernel
@@ -110,7 +111,6 @@ def main():
     multi = Multiprogrammer()
 
     bundled_queue = multi.run([qernel1, qernel2, qernel3, qernel4])
-
 
     sched = Scheduler()
 
