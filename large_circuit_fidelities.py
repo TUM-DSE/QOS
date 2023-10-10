@@ -1,5 +1,6 @@
 import csv
 import sys
+import pandas as pd
 
 from qos.distributed_transpiler.analyser import *
 
@@ -12,6 +13,7 @@ from qiskit.quantum_info.analysis import hellinger_fidelity
 from qiskit_ibm_provider import IBMProvider
 
 from benchmarks.circuits import *
+from benchmarks.plot.plot import custom_plot_large_circuit_fidelities
 
 def transpile_and_prepare(c: QuantumCircuit, b: BackendV2, reps: int) -> list[QuantumCircuit]:
     toReturn = []
@@ -59,9 +61,9 @@ def main(args: list[str]):
     randomness = int(args[2])
     benchmark_circuits = []
 
-    provider = IBMProvider(token='87ae595a5a0b9624fe36f477550700ee4b4dc540061a89951f197a0cd36d639e2c5e6307d533993123eaa925d9bea2de14a02b659219646ea4750e1768c76bf1')
+    #provider = IBMProvider(token='87ae595a5a0b9624fe36f477550700ee4b4dc540061a89951f197a0cd36d639e2c5e6307d533993123eaa925d9bea2de14a02b659219646ea4750e1768c76bf1')
     #provider = IBMProvider()
-    backend = provider.get_backend("ibmq_kolkata")
+    #backend = provider.get_backend("ibmq_kolkata")
 
     #backend = FakeKolkataV2()
     simulator = provider.get_backend("ibmq_qasm_simulator")
@@ -86,16 +88,6 @@ def main(args: list[str]):
     for c in benchmark_circuits:
         to_execute = to_execute + transpile_and_prepare(c, backend, randomness)
 
-    #allowed_ops = backend.configuration().basis_gates
-
-    #for i,te in enumerate(to_execute):
-        #for key, value in te.count_ops().items():
-            #if key not in allowed_ops:
-                #print(i)
-                #print(te)
-                #exit()
-
-    #exit()
     results = execute(to_execute, backend, shots=8192, save_id=True)
 
     counter = 0
@@ -110,4 +102,14 @@ def main(args: list[str]):
     write_to_csv("large_circuits_solo_" + str(lower_limit) + ".csv", aggr_metadata)
     
 
-main(sys.argv)
+def main2():
+    csv_file_path = "results/large_circuits_solo_"
+    dataframes = []
+
+    for i in [4, 8, 12, 16, 20, 24]:
+        dataframes.append(pd.read_csv(csv_file_path + str(i) + ".csv"))
+    
+    custom_plot_large_circuit_fidelities(dataframes, [""], ["Fidelity"], ["Number of Qubits"])
+
+main2()
+#main(sys.argv)

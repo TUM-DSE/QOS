@@ -238,6 +238,63 @@ def custom_plot_multiprogramming_relative(titles: list[str],
 	plt.savefig(output_file, bbox_inches="tight")
 
 
+def custom_plot_large_circuit_fidelities(dataframes: list[pd.DataFrame], titles: list[str],
+	ylabel: list[str],
+	xlabel: list[str],
+	output_file: str = "scalability_results.pdf"):
+
+	fig = plt.figure(figsize=WIDE_FIGSIZE)
+
+	x = np.array([4, 8, 12, 16, 20, 24])
+	#x = dataframes[0]["bench_name"]
+
+	nrows = 1
+	ncols = 1
+	gs = gridspec.GridSpec(nrows=nrows, ncols=ncols)
+
+	axis = [fig.add_subplot(gs[i, j]) for i in range(nrows) for j in range(ncols)]
+
+	axis[0].set_ylabel(ylabel[0])
+	axis[0].set_xlabel(xlabel[0])
+	axis[0].set_ylim(0, 1.1)
+
+	y = np.array(
+		[
+			df["fidelity"] for df in dataframes
+		]
+	)
+
+	yerr = np.array(
+		[
+			df["fidelity_std"] for df in dataframes
+		]
+	)
+	
+
+	axis[0].set_xticklabels(x)
+	axis[0].grid(axis="y", linestyle="-", zorder=-1)
+
+	grouped_bar_plot(axis[0], y, yerr, ["QAOA-R-2", "BV", "GHZ", "HS-1", "QAOA-PL-2", "QSVM", "TL-1", "VQE-1", "W-STATE"], show_average_text=True, average_text_position=1.03)
+
+	handles, labels = axis[0].get_legend_handles_labels()
+
+	fig.legend(
+        handles,
+        labels,
+        loc="lower center",
+        bbox_to_anchor=(0.5, -0.2),
+        ncol=9,
+        frameon=False,
+    )
+
+	axis[0].set_title(titles[0], fontsize=FONTSIZE, fontweight="bold")
+	
+	fig.text(0.5, 1, HIGHERISBETTER, ha="center", va="center", fontweight="bold", color="navy", fontsize=ISBETTER_FONTSIZE)
+
+	#os.makedirs(os.path.dirname(output_file), exist_ok=True)
+	#plt.tight_layout(pad=1)
+	plt.savefig(output_file, bbox_inches="tight")
+
 def custom_plot_dataframes(
 	dataframes: list[pd.DataFrame],
 	keys: list[list[str]],
