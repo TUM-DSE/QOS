@@ -39,11 +39,11 @@ class Qernel(ABC):
     status: str
     metadata: Dict[str, Any]
     results: Dict[str, Any] | QuasiDistr
-    assigned_qpu: QPU
     submit_time: float
+    parent: Any #In case this is a subquernel this will store the parent qernel object
     local_queue: List[tuple] #The local queue will store a tuple of estimated execution time and the time when the circuit was submitted
     src_qernels: List[tuple] #List[tuple(Qernel,int)], int is the number of qbits for that fragment
-    
+    waiting_time: float
     #status: str
     #analysis: List[AnalysisPass]
     #transformations: List[TransformationPass]
@@ -66,6 +66,7 @@ class Qernel(ABC):
         # If it has dependencies it means that it was a new system-created Qernel created
         #   by the Multiprogrammer to encapsulate a merged circuit and its original Qernel
         #   dependencies
+        self.submit_time = -1
         self.provider = ""
         self.circuit = qc
         if qc is not None:
@@ -120,6 +121,7 @@ class Qernel(ABC):
       
     def add_subqernel(self, q) -> None:
         self.subqernels.append(q)
+        q.parent = self
 
     def add_virtual_subqernel(self, q) -> None:
         self.virtual_subqernels.append(q)
