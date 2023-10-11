@@ -6,14 +6,18 @@ from qos.backends.test_qpu import TestQPU
 from qos.backends.ibmq import IBMQPU
 from qos.types import Engine, Qernel
 from qiskit.circuit import QuantumCircuit
+from qiskit_ibm_provider import IBMProvider
 import qos.database as db
+from qiskit import execute
+from qiskit.transpiler import CouplingMap
 import json
+from ibm_token import IBM_TOKEN
 import pdb
 from qos.tools import predict_queue_time
 
-SHOTS_MULTIPLIER = 1
-FID_WEIGHT = 0.9
-UTIL_WEIGHT = 0
+SHOTS = 8192
+DEFAULT_FID_WEIGHT = 0.7
+DEFAULT_UTIL_WEIGHT = 0
 
 def compute_score(fid1, fid2, eta1, eta2, util1, util2, fid_weight, util_weight):
         return (fid_weight*(fid2/fid1-1) - (1-fid_weight)*(eta2/eta1-1) + util_weight*(util2/util1-1))
@@ -42,24 +46,23 @@ class Scheduler(Engine):
 
         for i in qernels:
             i.match = i.matching[0]
-            i.args["shots"] = 8192*SHOTS_MULTIPLIER
+            i.args["shots"] = SHOTS
             db.submitQernel(i)
         return
     
-    def _balanced_policy(self, qernels: Qernel | List[Qernel], fid_weight=FID_WEIGHT, util_weight=UTIL_WEIGHT) -> None:
+    def _balanced_policy(self, qernels: Qernel | List[Qernel], fid_weight=DEFAULT_FID_WEIGHT, util_weight=DEFAULT_UTIL_WEIGHT) -> None:
 
         #pdb.set_trace()
 
         if not isinstance(qernels, list):
             qernels = [qernels]
         for qernel in qernels:
-            current_best = qernel.matching[0]
 
-            pdb.set_trace()
+            #pdb.set_trace()
             for j in range(len(qernel.matching)):
                 if j >= len(qernel.matching)-1:
                     qernel.match = qernel.matching[j]
-                    qernel.args["shots"] = 8192*SHOTS_MULTIPLIER
+                    qernel.args["shots"] = SHOTS
                     db.submitQernel(qernel)
                     print("Submitted qernel {}".format(qernel.id))
                     break
@@ -84,66 +87,107 @@ class Scheduler(Engine):
 
                 if score <= 0:
                     qernel.match = qernel.matching[j]
-                    qernel.args["shots"] = 8192*SHOTS_MULTIPLIER
+                    qernel.args["shots"] = SHOTS
                     db.submitQernel(qernel)
                     print("Submitted qernel {}".format(qernel.id))
                     break
                 else:
                     continue
         return
-    
 
-    def run(self, qernels: Qernel|List[Qernel], policy = _balanced_policy, fid_weight=FID_WEIGHT, util_weigth=UTIL_WEIGHT) -> None:
+    def run(self, qernels: Qernel|List[Qernel], policy = _balanced_policy, fid_weight=DEFAULT_FID_WEIGHT, util_weigth=DEFAULT_UTIL_WEIGHT) -> None:
+        
+        if isinstance(qernels, list):
+            root_qernels = qernels.copy()
 
+            all_qernels = []
+
+            for q in qernels:
+                sub_qernels = q.get_subqernels()
+                if sub_qernels != []:
+                    for subq in sub_qernels:
+                        subsub_qernels = subq.get_subqernels()
+                        if subsub_qernels != []:
+                            for subsubq in subsub_qernels:
+                                all_qernels.append(subsubq)
+                        else:
+                            all_qernels.append(subq)
+                else:
+                    all_qernels.append(q)
+            
+                #if len(self.queue) > self.window_size:
+                #    self.done_queue.append(self.queue.pop())
+
+        # Apply policies
         if policy == "bestqpu":
             policy = self._bestqpu_policy
-            policy(qernels)  # Assign qpus to the subqernels
+            policy(all_qernels)  # Assign qpus to the subqernels
         elif policy == "balanced":
             policy = self._balanced_policy
-            policy(qernels, fid_weight, util_weigth)
-        
-        '''
-        for i in qernels.subqernels:
+            policy(all_qernels, fid_weight, util_weigth)
 
-            tmpqernel = db.getQernel(i)
-            tmpqernel.qpu = db.getQPU_fromname(tmpqernel.args[b"qpu"].decode())
-
-            if tmpqernel.qpu.provider == "test":
-                qpu = TestQPU()
-                results = qpu.run()
-            elif tmpqernel.qpu.provider == "ibm":
-                qpu = IBMQPU()
-                circuit = QuantumCircuit.from_qasm_str(tmpqernel.circuit.decode())
-                # print(tmpqernel.qpu.name)
-                # print(circuit)
-                # pdb.set_trace()
-                trans_circuit = qpu.transpile(circuit, tmpqernel.qpu.name)
-                results = qpu.run(
-                    trans_circuit, tmpqernel.qpu.name, tmpqernel.shots
-                ).get_counts()
-
-            # Here the scheduler would do its qernel
-
-            self.logger.log(10, "Got results from qpu, updating")
-
-            db.setQernelField(tmpqernel.id, "status", "DONE")
-            db.setQernelField(tmpqernel.id, "results", jsonpickle.encode(results))
-        '''
         all_qpus = db.getAllQPU()
-
-        #pdb.set_trace()
-
-        dist = []
 
         all_queues = []
 
+        provider = IBMProvider(token=IBM_TOKEN)
+        print("Queues {}".format([i.local_queue for i in all_qpus]))    
+
         for i in all_qpus:
-            all_queues.append([i.name, i.local_queue])
+
+            print("Local queue {}".format(i.local_queue))
+            #Run the qernels on the local qpu on the ibm cloud
+            backend = provider.get_backend(i.alias)
+            #local_queue_circuits =  [qernels[int(j[0])].circuit for j in i.local_queue]
+            local_queue_circuits =  []
+
+            #The local_queue is a list of tuple with the following information: (qernel_id, estimated execution time, submitted time, estimated waiting time, predicted fidelity)
+
+            # Imagine you have the following qernels
+            # qernel0 (main qernel) -> qernel1 (sub), qernel2 (sub)
+            # qernel4 (main qernel) -> qernel5 (sub), qernel6 (sub)
+            # qernel7 (main qernel) -> qernel8 (sub), qernel9 (sub)
+
+            #The all_qernels list will have: q1, q2, q5, q6, q8, q9
+            #After the scheduling the local queue of a qpu could have just qernels: q5, q8
+            #Now I need to get the circuit of these qernel to submit to ibm
+            #Also it need to be in the same order as the local queue because after I get the results I need to know which result it belongs to which qernel
+
+            for j in i.local_queue:
+                for w in all_qernels:
+                    if w.id == int(j[0]):
+                        local_queue_circuits.append(w.circuit)
+                        break
+
+            #mappings = [qernels[int(j[0])].match[0] for j in i.local_queue]
+
+            results = []
+            pdb.set_trace()
+
+            #for j in range(len(local_queue_circuits)):
+            print("Running batch on qpu {}".format(i.name))
+            #circuit = local_queue_circuits[j]
+            #remapping = [[i,mappings[j][i]] for i in range(len(mappings[j]))]
+            #coupling_map = CouplingMap(remapping)
+            job_results = execute(local_queue_circuits, backend=backend, shots=8192).result().get_counts()
+                #job = execute(circuit, backend=backend, shots=8192)
+                #results.append(job.result().get_counts())
+
+            for j in range(len(i.local_queue)):
+                for w in all_qernels:
+                    if w.id == int(i.local_queue[j][0]):
+                        w.results = job_results[j]
+                        w.waiting_time = i.local_queue[j][3]
+                        break
+            
+            results.append(job_results)
+            
+            all_queues.append([i.name, i.local_queue, results])
             #print('Final queue for qpu {}:'.format(i.name))
             #dist.append((i.name, len(i.local_queue)))
             #for j in i.local_queue:
             #       print('Submitted circuit {} at {}, eta: {}'.format(j[0], j[2], j[1]))
-#
+
             #print('---------------------------------\n')
 
         #db.setQernelField(qernels.id, "status", "DONE")
@@ -154,7 +198,6 @@ class Scheduler(Engine):
 
     # This policy follows the following rules:
     # 1. If the qernel has more than one subqernel, means that it was merged and then use the assigned QPU
-    # 2.
 
     def results(self) -> None:
         pass

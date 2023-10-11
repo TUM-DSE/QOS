@@ -14,9 +14,6 @@ import numpy as np
 
 pipe_name = "multiprog_fifo.pipe"
 
-
-
-
 class Multiprogrammer(Engine):
 
     timeout = 5
@@ -110,16 +107,18 @@ class Multiprogrammer(Engine):
     #            qernel = db.getQernel(int(line))
     #            self.multiprogram(qernel, self._restrict_policy)
 
-    def run(self, qernels: List[Qernel] | Qernel, merge_policy_level=0) -> List[Qernel]:
+    def run(self, qernels: List[Qernel] | Qernel, merge_policy='restrict') -> List[Qernel]:
 
-        if merge_policy_level == 0:
+
+        if merge_policy == 'restrict':
             merge_policy = self._restrict_policy
         else:
             print("Merge policy not supported yet")
             exit(1)
 
+        #Its much easier to apply the merge policy if the subqernels are on the same list, just iterate through the list, or we can always pass around the root qernels, its much more clean but might take more time to look around for subqernels and subsubqernels
+        ''' 
         if isinstance(qernels, list):
-
             all_qernels = []
 
             for q in qernels:
@@ -146,6 +145,27 @@ class Multiprogrammer(Engine):
         else:
             this = merge_policy(qernels, 0.1)
             return this
+        
+        return qernels
+        '''
+        #The restrict policy doesnt work if the sub and subsubqernels are on the same list
+        #merge_policy(qernels, 0.1)
+
+        return qernels #<--- Comment this out
+        
+        # Copy paste here \/ your multiprogrammer code
+        # It should return the final queue of qernels to be scheduled
+
+
+
+
+
+
+        # return final_queue
+        # ---------------------
+        
+        
+        #return self.done_queue        
     
     def results(self) -> None:
         pass
@@ -168,8 +188,8 @@ class Multiprogrammer(Engine):
         # self.logger.log(10, "Running Restrict policy")
         #window = db.currentWindow()
 
-        # This is whole algorithm very very unclean, but it works for now
-        # To make this more compact we could simply trasverse the qernel and append all qernels in list and then go through the list
+        # This is whole algorithm is very very unclean, but it works for now
+        # This compares matching 0 of the incoming qernel with matching 0 of a qernel on the queue, the 1 to 0 then 0 to 1 and so on
         cycles = [(0,0), (1,0), (0,1), (1,1), (2,0), (0,2), (2,1), (1,2), (2,2), (3,0), (0,3), (3,1), (1,3), (3,2), (2,3), (3,3)]
 
         if isinstance(new_qernels, Qernel):
@@ -180,7 +200,6 @@ class Multiprogrammer(Engine):
 
         next = 0
 
-        #If the incoming qernel has subqernel, loop through them
         for q in new_qernels:
             for cycle in range(0, matching_cycles):
                 if next == 1:

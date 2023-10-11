@@ -205,22 +205,7 @@ class Matcher(Engine):
         p_z = (1 - p_reset) * (1 - np.exp(-time * (rate2 - rate1))) / 2
         return p_z + p_reset
     
-    def best_overall_layoutv2(circuit, backends, successors=True, call_limit=int(3e7),
-                        cost_function=None):
-        """Find the best selection of qubits and system to run
-        the chosen circuit one.
-
-        Parameters:
-            circ (QuantumCircuit): Quantum circuit
-            backends (IBMQBackend or list): A single or list of backends.
-            successors (bool): Return list best mappings per backend passed.
-            call_limit (int): Maximum number of calls to VF2 mapper.
-            cost_function (callable): Custom cost function, default=None
-
-        Returns:
-            tuple: (best_layout, best_backend, best_error)
-            list: List of tuples for best match for each backend
-        """
+    def best_overall_layoutv2(self, circuit, backends, successors=True, cost_function=None):
 
         if not isinstance(backends, list):
             backends = [backends]
@@ -247,8 +232,7 @@ class Matcher(Engine):
                 continue
             num_qubits = config.num_qubits
             if not config.simulator and circ_qubits <= num_qubits:
-                layouts = mply.matching_layouts(circ, config.coupling_map,
-                                           call_limit=call_limit)
+                layouts = mply.matching_layouts(circ, config.coupling_map)
                 layout_and_error = mply.evaluate_layouts(circ, layouts, backend,
                                                     cost_function=cost_function)
                 if any(layout_and_error):
@@ -281,14 +265,14 @@ class Matcher(Engine):
 
         this = self.best_overall_layoutv2(circuit, self._qpus, successors=True, cost_function=cost_function)
 
-        if cost_function == None:
-            this = mm.best_overall_layout(
-            small_qc, self._qpus, successors=True, cost_function=self.accurate_cost_func
-        )
-        else:
-            this = mm.best_overall_layout(
-                small_qc, self._qpus, successors=True, cost_function=cost_function, call_limit=500000
-            )
+        #if cost_function == None:
+        #    this = mm.best_overall_layout(
+        #    small_qc, self._qpus, successors=True, cost_function=self.accurate_cost_func
+        #)
+        #else:
+        #    this = mm.best_overall_layout(
+        #        small_qc, self._qpus, successors=True, cost_function=cost_function, call_limit=500000
+        #    )
 
         #logger.log(10, "Matched circuit to backend")
 
@@ -301,55 +285,16 @@ class Matcher(Engine):
         logger = logging.getLogger(__name__)
         logging.basicConfig(level=10)
 
-        if qernel.subqernels != []:
-            for i in qernel.subqernels:
-                if i.subqernels != []:
-                    for j in i.subqernels:
-                        #tmpqernel = db.getQernel(i)
-                        #qc = QuantumCircuit.from_qasm_str(tmpqernel.circuit.decode("utf-8"))
-                        #qc_dag = DAG
-                        #qc = qc_dag.to_circuit()
-                        # print(self.match(qc, cost_function=self.trivialConstFunction))
-                        # print("-------------------------")
-                        # print(self.match(qc, cost_function=None))
-                        # print("-------------------------")
-                        this = self.match(j.circuit, cost_function=None)
-                        # print(this)
-                        # print("-------------")
-
-                        if this != 1:
-                            j.matching = this
-                            #tmpqernel.matching = this
-                            #db.setQernelField(tmpqernel.id, "matching", str(this))
-                        else:
-                            print("Matching failed")
-                            return 1
-                else:
-                    this = self.match(i.circuit, cost_function=None)
-                    # print(this)
-                    # print("-------------")
-
-                    if this != 1:
-                        i.matching = this
-                        #tmpqernel.matching = this
-                        #db.setQernelField(tmpqernel.id, "matching", str(this))
-                    else:
-                        print("Matching failed")
-                        return 1
-        else:
+        if qernel.subqernels == []:
             this = self.match(qernel.circuit, cost_function=None)
-            # print(this)
-            # print("-------------")
-
-            if this != 1:
-                qernel.matching = this
-                #tmpqernel.matching = this
-                #db.setQernelField(tmpqernel.id, "matching", str(this))
-            else:
-                print("Matching failed")
-                return 1
-
-
+            qernel.matching = this
+        else:
+            for i in qernel.subqernels:
+                if i.subqernels == []:
+                    i.matching = self.match(i.circuit, cost_function=None)
+                else:
+                    for j in i.subqernels:
+                        j.matching = self.match(j.circuit, cost_function=None)
 
         # Send to multiprogrammer
 
