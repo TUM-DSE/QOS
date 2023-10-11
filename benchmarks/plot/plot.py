@@ -349,6 +349,81 @@ def custom_plot_small_circuit_relative_fidelities(dataframes: list[pd.DataFrame]
 
 	plt.savefig(output_file, bbox_inches="tight")
 
+
+def custom_plot_small_circuit_relative_properties(dataframes: list[pd.DataFrame], titles: list[str],
+	ylabel: list[str],
+	xlabel: list[str],
+	output_file: str = "relative_properties.pdf"):
+
+	fig = plt.figure(figsize=WIDE_FIGSIZE)
+
+	x = np.array([8, 16, 24])
+	#x = dataframes[0]["bench_name"]
+
+	nrows = 1
+	ncols = 2
+	gs = gridspec.GridSpec(nrows=nrows, ncols=ncols)
+
+	axis = [fig.add_subplot(gs[i, j]) for i in range(nrows) for j in range(ncols)]
+
+	axis[0].set_ylabel(ylabel[0])
+	axis[0].set_xlabel(xlabel[0])
+
+	axis[0].set_ylim(0, 2)
+
+	axis[0].axhline(1, color="red", linestyle="-", linewidth=2)
+	
+
+	y0 = np.array(
+		[
+			df["depth"] for df in dataframes
+		]
+	)
+
+	yerr0 = np.array(
+		[
+			0 for df in dataframes
+		]
+	)
+
+	y1 = np.array(
+		[
+			df["num_nonlocal_gates"] for df in dataframes
+		]
+	)
+
+	yerr1 = np.array(
+		[
+			0 for df in dataframes
+		]
+	)
+	
+	axis[0].set_xticklabels(x)
+	axis[1].set_xticklabels(x)
+	axis[0].grid(axis="y", linestyle="-", zorder=-1)
+	axis[1].grid(axis="y", linestyle="-", zorder=-1)
+
+	grouped_bar_plot(axis[0], y0, yerr0, [""], show_average_text=True, average_text_position=1.5)
+	grouped_bar_plot(axis[1], y1, yerr1, [""], show_average_text=True, average_text_position=1.5)
+
+	axis[0].set_title(titles[0], fontsize=FONTSIZE, fontweight="bold")
+	axis[1].set_title(titles[1], fontsize=FONTSIZE, fontweight="bold")
+
+	handles, labels = axis[0].get_legend_handles_labels()
+
+	fig.legend(
+        handles,
+        labels,
+        loc="lower center",
+        bbox_to_anchor=(0.5, -0.2),
+        ncol=9,
+        frameon=False,
+    )
+	
+	fig.text(0.5, 0.95, LOWERISBETTER, ha="center", va="center", fontweight="bold", color="navy", fontsize=ISBETTER_FONTSIZE)
+
+	plt.savefig(output_file, bbox_inches="tight")
+
 def custom_plot_dataframes(
 	dataframes: list[pd.DataFrame],
 	keys: list[list[str]],

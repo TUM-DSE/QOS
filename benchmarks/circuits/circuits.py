@@ -16,8 +16,8 @@ from qiskit.converters import circuit_to_dag, dag_to_circuit
 
 BENCHMARK_CIRCUITS = [
     #"adder",
-    "qaoa_r2",
-    #"qaoa_r3",
+    #"qaoa_r2",
+    "qaoa_r3",
     #"qaoa_r4",
     "bv",
     "ghz",

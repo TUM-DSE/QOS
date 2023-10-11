@@ -308,6 +308,13 @@ class QAOAAnalysisPass(DAGAnalysisPass):
 
         for i in range(qc.num_qubits):
             for instr in data:
+                if instr.operation.name == 'rzz':
+                    param = instr.operation.params[0]
+
+                    if param > 0:
+                        J[(instr.qubits[0].index, instr.qubits[1].index)] = 1
+                    else:
+                        J[(instr.qubits[0].index, instr.qubits[1].index)] = -1
                 if instr.operation.name == 'cx':
                     if instr.qubits[1].index == i:
                         op1 = instr.qubits[0].index

@@ -72,7 +72,7 @@ class DistributedTranspiler():
     def run(self, q: Qernel):
         analysis_pass = BasicAnalysisPass()
         supermarq_features_pass = SupermarqFeaturesAnalysisPass()
-
+        
         analysis_pass.run(q)
         supermarq_features_pass.run(q)
 
@@ -88,29 +88,28 @@ class DistributedTranspiler():
         if self.methods["QF"]:
             is_qaoa_pass = IsQAOACircuitPass()
             budget = self.budget
-
             if is_qaoa_pass.run(q):
-                qaoa_analysis_pass = QAOAAnalysisPass()  
+                qaoa_analysis_pass = QAOAAnalysisPass()
                 qaoa_analysis_pass.run(q)
-
                 metadata = q.get_metadata()
                 num_cnots = metadata["num_nonlocal_gates"]
                 hotspots = list(metadata["hotspot_nodes"].values())
                 qubits_to_freeze = 0
 
                 for i in range(2):
-                    if hotspots[i] / num_cnots >= 0.1:
+                    if hotspots[i] / num_cnots >= 0.07:                        
                         qubits_to_freeze = qubits_to_freeze + 1
 
                 qubits_to_freeze = min(qubits_to_freeze, budget)
 
-                QF_pass = FrozenQubitsPass(qubits_to_freeze)
-                q = QF_pass.run(q)
-
-                budget = budget - qubits_to_freeze
+                if qubits_to_freeze > 0:
+                    QF_pass = FrozenQubitsPass(qubits_to_freeze)
+                    q = QF_pass.run(q)
+                    budget = budget - qubits_to_freeze
 
             if self.methods["GV"] and self.methods["WC"]:
                 costs = self.computeCuttingCosts(q, self.size_to_reach)
+
                 if costs["GV"] < budget or costs["WC"] < budget:
                     if costs["GV"] < costs["WC"] or (costs["GV"] == 0 and costs["WC"] == 0):
                         q = self.applyGV(q, self.size_to_reach)
