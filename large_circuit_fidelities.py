@@ -18,6 +18,8 @@ from qos.distributed_transpiler.optimiser import *
 from qos.distributed_transpiler.run import *
 from qos.distributed_transpiler.virtualizer import GVInstatiator, GVKnitter
 
+#from qos.kernel.matcher import Matcher
+
 def transpile_and_prepare(c: QuantumCircuit, b: BackendV2, reps: int) -> list[QuantumCircuit]:
     toReturn = []
 
@@ -252,11 +254,12 @@ def end_to_end_eval(args: list[str]):
     randomness = int(args[2])
     benchmark_circuits = []
 
-    #provider = IBMProvider(token='87ae595a5a0b9624fe36f477550700ee4b4dc540061a89951f197a0cd36d639e2c5e6307d533993123eaa925d9bea2de14a02b659219646ea4750e1768c76bf1')
-    provider = IBMProvider()
+    provider = IBMProvider(token='87ae595a5a0b9624fe36f477550700ee4b4dc540061a89951f197a0cd36d639e2c5e6307d533993123eaa925d9bea2de14a02b659219646ea4750e1768c76bf1')
+    #provider = IBMProvider()
+    backends = provider.backends(simulator=False, operational=True)
     #backend = provider.get_backend("ibmq_kolkata")
 
-    backend = FakeKolkataV2()
+    backend = FakeGuadalupeV2()
     #simulator = provider.get_backend("ibmq_qasm_simulator")
     simulator = AerSimulator()
     basic_analysis_pass = BasicAnalysisPass()
@@ -277,6 +280,7 @@ def end_to_end_eval(args: list[str]):
     ready_qernels = []
     dt = DistributedTranspiler(size_to_reach=4, budget=4, methods=["GV", "WC", "QR", "QF"])
     gate_virtualizer = GVInstatiator()
+    matcher = Matcher(qpus=backends)
     knitting = GVKnitter()
 
     for bc in benchmark_circuits:
@@ -289,10 +293,8 @@ def end_to_end_eval(args: list[str]):
 
     for q in ready_qernels:
         sqs = q.get_subqernels()
-        print(len(sqs))
         for sq in sqs:
             ssqs = sq.get_subqernels()
-            print(len(ssqs))
             for qq in ssqs:
                 qc_small = qq.get_circuit()
                 cqc_small = transpile(qc_small, backend, optimization_level=3)

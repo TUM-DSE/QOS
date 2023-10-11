@@ -75,30 +75,34 @@ class Matcher(Engine):
 
         max_qpu_id = db.getLastQPUid()
 
-        for i in range(1, max_qpu_id + 1):
-            qpu_name = db.getQPU(i).name
-            qpu_alias = db.getQPU(i).alias
-    
-            if "Fake" in qpu_name:
-                backend = eval(qpu_name)()
-                self._qpu_properties[backend.name()] = {}
-                self._qpu_properties[backend.name()][
-                "medianReadoutError"] = self.getMedianReadoutError(backend)
-                basis_gates = backend.configuration().basis_gates
-                for g in basis_gates:
-                    self._qpu_properties[backend.name()][g] = self.getMedianGateError(backend, g)
-            else:
-                provider = IBMProvider(token=IBM_TOKEN)
-                print("Loading backend {} ({}/{})".format(qpu_alias, i, max_qpu_id))
-                backend = provider.get_backend(qpu_alias)
-                self._qpu_properties[backend.name] = {}
-                self._qpu_properties[backend.name][
-                "medianReadoutError"] = self.getMedianReadoutError(backend)
-                basis_gates = backend.configuration().basis_gates
-                for g in basis_gates:
-                    self._qpu_properties[backend.name][g] = self.getMedianGateError(backend, g)
+        if qpus == None:
+            for i in range(1, max_qpu_id + 1):
+                qpu_name = db.getQPU(i).name
+                qpu_alias = db.getQPU(i).alias
+        
+                if "Fake" in qpu_name:
+                    backend = eval(qpu_name)()
+                    self._qpu_properties[backend.name()] = {}
+                    self._qpu_properties[backend.name()][
+                    "medianReadoutError"] = self.getMedianReadoutError(backend)
+                    basis_gates = backend.configuration().basis_gates
+                    for g in basis_gates:
+                        self._qpu_properties[backend.name()][g] = self.getMedianGateError(backend, g)
+                else:
+                    provider = IBMProvider(token=IBM_TOKEN)
+                    print("Loading backend {} ({}/{})".format(qpu_alias, i, max_qpu_id))
+                    backend = provider.get_backend(qpu_alias)
+                    self._qpu_properties[backend.name] = {}
+                    self._qpu_properties[backend.name][
+                    "medianReadoutError"] = self.getMedianReadoutError(backend)
+                    basis_gates = backend.configuration().basis_gates
+                    for g in basis_gates:
+                        self._qpu_properties[backend.name][g] = self.getMedianGateError(backend, g)
 
-            self._qpus.append(backend)
+                self._qpus.append(backend)
+        else:
+            for q in qpus:
+                self._qpus.append(q)
 
     def getMedianReadoutError(self, backend):
         props = backend.properties()
