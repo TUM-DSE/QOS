@@ -150,7 +150,9 @@ def main3():
         print(calculate_fidelity(vq._circuit, result))
 
 def FrozenQubitsAndQVMExample():
-    qc_full = QuantumCircuit.from_qasm_file("~/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/3_16_1^P=1.qasm")
+    qc_full = QuantumCircuit.from_qasm_file("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/k_regular/gridsearch_100/ideal/3_24_1^M=2_0^P=1.qasm")
+    print(qc_full)
+    exit()
     #qc_full_properties = load_pickle("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_7_1^P=1.pkl")
     print(qc_full)
     #provider = IBMProvider(instance="ibm-q/open/main")

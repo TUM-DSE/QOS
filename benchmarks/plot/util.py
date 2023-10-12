@@ -62,6 +62,7 @@ def grouped_bar_plot(
     assert y.shape == yerr.shape
 
     num_groups, num_bars = y.shape
+ 
     assert len(bar_labels) == num_bars
 
     bar_width = spacing / (num_bars + 1)

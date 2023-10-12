@@ -263,7 +263,8 @@ class Matcher(Engine):
         #    small_qc, self._qpus, successors=True, cost_function=cost_function
         #)
 
-        this = self.best_overall_layoutv2(circuit, self._qpus, successors=True, cost_function=cost_function)
+        if cost_function == None:
+            this = self.best_overall_layoutv2(circuit, self._qpus, successors=True, cost_function=self.accurate_cost_func)
 
         #if cost_function == None:
         #    this = mm.best_overall_layout(

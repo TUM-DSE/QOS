@@ -125,7 +125,7 @@ class DistributedTranspiler():
         elif self.methods["GV"] and self.methods["WC"]:
             costs = self.computeCuttingCosts(q, self.size_to_reach)
 
-            if costs["GV"] < budget or costs["WC"] < budget: 
+            if costs["GV"] < self.budget or costs["WC"] < self.budget: 
                 if costs["GV"] < costs["WC"] or (costs["GV"] == 0 and costs["WC"] == 0):
                     q = self.applyGV(q, self.size_to_reach)
                 else:
