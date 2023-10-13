@@ -70,9 +70,10 @@ def execute(circuits: list[QuantumCircuit], backend: BackendV2, shots: int = 200
     job = backend.run(circuits, shots=shots)
     
     job_id = job.job_id()
-    print(job_id)
+    
 
     if save_id:
+        print(job_id)
         with open(job_id, 'w') as file:
             file.write(job_id)
 
@@ -104,12 +105,12 @@ def main(args: list[str]):
     randomness = int(args[2])
     benchmark_circuits = []
 
-    #provider = IBMProvider(token='87ae595a5a0b9624fe36f477550700ee4b4dc540061a89951f197a0cd36d639e2c5e6307d533993123eaa925d9bea2de14a02b659219646ea4750e1768c76bf1')
+    provider = IBMProvider(token='87ae595a5a0b9624fe36f477550700ee4b4dc540061a89951f197a0cd36d639e2c5e6307d533993123eaa925d9bea2de14a02b659219646ea4750e1768c76bf1')
     #provider = IBMProvider()
     #backend = provider.get_backend("ibmq_kolkata")
 
-    #backend = FakeKolkataV2()
-    simulator = provider.get_backend("ibmq_qasm_simulator")
+    backend = FakeKolkataV2()
+    simulator = AerSimulator()
     basic_analysis_pass = BasicAnalysisPass()
 
     aggr_metadata = []
@@ -231,12 +232,12 @@ def qosDTeval(args: list[str]):
     randomness = int(args[2])
     benchmark_circuits = []
 
-    provider = IBMProvider(token='87ae595a5a0b9624fe36f477550700ee4b4dc540061a89951f197a0cd36d639e2c5e6307d533993123eaa925d9bea2de14a02b659219646ea4750e1768c76bf1')
+    #provider = IBMProvider(token='87ae595a5a0b9624fe36f477550700ee4b4dc540061a89951f197a0cd36d639e2c5e6307d533993123eaa925d9bea2de14a02b659219646ea4750e1768c76bf1')
     #provider = IBMProvider()
     #backends = provider.backends(min_num_qubits=16, simulator=False, operational=True)
-    backend = provider.get_backend("ibmq_kolkata")
+    #backend = provider.get_backend("ibm_algiers")
 
-    #backend = FakeKolkataV2()
+    backend = FakeKolkataV2()
     #simulator = provider.get_backend("ibmq_qasm_simulator")
     simulator = AerSimulator()
     basic_analysis_pass = BasicAnalysisPass()
@@ -260,21 +261,24 @@ def qosDTeval(args: list[str]):
             #aggr_metadata.append([bench, metadata["num_qubits"], metadata["depth"], metadata["num_nonlocal_gates"], metadata["num_measurements"]])
             perfect_results.append(execute(c, simulator, shots=8192))
 
+
     ready_qernels = []
     dt = DistributedTranspiler(size_to_reach=6, budget=3, methods=["GV", "WC", "QR", "QF"])
-    dt_noQF = DistributedTranspiler(size_to_reach=6, budget=3, methods=["GV", "WC", "QR"])
+    #dt_noQF = DistributedTranspiler(size_to_reach=6, budget=4, methods=["GV", "WC", "QR"])
     gate_virtualizer = GVInstatiator()
     knitting = GVKnitter()
 
     for i,bc in enumerate(benchmark_circuits):
         q = Qernel(bc)
-        if i == 3:
-            optimized_q = dt_noQF.run(q)
-        else:
-            optimized_q = dt.run(q)
+        #if i == 3:
+            #optimized_q = dt_noQF.run(q)
+        #else:
+            #optimized_q = dt.run(q)
+        optimized_q = dt.run(q)
         ready_qernels.append(gate_virtualizer.run(optimized_q))
 
     to_execute = []
+
     for i,q in enumerate(ready_qernels):
         max_depth = 0
         max_cnots = 0
@@ -283,11 +287,11 @@ def qosDTeval(args: list[str]):
 
         sqs = q.get_subqernels()
         for sq in sqs:
-            if i == 3:
+            if i == 9:
                 perfect_results[i] = execute(sq.get_circuit(), simulator, shots=8192)
             ssqs = sq.get_subqernels()
             for qq in ssqs:
-                qc_small = qq.get_circuit()  
+                qc_small = qq.get_circuit()
                 cqc_small = transpile(qc_small, backend, optimization_level=3)
                 to_execute.append(cqc_small)
                 basic_analysis_pass.run(qq)
@@ -303,13 +307,13 @@ def qosDTeval(args: list[str]):
         
         aggr_metadata.append([BENCHMARK_CIRCUITS[i], max_num_qubits, max_depth, max_cnots, max_measurements])
 
-    print(len(to_execute))
-
     for q in ready_qernels:
         for vsq in q.get_virtual_subqernels():
             vsq.edit_metadata({"shots": 8192})
 
     print("Executing")
+    print(len(to_execute))
+
     results = execute(to_execute, backend, shots=8192, save_id=True)
 
     print("knitting")
@@ -327,10 +331,11 @@ def qosDTeval(args: list[str]):
 
     for i,q in enumerate(ready_qernels):
         vsqs = q.get_virtual_subqernels()
-        if i == 3:
+        if i == 9:
             fids.append(fidelity(vsqs[3].get_results(), perfect_results[i]))
         else:
             fids.append(fidelity(vsqs[0].get_results(), perfect_results[i]))
+
 
     for i in range(len(ready_qernels)):
         aggr_metadata[i].append(fids[i])
@@ -356,13 +361,13 @@ def getCircuitProperties(args: list[str]):
     for bench in BENCHMARK_CIRCUITS:
         circuits = get_circuits(bench, (lower_limit, upper_limit))
         if bench == 'qaoa_r3':
-            small_circ = QuantumCircuit.from_qasm_file("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/k_regular/gridsearch_100/ideal/3_24_1^M=2_0^P=1.qasm")
+            #small_circ = QuantumCircuit.from_qasm_file("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/k_regular/gridsearch_100/ideal/3_24_1^M=2_0^P=1.qasm")
             tqc = transpile(circuits[0], backend, optimization_level=3)
             q = Qernel(tqc)            
             basic_analysis_pass.run(q)            
             metadata = q.get_metadata()
             aggr_metadata.append([bench, metadata["num_qubits"], metadata["depth"], metadata["num_nonlocal_gates"], metadata["num_measurements"], 0, 0])
-            qq = Qernel(small_circ)
+            qq = Qernel(circuits[0])
             qernels.append(qq)
         elif bench == 'qaoa_pl1':
             small_circ = QuantumCircuit.from_qasm_file("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/ba/gridsearch_100/ideal/1_24_1^M=2_0^P=1.qasm")
@@ -383,7 +388,7 @@ def getCircuitProperties(args: list[str]):
                 metadata = q.get_metadata()
                 aggr_metadata.append([bench, metadata["num_qubits"], metadata["depth"], metadata["num_nonlocal_gates"], metadata["num_measurements"], 0, 0])
 
-    dt = DistributedTranspiler(size_to_reach=12, budget=3, methods=["GV", "WC", "QR", "QF"])
+    dt = DistributedTranspiler(size_to_reach=6, budget=3, methods=["GV", "WC", "QR", "QF"])
     dt_noQF = DistributedTranspiler(size_to_reach=12, budget=3, methods=["GV", "WC", "QR"])
     gate_virtualizer = GVInstatiator()
 
@@ -391,7 +396,7 @@ def getCircuitProperties(args: list[str]):
 
     for i,q in enumerate(qernels):
         print("circ: ", i)
-        if i == 0 or i == 4:
+        if i == 5 or i == 4:
             optimized_q = dt_noQF.run(q)
         else:
             optimized_q = dt.run(q)
@@ -687,5 +692,5 @@ def plot_overheads():
 
     custom_plot_small_circuit_overheads(dataframes, [""], ["Runtime [s]", "Number of Circuits"], ["Number of Qubits", "Number of Qubits"])
 #qosDTeval(sys.argv)
-plot_overheads()
+plot_large_circuits_solo()
 #plot_large_circuits_solo()

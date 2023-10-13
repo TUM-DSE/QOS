@@ -40,7 +40,7 @@ class Knitter(Virtualizer):
 
 class GVInstatiator(Instantiator):
     
-    def run(self, qernel: Qernel) -> list[Qernel]:
+    def run(self, qernel: Qernel) -> Qernel:
         qc = qernel.get_circuit()
         virtual_sub_qernels = qernel.get_virtual_subqernels()
 

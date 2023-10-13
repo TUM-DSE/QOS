@@ -55,6 +55,7 @@ def dynamic_measure_and_reset(dag: DAG) -> None:
 def random_qubit_reuse(dag: DAG, size_to_reach: int = 1) -> None:
     num_qubits = len(dag.qubits)
     while num_qubits > size_to_reach:
+        print("entered")
         qubit_pair = next(find_valid_reuse_pairs(dag), None)
         if qubit_pair is None:
             break
