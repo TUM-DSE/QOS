@@ -74,7 +74,6 @@ def plot_dep_min_stats() -> plt.Figure:
 
 sns.set_theme(style="whitegrid", color_codes=True)
 colors = sns.color_palette("deep")
-
 plt.rcParams.update({"font.size": 12})
 
 def insert_column(df):

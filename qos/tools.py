@@ -13,7 +13,8 @@ from qiskit.providers.basicaer import QasmSimulatorPy
 from qiskit_ibm_provider import IBMProvider
 from qiskit.compiler import transpile
 from qos.time_estimator.basic_estimator import CircuitEstimator
-from qos.secrets import IBM_TOKEN
+from ibm_token import IBM_TOKEN
+import pickle
 
 
 def check_layout_overlap(layout1: List, layout2: List) -> bool:
@@ -44,9 +45,6 @@ def bundle_qernels(new_qernel:Qernel, queued_qernel:Qernel, queued_matching=tupl
             queued_qernel.src_qernels.append(new_qernel)
 
             return 0
-
-
-
 
 class dict2obj(object):
     def __init__(self, d):
@@ -106,6 +104,9 @@ def redisToInt(redisInt) -> int:
 def decodeRedisDict(redisDict: Dict[str, Any]) -> Dict[str, Any]:
     newDict = {}
     for key, value in redisDict.items():
+        if key == b"backend":
+            newDict[key.decode("utf-8")] = pickle.loads(value)
+            continue
         newDict[key.decode("utf-8")] = value.decode("utf-8")
     return newDict
 
@@ -173,18 +174,23 @@ def predict_queue_time(qpuId: int) -> int:
     return 0
 
 def better_estimate_execution_time(qernel: Qernel) -> float:
-    provider = IBMProvider(token=IBM_TOKEN)
+    #provider = IBMProvider(token=IBM_TOKEN)
 
     #backends = provider.backends(min_num_qubits=16, filters=lambda b: b.num_qubits <= 127, simulator=False, operational=True)
-
-    #pdb.set_trace()
-
-    backend = provider.get_backend(qernel.match[1])
+    
+    #backend = provider.get_backend(qernel.match[1])
+    #depickle
+    backend = db.getQPUField(
+        db.getQPUIdFromName(qernel.match[1]),
+        "backend")
+    backend = pickle.loads(backend)
     #pdb.set_trace()
     
     #backend = [i for i in backends if i.name=='ibm_cairo'][0]
 
     #backend = fake_provider.FakeKolkataV2()
+
+    #backend = db.getQPUFromName(qernel.match[1])
 
     tcircuit = transpile(qernel.circuit, backend)
 

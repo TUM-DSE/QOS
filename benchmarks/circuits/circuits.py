@@ -40,6 +40,28 @@ BENCHMARK_CIRCUITS = [
     #"wstate",
 ]
 
+def get_circuit(benchname: str, nqubits: int) -> QuantumCircuit:
+    
+    abs_path = os.path.dirname(os.path.abspath(__file__))
+    circuits_dir = os.path.join(abs_path, benchname)
+    file = [
+        fname
+        for fname in os.listdir(circuits_dir)
+        if fname.endswith(".qasm")
+        and fname.split(".")[0].isdigit()
+        and int(fname.split(".")[0]) == nqubits
+    ]
+
+    if len(file) == 0:
+        raise ValueError("No circuits found for the given qubit range.")
+    
+    circuit = QuantumCircuit.from_qasm_file(os.path.join(circuits_dir, file[0]))
+    
+    dag = circuit_to_dag(circuit)
+    
+    dag.remove_all_ops_named("barrier")
+    
+    return dag_to_circuit(dag)
 
 def get_circuits(benchname: str, qubit_range: tuple[int, int]) -> list[QuantumCircuit]:
     abs_path = os.path.dirname(os.path.abspath(__file__))

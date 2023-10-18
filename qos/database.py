@@ -210,7 +210,6 @@ def QPU_earliest_free_time(qpu: QPU|str|int):
     #last[0] is the execution time, last[1] is the submitted time
     #if last[0]+last[1] > time.time() then the qpu is busy and the ETA is the submitted time of the last qernel plus the execution time, otherwise the ETA is 0
     #If the ETA is more than 0 and the qpu is busy then the submitted time will be the time in the future when the qpu will be free and the incoming qernel is going to be executed
-    #pdb.set_trace()
     if type(qpu) == str:
         qpu = getQPUFromName(qpu)
     elif type(qpu) == int:
@@ -315,7 +314,7 @@ def submitQernel(qernel: Qernel) -> int:
         # estimated execution time
         # submission time,
         # estimated waiting time,
-        # predicted fidelity
+        # predicted error
 
         #print(local_queue)
 

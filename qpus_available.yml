@@ -19,11 +19,13 @@ qpus:
 ##    type: fake
 ##    provider: ibm
 #
-#  - name: IBMKolkata
-#    alias: ibmq_kolkata
-#    nqbits: 27
-#    type: real
-#    provider: ibm
+
+######
+  - name: IBMKolkata
+    alias: ibmq_kolkata
+    nqbits: 27
+    type: real
+    provider: ibm
 #
 #  - name: IBMGuadalupe
 #    alias: ibmq_guadalupe
@@ -31,54 +33,67 @@ qpus:
 #    type: real
 #    provider: ibm
 #
-#  - name: IBMNazca
-#    alias: ibm_nazca
+  - name: IBMNazca
+    alias: ibm_nazca
+    nqbits: 127
+    type: real
+    provider: ibm
+
+#  - name: IBMKyiv
+#    alias: ibm_kyiv
 #    nqbits: 127
 #    type: real
 #    provider: ibm
-#
-#  - name: IBMCusco
-#    alias: ibm_cusco
-#    nqbits: 127
-#    type: real
-#    provider: ibm
-#
-#  - name: IBMSherbrooke
-#    alias: ibm_sherbrooke
-#    nqbits: 127
-#    type: real
-#    provider: ibm
-#
-#  - name: IBMMumbai
-#    alias: ibmq_mumbai
-#    nqbits: 27
-#    type: real
-#    provider: ibm
-#
-#  - name: IBMAlgiers
-#    alias: ibm_algiers
-#    nqbits: 27
-#    type: real
-#    provider: ibm
-#
-#  - name: IBMCairo
-#    alias: ibm_cairo
-#    nqbits: 27
-#    type: real
-#    provider: ibm
-#
-#  - name: IBMHanoi
-#    alias: ibm_hanoi
-#    nqbits: 27
-#    type: real
-#    provider: ibm
-#
+
+  - name: IBMBrisbane
+    alias: ibm_brisbane
+    nqbits: 127
+    type: real
+    provider: ibm
+
+  - name: IBMCusco
+    alias: ibm_cusco
+    nqbits: 127
+    type: real
+    provider: ibm
+
+  - name: IBMSherbrooke
+    alias: ibm_sherbrooke
+    nqbits: 127
+    type: real
+    provider: ibm
+
+  - name: IBMMumbai
+    alias: ibmq_mumbai
+    nqbits: 27
+    type: real
+    provider: ibm
+
+  - name: IBMAlgiers
+    alias: ibm_algiers
+    nqbits: 27
+    type: real
+    provider: ibm
+
+  - name: IBMCairo
+    alias: ibm_cairo
+    nqbits: 27
+    type: real
+    provider: ibm
+
+  - name: IBMHanoi
+    alias: ibm_hanoi
+    nqbits: 27
+    type: real
+    provider: ibm
+
 #  - name: IBMAuckland
 #    alias: ibm_auckland
 #    nqbits: 27
 #    type: real
 #    provider: ibm
-#
+
+#######
 ##  - name: FakeMontreal
 ##    alias: fake_montreal
 ##    nqbits: 27
@@ -157,11 +172,11 @@ qpus:
 ##    type: fake
 ##    provider: ibm
 
-    - name: IBMPerth
-      alias: ibm_perth
-      nqbits: 7
-      type: real
-      provider: ibm
+#    - name: IBMPerth
+#      alias: ibm_perth
+#      nqbits: 7
+#      type: real
+#      provider: ibm
 
   #  - name: IBMLagos
   #    alias: ibm_lagos

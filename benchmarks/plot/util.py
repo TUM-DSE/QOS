@@ -5,6 +5,7 @@ import seaborn as sns
 import matplotlib.ticker as ticker
 from matplotlib import gridspec
 import os
+import pdb
 
 FONTSIZE = 12
 ISBETTER_FONTSIZE = FONTSIZE + 2
@@ -18,7 +19,7 @@ plt.rcParams.update({"font.size": FONTSIZE})
 def grouped_bar_plot(
     ax: plt.Axes,
     y: np.ndarray,
-    yerr: np.ndarray,
+    #yerr: np.ndarray,
     bar_labels: list[str],
     colors: list[str] | None = None,
     hatches: list[str] | None = None,
@@ -58,8 +59,9 @@ def grouped_bar_plot(
             "%",
         ]
 
-    assert len(y.shape) == len(yerr.shape) == 2
-    assert y.shape == yerr.shape
+    #assert len(y.shape) == len(yerr.shape) == 2
+    #assert len(y.shape) == 2
+    #assert y.shape == yerr.shape
 
     num_groups, num_bars = y.shape
  
@@ -70,7 +72,7 @@ def grouped_bar_plot(
 
     for i in range(num_bars):
         y_bars = y[:, i]
-        yerr_bars = yerr[:, i]
+        #yerr_bars = yerr[:, i]
 
         color, hatch = colors[i % len(colors)], hatches[i % len(hatches)]
 
@@ -80,7 +82,7 @@ def grouped_bar_plot(
             bar_width,
             hatch=hatch,
             label=bar_labels[i],
-            yerr=yerr_bars,
+            #yerr=yerr_bars,
             color=color,
             edgecolor="black",
             linewidth=1.5,
@@ -96,6 +98,82 @@ def grouped_bar_plot(
             print(text)
             ax.text(x_pos, average_text_position, text, ha="center")
 
+def bar_plot(
+    y: np.ndarray,
+    bar_labels: list[str],
+    colors: list[str] | None = None,
+    hatches: list[str] | None = None,
+    show_average_text: bool = False,
+    average_text_position: float = 1.05,
+    spacing: float = 2,
+    zorder: int = 2000,
+    filename: str = None,
+    y_integer: bool = False,
+    ):
+    if colors is None:
+        colors = sns.color_palette("pastel")
+    if hatches is None:
+        hatches = hatches = [
+            "/",
+            "\\",
+            "//",
+            "\\\\",
+            "x",
+            ".",
+            ",",
+            "*",
+            "o",
+            "O",
+            "+",
+            "X",
+            "s",
+            "S",
+            "d",
+            "D",
+            "^",
+            "v",
+            "<",
+            ">",
+            "p",    
+            "P",
+            "$",
+            "#",
+            "%",
+        ]
+
+    #assert len(y.shape) == len(yerr.shape) == 2
+    #assert len(y.shape) == 2
+    #assert y.shape == yerr.shape
+
+    num_bars = len(y)
+    x = np.arange(num_bars)
+
+    fig, ax = plt.subplots()
+
+    color, hatch = colors[:len(y)], hatches[:len(y)]
+
+    bar_width = spacing / (num_bars)
+
+    plt.xticks(rotation=45)
+
+    ax.bar(
+        x,
+        y,
+        bar_width,
+        hatch=hatch,
+        tick_label=bar_labels,
+        #yerr=yerr_bars,
+        color=color,
+        edgecolor="black",
+        linewidth=1.5,
+        error_kw=dict(lw=2, capsize=3),
+        zorder=zorder,
+    )
+    if y_integer:
+        y_ticks_integer = np.arange(0, max(y) + 1, (max(y) // 10) + 1)
+        ax.set_yticks(ticks=y_ticks_integer)
+
+    save_figure(fig, filename)
 
 def index_dataframe_mean_std(
     df: pd.DataFrame,
@@ -154,48 +232,41 @@ def save_figure(fig: plt.Figure, exp_name: str):
 #         index_dataframe_mean_std(
 #             dfs[0], "num_qubits", np.array([8, 10, 12]), "num_cnots_base"
 # #         )
-#     )
+#     ) 
 
-# def plot_lines(ax, keys: list[str], labels: list[str], dataframes: list[pd.DataFrame]):
-#     all_x = set()
-#     for ls, key in enumerate(keys):
-#         for df in dataframes:
-#             grouped_df = prepare_dataframe(df, key)
-#             x = grouped_df[X_KEY]
-#             all_x.update(set(x))
-#             y_mean = grouped_df[key]["mean"]
-#             y_error = grouped_df[key]["sem"]
-#             if np.isnan(y_error).any():
-#                 y_error = None
 
-#             ax.errorbar(
-#                 x,
-#                 y_mean,
-#                 yerr=y_error,
-#                 label=labels[ls],
-#                 # color=COLORS[ls],
-#                 marker=MARKER_STYLES[ls],
-#                 markersize=6,
-#                 markeredgewidth=1.5,
-#                 markeredgecolor="black",
-#                 linestyle=LINE_STYLES[ls],
-#                 linewidth=2,
-#                 capsize=3,
-#                 capthick=1.5,
-#                 ecolor="black",
-#             )
-#     x = sorted(list(all_x))
-#     ax.set_xticks(x)
+def plot_lines_2yaxis(xkey:str, xlabel: str, ykeys: list[str], labels: list[str], data: pd.DataFrame, filename: str):
 
-# def prepare_dataframe(df: pd.DataFrame, key: str) -> pd.DataFrame:
-#     res_df = df.loc[df[key] > 0.0]
-#     res_df = (
-#         res_df.groupby("num_qubits")
-#         .agg({key: ["mean", "sem"]})
-#         .sort_values(by=["num_qubits"])
-#         .reset_index()
-#     )
-#     return res_df
+    sns.set_theme()
+    sns.set_style("whitegrid")
+
+    fig, ax1 = plt.subplots()
+    sns.lineplot(data=data, x=xkey, y=ykeys[0], ax=ax1, label=labels[0], markers='o')
+
+    ax2 = ax1.twinx()
+
+    sns.lineplot(data=data, x=xkey, y=ykeys[1], ax=ax2, label=labels[1], markers='o')
+
+    ax1.set_ylabel(labels[0], color='b')
+    ax2.set_ylabel(labels[1], color='r')
+    ax1.set_xlabel(xlabel)
+    
+    ax1.legend(loc='upper left')
+    ax2.legend(loc='upper right')
+
+    save_figure(fig, filename)
+
+def prepare_dataframe(df: pd.DataFrame, key: str) -> pd.DataFrame:
+    res_df = df.loc[df[key] > 0.0]
+    res_df = (
+        res_df.groupby("num_qubits")
+        .agg({key: ["mean", "sem"]})
+        .sort_values(by=["num_qubits"])
+        .reset_index())
+    return res_df
+
+
+
 
 
 # def calculate_figure_size(num_rows, num_cols):

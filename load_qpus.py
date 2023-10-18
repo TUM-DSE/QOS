@@ -24,9 +24,9 @@ def load_qpus(qpu_file: str):
     return 0
 
 
-# print("Available QPUs:")
-# for i in range(1, 5):
-#    print(getQPU(i))
+#print("Available QPUs:")
+#for i in range(1, 5):
+#    print(db.getQPU(i))
 
 logging.basicConfig(level=50)
 
