@@ -15,7 +15,7 @@ import pickle
 from networkx.readwrite import json_graph
 from qos.dag import DAG
 from qiskit_ibm_provider import IBMProvider
-from qos.secrets import IBM_TOKEN
+from ibm_token import IBM_TOKEN
 import mapomatic.layouts as mply
 
 gates = {
@@ -92,6 +92,7 @@ class Matcher(Engine):
                     provider = IBMProvider(token=IBM_TOKEN)
                     print("Loading backend {} ({}/{})".format(qpu_alias, i, max_qpu_id))
                     backend = provider.get_backend(qpu_alias)
+                    db.setQPUField(i, "backend", pickle.dumps(backend))
                     self._qpu_properties[backend.name] = {}
                     self._qpu_properties[backend.name][
                     "medianReadoutError"] = self.getMedianReadoutError(backend)
@@ -158,6 +159,15 @@ class Matcher(Engine):
             readouts.append(props.readout_error(i))
 
         return np.median(readouts)
+    
+    def getbackend(self, backend_name:str):
+
+        for i in self._qpus:
+            if i.name() == backend_name:
+                return i
+            
+        return None
+
 
     def getMedianGateError(self, backend, gate):
         props = backend.properties()
@@ -299,6 +309,7 @@ class Matcher(Engine):
         return p_z + p_reset
     
     def best_overall_layoutv2(self, circuit, backends, successors=True, cost_function=None):
+        #pdb.set_trace()
 
         if not isinstance(backends, list):
             backends = [backends]
@@ -362,22 +373,68 @@ class Matcher(Engine):
         if best_out:
             return best_out[0]
         return best_out
+    
+
+    def best_overall_layoutv3(self, circuit, backends, successors=True, cost_function=None):
+        #pdb.set_trace()
+
+        if not isinstance(backends, list):
+            backends = [backends]
+
+        if cost_function is None:
+            cost_function = mply.default_cost
+
+        best_out = []
+
+        try:
+            trans_qc27 = transpile(circuit, backend, optimization_level=3)
+        except NameError as e:
+            print("[ERROR] - Can't transpile circuit on backend {}".format(backend.name()))
+            return 1
+
+        try:
+            trans_qc127 = transpile(circuit, backend, optimization_level=3)
+        except NameError as e:
+            print("[ERROR] - Can't transpile circuit on backend {}".format(backend.name()))
+            return 1
+
+        circ27 = mm.deflate_circuit(trans_qc27)
+        circ127 = mm.deflate_circuit(trans_qc127)
+
+        for backend in backends:
+            config = backend.configuration()
+
+            if backend.n_qubits == 27:
+                circ = circ27
+            elif backend.n_qubits == 127:
+                circ = circ127
+
+            circ_qubits = circ.num_qubits
+            circuit_gates = set(circ.count_ops()).difference({'barrier', 'reset', 'measure'})
+            if not circuit_gates.issubset(backend.configuration().basis_gates):
+                continue
+            num_qubits = config.num_qubits
+            if not config.simulator and circ_qubits <= num_qubits:
+                layouts = mply.matching_layouts(circ, config.coupling_map)
+                layout_and_error = mply.evaluate_layouts(circ, layouts, backend,
+                                                    cost_function=cost_function)
+                if any(layout_and_error):
+                    layout = layout_and_error[0][0]
+                    error = layout_and_error[0][1]
+                    best_out.append((layout, config.backend_name, error))
+        best_out.sort(key=lambda x: x[2])
+        if successors:
+            return best_out
+        if best_out:
+            return best_out[0]
+        return best_out
 
     def match(self, circuit: QuantumCircuit, cost_function=None) -> List:
 
         #logger = logging.getLogger(__name__)
         #logging.basicConfig(level=10)
 
-        #try:
-        #    trans_qc = transpile(circuit, self._qpus[0], optimization_level=3)
-        #except NameError as e:
-        #    print("Can't transpile on this backend", e)
-        #    return 1
-        #
-        #small_qc = mm.deflate_circuit(trans_qc)
-
-        #this = mm.best_overall_layout(
-        #    small_qc, self._qpus, successors=True, cost_function=cost_function
+        #this = mm.best_overall_layout(circuit, self._qpus, successors=True, cost_function=cost_function
         #)
 
         if cost_function == None:
@@ -391,10 +448,39 @@ class Matcher(Engine):
         #    this = mm.best_overall_layout(
         #        small_qc, self._qpus, successors=True, cost_function=cost_function, call_limit=500000
         #    )
+        #this = self.best_overall_layoutv2(circuit, self._qpus, successors=True, cost_function=cost_function)
+        #this = mm.best_overall_layout(small_qc, self._qpus, successors=True, cost_function=cost_function, call_limit=50000)
+        #this = self.best_overall_layoutv3(circuit, self._qpus, successors=True, #cost_function=cost_function, call_limit=50000)
 
         #logger.log(10, "Matched circuit to backend")
 
         return this
+    
+    def match_list(self, circuits: List[QuantumCircuit], cost_function=None) -> List:
+
+        #logger = logging.getLogger(__name__)
+        #logging.basicConfig(level=10)
+
+        print("Transpiling all circuits")
+
+        try:
+            trans_qcs = transpile(circuits, self._qpus[0], optimization_level=3)
+        except NameError as e:
+            print("Can't transpile on this backend", e)
+            return 1
+        
+        small_qcs = []
+        best_layouts = []
+
+        for a, i  in enumerate(trans_qcs):
+
+            print("Matching circuit, num_qubits:{}, depth:{}".format(circuits[a].num_qubits, circuits[a].depth()))
+            
+            small_qc = mm.deflate_circuit(i)
+
+            best_layouts.append(mm.best_overall_layout(small_qc, self._qpus, successors=True, cost_function=cost_function, call_limit=10000))
+
+        return best_layouts
 
     def run(self, qernel: Qernel) -> int:
 
@@ -423,6 +509,16 @@ class Matcher(Engine):
         ## multiprog = Multiprogrammer()
         ## multiprog.submit(qernel)
         #return 0
+
+    def run_list(self, qernels: List[Qernel]) -> int:
+
+        # Running a list is just to make matching faster but it wouldnt be used in a real applicatino of QOS
+        # Also, it doesnt support subqernels, it is mainly for evaluating the scheduler
+
+        this = self.match_list([i.circuit for i in qernels], cost_function=None)
+        
+        for i in range(len(this)):
+            qernels[i].matching = this[i]
 
     # This is to submit a single qernel instead of a whole qernel with subqernels
     def submit_single(self, qernel: Qernel) -> int:

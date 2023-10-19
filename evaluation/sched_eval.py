@@ -10,10 +10,12 @@ import matplotlib.pyplot as plt
 
 CIRC_SIZE = 8
 CIRC_DEPTH = 7
-CIRC_NUMBER = 32
+CIRC_NUMBER = 16
 SUB_FREQ = 1
 FID_WEIGHT = 0.9
 UTIL_WEIGHT = 0
+
+FID_WEIGHTS = [0.1, 0.3, 0.5, 0.7, 0.9]
 
 def main():
     
@@ -29,16 +31,9 @@ def main():
     matcher = Matcher()
     qernels = []
 
-    for i in range(0, CIRC_NUMBER, 3):
+    for i in range(CIRC_NUMBER):
       print("Matching qernel {}...".format(str(i)))
-      new_qernel_sub1 = Qernel(random_circuit(CIRC_SIZE, CIRC_DEPTH, max_operands=2, measure=True))
-      new_qernel_sub2 = Qernel(random_circuit(CIRC_SIZE, CIRC_DEPTH, max_operands=2, measure=True))
-      main_qernel = Qernel()
-      new_qernel_sub1.id = i + 1
-      new_qernel_sub2.id = i + 2
-      main_qernel.add_subqernel(new_qernel_sub1)
-      main_qernel.add_subqernel(new_qernel_sub2)
-      #submit time in seconds times the sub_freq
+      main_qernel = Qernel(random_circuit(CIRC_SIZE, CIRC_DEPTH, max_operands=2, measure=True))
       main_qernel.submit_time = i*SUB_FREQ
       main_qernel.id = i
       matcher.run(main_qernel)
@@ -64,9 +59,53 @@ def main():
 
     #TypeError: only size-1 arrays can be converted to Python scalars
 
-    pdb.set_trace()
+          avg_error_list.append(avg_error/CIRC_NUMBER)
+      avg_wait_list.append(avg_wait/CIRC_NUMBER)
+
+      #plt.figure(figsize=(max([i[1] for i in dist]),len(dist)+3))
+
+      plt.bar(range(len(dist)), [i[1] for i in dist], align='center')
+      #fig, ax = plt.subplots()
+      plt.xticks(range(len(dist)), [i[0] for i in dist])
+      plt.xticks(rotation=30)
+      plt.text(len(dist), max([i[1] for i in dist])-2, 'Avg fidelity:{}\nAvg waiting time:{}s\n'.format(round(avg_error/CIRC_NUMBER,3), round((avg_wait/CIRC_NUMBER),3)), fontsize=12, bbox=dict(facecolor='white', edgecolor='gray', boxstyle='round'))
+      #ax.text(1.03, 0.98, my_text, transform=ax.transAxes, fontsize=12, verticalalignment='top', bbox=props)
+      #plt.autoscale(enable=True, axis='x', tight=True)
+      #fig.setp(ax.get_xticklabels(), rotation=30, horizontalalignment='right')
+      plt.tight_layout()
+      plt.savefig('dist{}.png'.format(str(fid)))
+      plt.close()
+      #plt.show()
+      #all_queues = sched.run(qernels, "bestqpu")
+
+    #pdb.set_trace()
+
+    fig, ax1 = plt.subplots()
+
+    # Plot avg fidelity on the left y-axis
+    ax1.plot(FID_WEIGHTS, avg_error_list, label='Avg fidelity', color='b')
+    ax1.set_xlabel('Fidelity weight')
+    ax1.set_ylabel('Avg fidelity', color='b')
+    ax1.tick_params(axis='y', labelcolor='b')
+    ax1.legend(loc='upper left')
+
+    # Create a secondary y-axis on the right
+    ax2 = ax1.twinx()
+
+    # Plot avg waiting time on the right y-axis
+    ax2.plot(FID_WEIGHTS, avg_wait_list, label='Avg waiting time', color='r')
+    ax2.set_ylabel('Avg waiting time', color='r')
+    ax2.tick_params(axis='y', labelcolor='r')
+    ax2.legend(loc='upper right')
+
+    plt.title('Avg Fidelity and Waiting Time')
+    plt.savefig('avg_error_and_wait.png')
+    plt.show()
+
+    #pdb.set_trace()
 
     plt.bar(range(len(dist)), [i[1] for i in dist], align='center')
+    plt.xticks(rotation=30)
     plt.xticks(range(len(dist)), [i[0] for i in dist])
     plt.savefig('dist.png')
     plt.show()
