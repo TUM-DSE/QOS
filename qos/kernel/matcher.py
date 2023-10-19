@@ -104,6 +104,52 @@ class Matcher(Engine):
         else:
             for q in qpus:
                 self._qpus.append(q)
+                self._qpu_properties[q.name] = {}
+                self._qpu_properties[q.name]["medianReadoutError"] = self.getMedianReadoutError(q)
+
+                non_local_gate_error = []
+                basis_gates = q.configuration().basis_gates                
+                for g in basis_gates:
+                    self._qpu_properties[q.name][g] = self.getMedianGateError(q, g)
+                    if gates[g] == 2:
+                        non_local_gate_error .append(self._qpu_properties[q.name][g])
+
+                self._qpu_properties[q.name]["medianNonLocalError"] = np.median(non_local_gate_error)
+                self._qpu_properties[q.name]["medianT1"] = self.getMedianT1(q)
+                self._qpu_properties[q.name]["medianT2"] = self.getMedianT2(q)
+
+            best_readout = 1
+            best_T2 = 0
+            best_readout_machine = ""
+            best_T2_machine = ""
+            best_nonlocal_error = 1
+            best_nonlocal_machine = ""
+
+            best_overall_score = 0
+            best_overall_machine = ""
+
+            for k,v in self._qpu_properties.items():
+                medianReadout = v["medianReadoutError"]
+                medianT2 = v["medianT2"]
+                medianNonLocal = v["medianNonLocalError"]
+                score = ((1-medianReadout) + (1-medianNonLocal) + (medianT2 / 200)) / 3
+
+                if score > best_overall_score:
+                    best_overall_score = score
+                    best_overall_machine = k
+
+                if medianReadout < best_readout:
+                    best_readout = medianReadout
+                    best_readout_machine = k
+                if medianT2 > best_T2:
+                    best_T2 = medianT2
+                    best_T2_machine = k
+                if medianNonLocal < best_nonlocal_error:
+                    best_nonlocal_error =medianNonLocal
+                    best_nonlocal_machine = k
+
+            print(best_nonlocal_machine, best_readout_machine, best_T2_machine)
+            print(best_overall_machine)
 
     def getMedianReadoutError(self, backend):
         props = backend.properties()
@@ -140,6 +186,42 @@ class Matcher(Engine):
                 errors.append(props.gate_error(gate, pair))
 
         return np.median(errors)
+    
+
+    def getMedianT1(self, backend):
+        props = backend.properties()
+        num_qubits = backend.configuration().num_qubits
+
+        t1s = []
+        average_t1 = 0
+
+        for qq in range(num_qubits):
+           
+            try:
+                t1 = props.qubit_property(qq, "T1")[0]
+                t1s.append(t1)
+                average_t1 = average_t1 + t1
+            except:
+                t1s.append(average_t1 / len(t1s))
+
+        return np.median(t1s)
+
+    def getMedianT2(self, backend):
+        props = backend.properties()
+        num_qubits = backend.configuration().num_qubits
+
+        t2s = []
+        average_t2 = 0
+
+        for qq in range(num_qubits):
+            try:
+                t2 = props.qubit_property(qq, "T2")[0]
+                t2s.append(t2)
+                average_t2 = average_t2 + t2
+            except:
+                t2s.append(average_t2 / len(t2s))
+
+        return np.median(t2s)
 
     def trivialConstFunction(self, circuit: QuantumCircuit, layouts, backend):
         fid = 1.0
@@ -164,8 +246,19 @@ class Matcher(Engine):
         dt = backend.configuration().dt
         num_qubits = backend.configuration().num_qubits
 
-        t1s = [props.qubit_property(qq, "T1")[0] for qq in range(num_qubits)]
-        t2s = [props.qubit_property(qq, "T2")[0] for qq in range(num_qubits)]
+        t1s = []
+        t2s = []
+        average_t2 = 0
+
+        for qq in range(num_qubits):
+            t1s.append(props.qubit_property(qq, "T1")[0])
+            try:
+                t2 = props.qubit_property(qq, "T2")[0]
+                t2s.append(t2)
+                average_t2 = average_t2 + t2
+            except:
+                t2s.append(average_t2 / len(t2s))
+
 
         for layout in layouts:
             sch_circ = transpile(
@@ -230,12 +323,33 @@ class Matcher(Engine):
             config = backend.configuration()
 
             try:
-                trans_qc = transpile(circuit, backend, optimization_level=3)
+                #trans_qc = transpile(circuit, backend, optimization_level=3)
+                trans_qc_list = transpile([circuit]*20, backend, optimization_level=3)
+
+                #trans_qc_list = [mm.deflate_circuit(tqc) for tqc in trans_qc_list]
+                #trans_qc_list = [tqc for tqc in trans_qc_list if tqc.num_qubits == circuit.num_qubits]
+                #print(len(trans_qc_list))
+
+                best_cx_count = [circ.num_nonlocal_gates() for circ in trans_qc_list]
+                best_idx = np.argmin(best_cx_count)
+                trans_qc = trans_qc_list[best_idx]
+
             except NameError as e:
                 print("[ERROR] - Can't transpile circuit on backend {}".format(backend.name()))
                 return 1
 
             circ = mm.deflate_circuit(trans_qc)
+
+            """
+            try:
+                assert(circ.num_qubits == circuit.num_qubits)
+            except:
+                print(circ.num_qubits, circuit.num_qubits)
+                print(circ)
+                print(circuit)
+                exit()
+            """
+
 
             circ_qubits = circ.num_qubits
             circuit_gates = set(circ.count_ops()).difference({'barrier', 'reset', 'measure'})
@@ -243,13 +357,16 @@ class Matcher(Engine):
                 continue
             num_qubits = config.num_qubits
             if not config.simulator and circ_qubits <= num_qubits:
-                layouts = mply.matching_layouts(circ, config.coupling_map)
+                layouts = mply.matching_layouts(circ, config.coupling_map, call_limit=int(1e3))
                 layout_and_error = mply.evaluate_layouts(circ, layouts, backend,
                                                     cost_function=cost_function)
                 if any(layout_and_error):
-                    layout = layout_and_error[0][0]
-                    error = layout_and_error[0][1]
-                    best_out.append((layout, config.backend_name, error))
+                    for l in layout_and_error:
+                        if len(l[0]) == circuit.num_qubits:
+                            layout = l[0]
+                            error = l[1]
+                            best_out.append((layout, config.backend_name, error))
+                            break                    
         best_out.sort(key=lambda x: x[2])
         if successors:
             return best_out

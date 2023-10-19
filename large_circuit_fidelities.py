@@ -2,6 +2,8 @@ import csv
 import sys
 import pandas as pd
 from time import perf_counter
+from multiprocessing import Pool
+import copy
 
 from qiskit.circuit import QuantumCircuit
 from qiskit.providers.fake_provider import *
@@ -12,14 +14,63 @@ from qiskit.quantum_info.analysis import hellinger_fidelity
 from qiskit_ibm_provider import IBMProvider
 
 from benchmarks.circuits import *
-from benchmarks.plot.plot import custom_plot_large_circuit_fidelities, custom_plot_small_circuit_relative_fidelities, custom_plot_small_circuit_relative_properties, custom_plot_small_circuit_overheads
+from benchmarks.plot.plot import * 
 
 from qos.distributed_transpiler.analyser import *
 from qos.distributed_transpiler.optimiser import *
 from qos.distributed_transpiler.run import *
 from qos.distributed_transpiler.virtualizer import GVInstatiator, GVKnitter
+from qos.kernel.multiprogrammer import Multiprogrammer
+
+from qvm.qvm.compiler.virtualization.gate_decomp import OptimalDecompositionPass
+from qvm.qvm.run import run_virtual_circuit
+from qvm.examples.fid import calculate_fidelity
+from qvm.qvm.quasi_distr import QuasiDistr
 
 from qos.kernel.matcher import Matcher
+
+def getEffectiveUtilization(qc: QuantumCircuit, backend_num_qubits: int):
+    max_duration = 0
+    utilization = (qc.num_qubits / backend_num_qubits) * 100
+
+    for i in range(qc.num_qubits):
+        if qc.qubit_duration(i) > max_duration:
+            max_duration = qc.qubit_duration(i)
+
+    for i in range(qc.num_qubits):
+        utilization = utilization - (((qc.qubit_duration(i) / max_duration) * 100) / backend_num_qubits)
+
+    return utilization
+
+
+def best_selection(circuits: list[QuantumCircuit], weighted: bool = False, weights: list[float] = []):
+    basic_analysis_pass = BasicAnalysisPass()
+    supermarq_analysis_pass = SupermarqFeaturesAnalysisPass()
+    multiprogrammer = Multiprogrammer()
+    best_score = 0
+    to_return_0 = None
+    to_return_1 = None
+
+    for i in range(len(circuits)):
+        for j in range(len(circuits)):
+            if i != j:
+                q0 = Qernel(circuits[i])
+                q1 = Qernel(circuits[j])
+
+                basic_analysis_pass.run(q0)
+                basic_analysis_pass.run(q1)
+
+                supermarq_analysis_pass.run(q0)
+                supermarq_analysis_pass.run(q1)
+
+                score = multiprogrammer.get_matching_score(q0, q1, weighted, weights)
+
+                if score > best_score:
+                    to_return_0 = q0.get_circuit()
+                    to_return_1 = q1.get_circuit()
+                    best_score = score
+
+    return (to_return_0, to_return_1)
 
 def split_counts_bylist(counts, kl):
     counts_list = []
@@ -99,7 +150,7 @@ def write_to_csv(filename, data):
         for row in data:
             writer.writerow(row)
 
-def main(args: list[str]):
+def getLargeCircuitFidelities(args: list[str]):
     lower_limit = int(args[1])
     upper_limit = lower_limit + 1
     randomness = int(args[2])
@@ -226,18 +277,50 @@ def getCuttingResults(args: list[str]):
 
     write_to_csv("cut_circuits_solo_" + str(lower_limit) + ".csv", aggr_metadata)
 
-def qosDTeval(args: list[str]):
+def quickTest():
+    circuit = QuantumCircuit.from_qasm_file("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/k_regular/gridsearch_100/ideal/3_24_1^M=2_0^P=1.qasm")
+    #circuit =  get_circuits("bv", (24, 25))[0]
+    #backend = FakeKolkataV2()
+    #provider = IBMProvider()
+    provider = IBMProvider(token='87ae595a5a0b9624fe36f477550700ee4b4dc540061a89951f197a0cd36d639e2c5e6307d533993123eaa925d9bea2de14a02b659219646ea4750e1768c76bf1')
+    simulator = provider.get_backend("ibmq_qasm_simulator")
+
+    job = provider.retrieve_job('cmpd97wz31fg008xynn0')
+    noisy_results = job.result().get_counts()
+
+    perfect_results = QuasiDistr.from_counts(execute(circuit, simulator, shots=8192))
+
+    #knitted_results = res_dist.nearest_probability_distribution()
+
+    print("FID: ", fidelity(noisy_results, perfect_results))
+    exit()
+
+    decomp_pass = OptimalDecompositionPass(12)
+
+    cut_circ = decomp_pass.run(circuit, 3)
+    virt_cut_circ = VirtualCircuit(cut_circ)
+
+    counter = 0
+    results = {}
+    for frag, frag_circuit in virt_cut_circ.fragment_circuits.items():
+        results[frag] = [QuasiDistr.from_counts(noisy_results)]
+
+    with Pool(processes=8) as pool:
+        res_dist = virt_cut_circ.knit(results, pool)
+
+def getDTfidelities(args: list[str]):
     lower_limit = int(args[1])
     upper_limit = lower_limit + 1
     randomness = int(args[2])
     benchmark_circuits = []
 
-    #provider = IBMProvider(token='87ae595a5a0b9624fe36f477550700ee4b4dc540061a89951f197a0cd36d639e2c5e6307d533993123eaa925d9bea2de14a02b659219646ea4750e1768c76bf1')
+    provider = IBMProvider(token='87ae595a5a0b9624fe36f477550700ee4b4dc540061a89951f197a0cd36d639e2c5e6307d533993123eaa925d9bea2de14a02b659219646ea4750e1768c76bf1')
     #provider = IBMProvider()
     #backends = provider.backends(min_num_qubits=16, simulator=False, operational=True)
     #backend = provider.get_backend("ibm_algiers")
+    backend = provider.get_backend("ibmq_kolkata")
 
-    backend = FakeKolkataV2()
+    #backend = FakeKolkataV2()
     #simulator = provider.get_backend("ibmq_qasm_simulator")
     simulator = AerSimulator()
     basic_analysis_pass = BasicAnalysisPass()
@@ -246,15 +329,17 @@ def qosDTeval(args: list[str]):
     perfect_results = []
 
     for bench in BENCHMARK_CIRCUITS:
-        #if bench == 'qaoa_r3':
-            #circuits = [QuantumCircuit.from_qasm_file("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/k_regular/gridsearch_100/ideal/3_24_1^M=2_0^P=1.qasm")]
-        #elif bench == 'qaoa_pl1':
-            #circuits = [QuantumCircuit.from_qasm_file("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/ba/gridsearch_100/ideal/1_24_1^M=2_0^P=1.qasm")]
-        #else:
-            #circuits = get_circuits(bench, (lower_limit, upper_limit))
-        circuits = get_circuits(bench, (lower_limit, upper_limit))
+        if bench == 'qaoa_r3':
+            circuits = [QuantumCircuit.from_qasm_file("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/k_regular/gridsearch_100/ideal/3_24_1^M=2_0^P=1.qasm")]
+        elif bench == 'qaoa_pl1':
+            circuits = [QuantumCircuit.from_qasm_file("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/ba/gridsearch_100/ideal/1_24_1^M=2_0^P=1.qasm")]
+        else:
+            circuits = get_circuits(bench, (lower_limit, upper_limit))
+        #circuits = get_circuits(bench, (lower_limit, upper_limit))
+        
         for c in circuits:
             benchmark_circuits.append(c)
+            #print(c)
             #q = Qernel(c)
             #basic_analysis_pass.run(q)
             #metadata = q.get_metadata()
@@ -262,19 +347,20 @@ def qosDTeval(args: list[str]):
             perfect_results.append(execute(c, simulator, shots=8192))
 
 
+
     ready_qernels = []
     dt = DistributedTranspiler(size_to_reach=6, budget=3, methods=["GV", "WC", "QR", "QF"])
-    #dt_noQF = DistributedTranspiler(size_to_reach=6, budget=4, methods=["GV", "WC", "QR"])
+    dt_noQF = DistributedTranspiler(size_to_reach=6, budget=3, methods=["GV", "WC", "QR"])
     gate_virtualizer = GVInstatiator()
     knitting = GVKnitter()
 
     for i,bc in enumerate(benchmark_circuits):
         q = Qernel(bc)
-        #if i == 3:
-            #optimized_q = dt_noQF.run(q)
-        #else:
-            #optimized_q = dt.run(q)
-        optimized_q = dt.run(q)
+        if i == 10:
+            optimized_q = dt_noQF.run(q)
+        else:
+            optimized_q = dt.run(q)
+        #optimized_q = dt.run(q)
         ready_qernels.append(gate_virtualizer.run(optimized_q))
 
     to_execute = []
@@ -286,13 +372,18 @@ def qosDTeval(args: list[str]):
         max_num_qubits = 0
 
         sqs = q.get_subqernels()
+        print(len(sqs))
         for sq in sqs:
-            if i == 9:
+            if i == 10:
+                print("here")
                 perfect_results[i] = execute(sq.get_circuit(), simulator, shots=8192)
+                print("here")
             ssqs = sq.get_subqernels()
+            print(len(ssqs))
             for qq in ssqs:
-                qc_small = qq.get_circuit()
-                cqc_small = transpile(qc_small, backend, optimization_level=3)
+                qc_small = qq.get_circuit()                
+                cqc_small = transpile(qc_small, backend, optimization_level=3, scheduling_method='alap')
+                print(cqc_small)
                 to_execute.append(cqc_small)
                 basic_analysis_pass.run(qq)
                 metadata = qq.get_metadata()
@@ -313,6 +404,7 @@ def qosDTeval(args: list[str]):
 
     print("Executing")
     print(len(to_execute))
+    exit()
 
     results = execute(to_execute, backend, shots=8192, save_id=True)
 
@@ -331,7 +423,7 @@ def qosDTeval(args: list[str]):
 
     for i,q in enumerate(ready_qernels):
         vsqs = q.get_virtual_subqernels()
-        if i == 9:
+        if i == 10:
             fids.append(fidelity(vsqs[3].get_results(), perfect_results[i]))
         else:
             fids.append(fidelity(vsqs[0].get_results(), perfect_results[i]))
@@ -362,31 +454,55 @@ def getCircuitProperties(args: list[str]):
         circuits = get_circuits(bench, (lower_limit, upper_limit))
         if bench == 'qaoa_r3':
             #small_circ = QuantumCircuit.from_qasm_file("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/k_regular/gridsearch_100/ideal/3_24_1^M=2_0^P=1.qasm")
-            tqc = transpile(circuits[0], backend, optimization_level=3)
-            q = Qernel(tqc)            
-            basic_analysis_pass.run(q)            
-            metadata = q.get_metadata()
-            aggr_metadata.append([bench, metadata["num_qubits"], metadata["depth"], metadata["num_nonlocal_gates"], metadata["num_measurements"], 0, 0])
+            min_cnots = 1000000000
+            min_depth = 1000000000
+            for i in range(20):
+                tqc = transpile(circuits[0], backend, optimization_level=3)
+                q = Qernel(tqc)            
+                basic_analysis_pass.run(q)            
+                metadata = q.get_metadata()
+                if metadata["depth"] < min_depth:
+                    min_depth = metadata["depth"]
+                if metadata["num_nonlocal_gates"] < min_cnots:
+                    min_cnots = metadata["num_nonlocal_gates"]
+
+            aggr_metadata.append([bench, metadata["num_qubits"], max_depth, max_cnots, metadata["num_measurements"], 0, 0])
             qq = Qernel(circuits[0])
             qernels.append(qq)
         elif bench == 'qaoa_pl1':
             small_circ = QuantumCircuit.from_qasm_file("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/ba/gridsearch_100/ideal/1_24_1^M=2_0^P=1.qasm")
-            tqc = transpile(circuits[0], backend, optimization_level=3)
-            q = Qernel(tqc)            
-            basic_analysis_pass.run(q)            
-            metadata = q.get_metadata()
-            aggr_metadata.append([bench, metadata["num_qubits"], metadata["depth"], metadata["num_nonlocal_gates"], metadata["num_measurements"], 0, 0])
+            min_cnots = 1000000000
+            min_depth = 1000000000
+            for i in range(20):
+                tqc = transpile(circuits[0], backend, optimization_level=3)
+                q = Qernel(tqc)            
+                basic_analysis_pass.run(q)            
+                metadata = q.get_metadata()
+                if metadata["depth"] > min_depth:
+                    min_depth = metadata["depth"]
+                if metadata["num_nonlocal_gates"] > min_cnots:
+                    min_cnots = metadata["num_nonlocal_gates"]
+
+            aggr_metadata.append([bench, metadata["num_qubits"], max_depth, max_cnots, metadata["num_measurements"], 0, 0])
             qq = Qernel(small_circ)
             qernels.append(qq)
         else:  
             for c in circuits:
-                tqc = transpile(c, backend, optimization_level=3)
-                q = Qernel(tqc)
-                qq = Qernel(c)
-                basic_analysis_pass.run(q)
-                qernels.append(qq)
-                metadata = q.get_metadata()
-                aggr_metadata.append([bench, metadata["num_qubits"], metadata["depth"], metadata["num_nonlocal_gates"], metadata["num_measurements"], 0, 0])
+                min_cnots = 1000000000
+                min_depth = 1000000000
+                for i in range(20):
+                    tqc = transpile(c, backend, optimization_level=3)
+                    q = Qernel(tqc)
+                    qq = Qernel(c)
+                    basic_analysis_pass.run(q)
+                    qernels.append(qq)
+                    metadata = q.get_metadata()
+
+                    if metadata["depth"] > min_depth:
+                        min_depth = metadata["depth"]
+                    if metadata["num_nonlocal_gates"] > min_cnots:
+                        min_cnots = metadata["num_nonlocal_gates"]
+            aggr_metadata.append([bench, metadata["num_qubits"], max_depth, max_cnots, metadata["num_measurements"], 0, 0])
 
     dt = DistributedTranspiler(size_to_reach=6, budget=3, methods=["GV", "WC", "QR", "QF"])
     dt_noQF = DistributedTranspiler(size_to_reach=12, budget=3, methods=["GV", "WC", "QR"])
@@ -435,8 +551,8 @@ def getCompilationTimes(args: list[str]):
 
     provider = IBMProvider(token='87ae595a5a0b9624fe36f477550700ee4b4dc540061a89951f197a0cd36d639e2c5e6307d533993123eaa925d9bea2de14a02b659219646ea4750e1768c76bf1')
     #provider = IBMProvider()
-    #backend = provider.get_backend("ibmq_kolkata")
-    backend = FakeKolkataV2()
+    backend = provider.get_backend("ibmq_kolkata")
+    #backend = FakeKolkataV2()
 
     #basic_analysis_pass = BasicAnalysisPass()
 
@@ -444,6 +560,7 @@ def getCompilationTimes(args: list[str]):
     aggr_metadata = []
     comp_times = []
     comp_stds = []
+    volumes = []
     
     for i,bench in enumerate(BENCHMARK_CIRCUITS):
         circuits = get_circuits(bench, (lower_limit, upper_limit))
@@ -456,9 +573,10 @@ def getCompilationTimes(args: list[str]):
                 comp_time = perf_counter() - now
                 tmp_comp_times.append(comp_time)
 
+            volumes.append(circuits[0].num_qubits * circuits[0].depth())
             comp_times.append(np.mean(tmp_comp_times))
             comp_stds.append(np.std(tmp_comp_times))
-            q = Qernel(tqc)            
+            #q = Qernel(tqc)            
             qq = Qernel(small_circ)
             qernels.append(qq)
         elif bench == 'qaoa_pl1':
@@ -469,9 +587,11 @@ def getCompilationTimes(args: list[str]):
                 tqc = transpile(circuits[0], backend, optimization_level=3)
                 comp_time = perf_counter() - now
                 tmp_comp_times.append(comp_time)
+
+            volumes.append(circuits[0].num_qubits * circuits[0].depth())
             comp_times.append(np.mean(tmp_comp_times))
             comp_stds.append(np.std(tmp_comp_times))
-            q = Qernel(tqc)            
+            #q = Qernel(tqc)            
             qq = Qernel(small_circ)
             qernels.append(qq)
         else:  
@@ -484,56 +604,240 @@ def getCompilationTimes(args: list[str]):
                     tmp_comp_times.append(comp_time)
                 comp_times.append(np.mean(tmp_comp_times))
                 comp_stds.append(np.std(tmp_comp_times))
-                q = Qernel(tqc)            
+                volumes.append(c.num_qubits * c.depth())
+                #q = Qernel(tqc)            
                 qq = Qernel(c)
                 qernels.append(qq)
 
-    print(comp_times)
     
-    dt = DistributedTranspiler(size_to_reach=12, budget=3, methods=["GV", "WC", "QR", "QF"])
+    #dt = DistributedTranspiler(size_to_reach=12, budget=3, methods=["GV", "WC", "QR", "QF"])
     dt_noQF = DistributedTranspiler(size_to_reach=12, budget=3, methods=["GV", "WC", "QR"])
     gate_virtualizer = GVInstatiator()
 
     #metadata_delta = []
     new_comp_times = []
+    new_comp_times_stds = []
     dt_comp_times = []
-    new_circuits = []
+    dt_comp_times_stds = []
+    new_volumes = [0 for i in range(len(qernels))]
+    old_volumes = [0 for i in range(len(qernels))]
 
     for i,q in enumerate(qernels):
         #print("circ: ", i)
-        to_transpile = []
-        new_comp_times.append(0)
 
-        now = perf_counter()
-        if i == 0 or i == 4:
-            optimized_q = dt_noQF.run(q)
-        else:
-            optimized_q = dt.run(q)
-        comp_time = perf_counter() - now
-        dt_comp_times.append(comp_time)
+        tmp_array = []
+        for j in range(randomness):
+            qq = copy.deepcopy(q)
+            now = perf_counter()
+            optimized_q = dt_noQF.run(qq)
+            tmp_array.append(perf_counter() - now)
+
+        dt_comp_times.append(np.mean(tmp_array))
+        dt_comp_times_stds.append(np.std(tmp_array))
         
         final_qernel = gate_virtualizer.run(optimized_q)
 
-        sqs = q.get_subqernels()
-        for sq in sqs:
-            ssqs = sq.get_subqernels()
-            new_circuits.append(len(ssqs))
-            for qq in ssqs:               
-                qc_small = qq.get_circuit()
-                tmp_times = []
+        tmp_array = [0 for k in range(randomness)]
 
-                for j in range(randomness):
+        for j in range(randomness):
+            sqs = final_qernel.get_subqernels()
+            for sq in sqs:
+                ssqs = sq.get_subqernels()
+                print(len(ssqs))
+                old_volumes[i] = old_volumes[i] + len(ssqs)
+                for qq in ssqs:             
+                    qc_small = qq.get_circuit()
+                    new_volumes[i] = new_volumes[i] + qc_small.num_qubits * qc_small.depth()
                     now = perf_counter()
                     transpile(qc_small, backend, optimization_level=3)
-                    comp_time = perf_counter() - now
-                    tmp_times.append(comp_time)
+                    time = perf_counter() - now
+                    tmp_array[j] = tmp_array[j] + time
+                    #print(tmp_array[j])
                 
-                new_comp_times[i] = new_comp_times[i] + np.mean(tmp_times)
+        new_comp_times.append(np.mean(tmp_array))
+        new_comp_times_stds.append(np.std(tmp_array))
                 
-        aggr_metadata.append([BENCHMARK_CIRCUITS[i],0, 0,  comp_times[i], new_comp_times[i], dt_comp_times[i], new_circuits[i]])
+        #print(i)
+        #print(len(new_comp_times), len(new_comp_times_stds))
+        aggr_metadata.append([BENCHMARK_CIRCUITS[i], comp_times[i], comp_stds[i], new_comp_times[i], new_comp_times_stds[i], dt_comp_times[i], dt_comp_times_stds[i]])
 
+    print(volumes)
+    print(new_volumes)
+    print(old_volumes)
+    df_percentage = [new / old for (new, old) in zip(new_volumes, volumes)]
+    print(df_percentage)
+    print(np.mean(old_volumes))
+    print(np.mean(df_percentage))
     write_to_csv("cut_circuits_overheads" + str(lower_limit) + ".csv", aggr_metadata)
 
+def getMatchingScores(args: list[str]):
+    lower_limit = int(args[1])
+    upper_limit = lower_limit + 1
+    randomness = int(args[2])
+
+    provider = IBMProvider(token='87ae595a5a0b9624fe36f477550700ee4b4dc540061a89951f197a0cd36d639e2c5e6307d533993123eaa925d9bea2de14a02b659219646ea4750e1768c76bf1')
+    backends = provider.backends(filters=lambda b: b.num_qubits >= 12, simulator=False, operational=True)
+    backends_map = {backend.name : backend for backend in backends}
+    print(backends)
+    #provider = IBMProvider()
+    #backend = provider.get_backend("ibmq_kolkata")
+    #backend = FakeKolkataV2()
+
+    benchmark_circuits = []
+
+    for bench in BENCHMARK_CIRCUITS:
+        circuits = get_circuits(bench, (lower_limit, upper_limit))
+        for c in circuits:
+            benchmark_circuits.append(c)
+            #q = Qernel(c)
+            #basic_analysis_pass.run(q)
+            #metadata = q.get_metadata()
+            #aggr_metadata.append([bench, metadata["num_qubits"], metadata["depth"], metadata["num_nonlocal_gates"], metadata["num_measurements"]])
+            #perfect_results.append(execute(c, simulator, shots=8192))
+
+    
+    matcher = Matcher(qpus=backends)
+
+    to_execute = {}
+
+    for b in backends:
+        to_execute[b.name] = []
+
+    for bc in benchmark_circuits:
+        layout, best_machine, score = matcher.match(bc)[0]
+        print(best_machine, layout)
+        backend = backends_map[best_machine]
+        tqc = transpile(bc, backend, initial_layout=layout)
+        to_execute[best_machine].append(tqc)
+
+    print(to_execute)
+
+def multiprogrammerEvaluation(args: list[str]):
+    lower_limit = int(args[1])
+    upper_limit = lower_limit + 1
+    randomness = int(args[2])
+
+    provider = IBMProvider(token='87ae595a5a0b9624fe36f477550700ee4b4dc540061a89951f197a0cd36d639e2c5e6307d533993123eaa925d9bea2de14a02b659219646ea4750e1768c76bf1')
+    #provider = IBMProvider()
+    backend = provider.get_backend("ibmq_kolkata")
+    simulator = AerSimulator()
+    #simulator =  provider.get_backend("ibmq_qasm_simulator")
+    #backend = FakeKolkataV2()
+    basic_analysis_pass = BasicAnalysisPass()
+    
+
+    benchmark_circuits = []
+    aggr_metadata = []
+    perfect_results = []
+    benchmark_index = {}
+
+    for i,bench in enumerate(BENCHMARK_CIRCUITS):
+        circuits = get_circuits(bench, (lower_limit, upper_limit))
+
+        for c in circuits:
+            c.name = bench
+            benchmark_circuits.append(c)
+            benchmark_index[bench] = i
+
+            q = Qernel(c)
+            basic_analysis_pass.run(q)
+            metadata = q.get_metadata()
+            aggr_metadata.append([bench, metadata["num_qubits"] * 2, metadata["depth"], metadata["num_nonlocal_gates"], metadata["num_measurements"]])
+            perfect_results.append(execute(c, simulator, shots=8192))
+
+    #for bc in benchmark_circuits:
+        #tqc = transpile(bc, backend, optimization_level=3, scheduling_method='alap')
+        #print("Utilization: ", bc.num_qubits / backend.num_qubits)
+        #print("Effective Utilization: ", getEffectiveUtilization(tqc, backend.num_qubits))
+
+    merged_circuits_random = []
+
+    print("---------------------------------")
+
+    benchmark_circuits_copy = copy.deepcopy(benchmark_circuits)
+
+    to_execute = []
+
+    random_index = []
+
+    for i in range(int(len(benchmark_circuits) / 2)):
+        circ0 = benchmark_circuits.pop(random.randint(0, len(benchmark_circuits) - 1))
+        circ1 = benchmark_circuits.pop(random.randint(0, len(benchmark_circuits) - 1))
+        random_index.append((benchmark_index[circ0.name], benchmark_index[circ1.name]))
+        
+        max_depth = max(circ0.depth(), circ1.depth())
+        min_depth = min(circ0.depth(), circ1.depth())
+        merged_circuit = merge_circs(circ0, circ1)
+        to_execute = to_execute + transpile([merged_circuit] * randomness, backend, optimization_level=3)
+        utilization = (circ0.num_qubits / backend.num_qubits) * 100
+        effective_utilization = utilization + ((min_depth / max_depth) * 100) * (circ0.num_qubits / backend.num_qubits)
+        print("Effective Utilization: ", effective_utilization)
+
+    print("---------------------------------")
+
+    best_index = []
+
+    for i in range(int(len(benchmark_circuits_copy) / 2)):
+        (circ0, circ1) = best_selection(benchmark_circuits_copy, True, [0.25, 0.25, 0.5, 0.0])
+        #(circ0, circ1) = best_selection(benchmark_circuits_copy, True, [1.0, 0.0, 0.0, 0.0])
+        benchmark_circuits_copy.remove(circ0)
+        benchmark_circuits_copy.remove(circ1)
+
+        best_index.append((benchmark_index[circ0.name], benchmark_index[circ1.name]))
+
+        max_depth = max(circ0.depth(), circ1.depth())
+        min_depth = min(circ0.depth(), circ1.depth())         
+        merged_circuit = merge_circs(circ0, circ1)
+        to_execute = to_execute + transpile([merged_circuit] * randomness, backend, optimization_level=3)
+        utilization = (circ0.num_qubits / backend.num_qubits) * 100
+        effective_utilization = utilization + ((min_depth / max_depth) * 100) * (circ0.num_qubits / backend.num_qubits)
+        print("Effective Utilization: ", effective_utilization)
+
+    exit()
+    print(random_index)
+    print(best_index)
+    results = execute(to_execute, backend, 8192, True)
+
+    counter = 0
+    average_random_fidelities = [0 for i in range(len(perfect_results))]
+    std_random_fidelities = [0 for i in range(len(perfect_results))]
+    average_best_fidelities = [0 for i in range(len(perfect_results))]
+    std_best_fidelities = [0 for i in range(len(perfect_results))]
+
+    for i in range(len(random_index)):
+        tmp_fids0 = []
+        tmp_fids1 = []
+        for j in range(randomness):
+            splitted_counts = split_counts_bylist(results[counter], [lower_limit, lower_limit])
+            tmp_fids0.append(fidelity(splitted_counts[0], perfect_results[random_index[i][0]]))
+            tmp_fids1.append(fidelity(splitted_counts[1], perfect_results[random_index[i][1]]))
+            counter = counter + 1
+        
+        average_random_fidelities[random_index[i][0]] = np.mean(tmp_fids0)
+        average_random_fidelities[random_index[i][1]] = np.mean(tmp_fids1)
+        std_random_fidelities[random_index[i][0]] = np.std(tmp_fids0)
+        std_random_fidelities[random_index[i][1]] = np.std(tmp_fids0)
+
+    for i in range(len(best_index)):
+        tmp_fids0 = []
+        tmp_fids1 = []
+        for j in range(randomness):
+            splitted_counts = split_counts_bylist(results[counter], [lower_limit, lower_limit])
+            tmp_fids0.append(fidelity(splitted_counts[0], perfect_results[best_index[i][0]]))
+            tmp_fids1.append(fidelity(splitted_counts[1], perfect_results[best_index[i][1]]))
+            counter = counter + 1
+        
+        average_best_fidelities[best_index[i][0]] = np.mean(tmp_fids0)
+        average_best_fidelities[best_index[i][1]] = np.mean(tmp_fids1)
+        std_best_fidelities[best_index[i][0]] = np.std(tmp_fids0)
+        std_best_fidelities[best_index[i][1]] = np.std(tmp_fids0)
+
+    for i in range(len(average_best_fidelities)):
+        aggr_metadata[i].append(average_random_fidelities[i])
+        aggr_metadata[i].append(average_best_fidelities[i])
+
+    write_to_csv("multiprogrammer_test" + str(lower_limit * 2) + ".csv", aggr_metadata)
+    #print(np.mean(average_random_fidelities), np.mean(average_best_fidelities))
 
 def end_to_end_eval(args: list[str]):
     lower_limit = int(args[1])
@@ -691,6 +995,48 @@ def plot_overheads():
         dataframes.append(pd.read_csv(csv_file_path + str(i) + ".csv"))
 
     custom_plot_small_circuit_overheads(dataframes, [""], ["Runtime [s]", "Number of Circuits"], ["Number of Qubits", "Number of Qubits"])
+
+def plot_cut_fidelities():
+    dataframes = []
+
+    small_file_path = "results/cut_circuits_solo_"
+    large_file_path = "results/large_circuits_solo_"
+
+    for i in [12, 24]:
+        dataframes.append(pd.read_csv(large_file_path + str(i) + ".csv"))
+        dataframes.append(pd.read_csv(small_file_path + str(i) + ".csv"))
+
+    custom_plot_small_circuit_fidelities(dataframes, ["QAOA-R3", "BV", "GHZ", "HS-1", "QAOA-P1", "QSVM", "TL-1", "VQE-1", "W-STATE"], ["Fidelity"], ["Number of Qubits"])
+
+def plot_multiprogrammer():
+    dataframes = []
+
+    mc_file_path = "results/multiprogrammer_test"
+    baseline_file_path = "results/large_circuits_solo_"
+
+    for i in [8, 16, 24]:
+        dataframes.append(pd.read_csv(mc_file_path + str(i) + ".csv"))
+        dataframes.append(pd.read_csv(baseline_file_path + str(i) + ".csv"))
+
+    custom_plot_multiprogrammer(dataframes, [], ["Fidelity"], ["Utilization [%]"])
+
+def plot_multiprogrammer_relative():
+    dataframes = []
+
+    mc_file_path = "results/multiprogrammer_test"
+    baseline_file_path = "results/large_circuits_solo_"
+
+    for i in [4, 8, 12]:
+        dataframes.append(pd.read_csv(mc_file_path + str(i * 2) + ".csv"))
+        dataframes.append(pd.read_csv(baseline_file_path + str(i) + ".csv"))
+
+    custom_plot_multiprogrammer_relative(dataframes, [], ["Rel. Fidelity"], ["Utilization [%]"])
+
 #qosDTeval(sys.argv)
-plot_large_circuits_solo()
-#plot_large_circuits_solo()
+#plot_cut_fidelities()
+#quickTest()
+getDTfidelities(sys.argv)
+#getMatchingScores(sys.argv)
+#plot_multiprogrammer()
+#plot_multiprogrammer_relative()
+#plot_overheads()

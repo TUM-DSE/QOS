@@ -211,9 +211,9 @@ def main(args: list[str]):
     benchmark_circuits = []
     big_benchmark_circuits = []
 
-    custom_plot_multiprogramming(["Fidelity vs. Increasing Utilization"], ["Fidelity"], ["Utilization [%]"])
-    custom_plot_multiprogramming_relative(["Fidelity Loss Relative to Baseline"], ["Rel. Fidelity"], ["Utilization [%]"])
-    exit()
+    #custom_plot_multiprogramming(["Fidelity vs. Increasing Utilization"], ["Fidelity"], ["Utilization [%]"])
+    #custom_plot_multiprogramming_relative(["Fidelity Loss Relative to Baseline"], ["Rel. Fidelity"], ["Utilization [%]"])
+    #exit()
     #provider = IBMProvider(token='87ae595a5a0b9624fe36f477550700ee4b4dc540061a89951f197a0cd36d639e2c5e6307d533993123eaa925d9bea2de14a02b659219646ea4750e1768c76bf1')
     provider = IBMProvider()
 
