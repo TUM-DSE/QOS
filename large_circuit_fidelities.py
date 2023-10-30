@@ -314,13 +314,13 @@ def getDTfidelities(args: list[str]):
     randomness = int(args[2])
     benchmark_circuits = []
 
-    provider = IBMProvider(token='87ae595a5a0b9624fe36f477550700ee4b4dc540061a89951f197a0cd36d639e2c5e6307d533993123eaa925d9bea2de14a02b659219646ea4750e1768c76bf1')
+    #provider = IBMProvider(token='87ae595a5a0b9624fe36f477550700ee4b4dc540061a89951f197a0cd36d639e2c5e6307d533993123eaa925d9bea2de14a02b659219646ea4750e1768c76bf1')
     #provider = IBMProvider()
     #backends = provider.backends(min_num_qubits=16, simulator=False, operational=True)
     #backend = provider.get_backend("ibm_algiers")
-    backend = provider.get_backend("ibmq_kolkata")
+    #backend = provider.get_backend("ibmq_kolkata")
 
-    #backend = FakeKolkataV2()
+    backend = FakeKolkata()
     #simulator = provider.get_backend("ibmq_qasm_simulator")
     simulator = AerSimulator()
     basic_analysis_pass = BasicAnalysisPass()
@@ -330,13 +330,12 @@ def getDTfidelities(args: list[str]):
 
     for bench in BENCHMARK_CIRCUITS:
         if bench == 'qaoa_r3':
-            circuits = [QuantumCircuit.from_qasm_file("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/k_regular/gridsearch_100/ideal/3_24_1^M=2_0^P=1.qasm")]
+            circuits = [QuantumCircuit.from_qasm_file("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/k_regular/gridsearch_100/ideal/3_" + str(lower_limit) + "_1^M=2_0^P=1.qasm")]
         elif bench == 'qaoa_pl1':
-            circuits = [QuantumCircuit.from_qasm_file("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/ba/gridsearch_100/ideal/1_24_1^M=2_0^P=1.qasm")]
+            circuits = [QuantumCircuit.from_qasm_file("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/ba/gridsearch_100/ideal/1_" + str(lower_limit) + "_1^M=2_0^P=1.qasm")]
         else:
             circuits = get_circuits(bench, (lower_limit, upper_limit))
-        #circuits = get_circuits(bench, (lower_limit, upper_limit))
-        
+       
         for c in circuits:
             benchmark_circuits.append(c)
             #print(c)
@@ -347,20 +346,19 @@ def getDTfidelities(args: list[str]):
             perfect_results.append(execute(c, simulator, shots=8192))
 
 
-
     ready_qernels = []
-    dt = DistributedTranspiler(size_to_reach=6, budget=3, methods=["GV", "WC", "QR", "QF"])
-    dt_noQF = DistributedTranspiler(size_to_reach=6, budget=3, methods=["GV", "WC", "QR"])
+    dt = DistributedTranspiler(size_to_reach=8, budget=3, methods=["GV", "WC", "QR", "QF"])
+    dt_noQF = DistributedTranspiler(size_to_reach=8, budget=3, methods=["GV", "WC", "QR"])
     gate_virtualizer = GVInstatiator()
     knitting = GVKnitter()
 
     for i,bc in enumerate(benchmark_circuits):
         q = Qernel(bc)
-        if i == 10:
-            optimized_q = dt_noQF.run(q)
-        else:
-            optimized_q = dt.run(q)
-        #optimized_q = dt.run(q)
+        #if i == 10:
+            #optimized_q = dt_noQF.run(q)
+        #else:
+            #optimized_q = dt.run(q)
+        optimized_q = dt_noQF.run(q)
         ready_qernels.append(gate_virtualizer.run(optimized_q))
 
     to_execute = []
@@ -374,27 +372,27 @@ def getDTfidelities(args: list[str]):
         sqs = q.get_subqernels()
         print(len(sqs))
         for sq in sqs:
-            if i == 10:
-                print("here")
-                perfect_results[i] = execute(sq.get_circuit(), simulator, shots=8192)
-                print("here")
+            #if i == 10:
+                #print("here")
+                #perfect_results[i] = execute(sq.get_circuit(), simulator, shots=8192)
+                #print("here")
             ssqs = sq.get_subqernels()
             print(len(ssqs))
             for qq in ssqs:
                 qc_small = qq.get_circuit()                
                 cqc_small = transpile(qc_small, backend, optimization_level=3, scheduling_method='alap')
-                print(cqc_small)
+                #print(cqc_small)
                 to_execute.append(cqc_small)
-                basic_analysis_pass.run(qq)
-                metadata = qq.get_metadata()
-                if metadata["depth"] > max_depth:
-                    max_depth = metadata["depth"]
-                if metadata["num_nonlocal_gates"] > max_cnots:
-                    max_cnots = metadata["num_nonlocal_gates"]
-                if metadata["num_measurements"] > max_measurements:
-                    max_measurements = metadata["num_measurements"]
-                if metadata["num_qubits"] > max_num_qubits:
-                    max_num_qubits = metadata["num_qubits"]
+                #basic_analysis_pass.run(qq)
+                #metadata = qq.get_metadata()
+                #if metadata["depth"] > max_depth:
+                   #max_depth = metadata["depth"]
+                #if metadata["num_nonlocal_gates"] > max_cnots:
+                    #max_cnots = metadata["num_nonlocal_gates"]
+                #if metadata["num_measurements"] > max_measurements:
+                    #max_measurements = metadata["num_measurements"]
+                #if metadata["num_qubits"] > max_num_qubits:
+                    #max_num_qubits = metadata["num_qubits"]
         
         aggr_metadata.append([BENCHMARK_CIRCUITS[i], max_num_qubits, max_depth, max_cnots, max_measurements])
 
@@ -404,9 +402,8 @@ def getDTfidelities(args: list[str]):
 
     print("Executing")
     print(len(to_execute))
-    exit()
 
-    results = execute(to_execute, backend, shots=8192, save_id=True)
+    results = execute(to_execute, backend, shots=8192, save_id=False)
 
     print("knitting")
     counter = 0
@@ -423,10 +420,7 @@ def getDTfidelities(args: list[str]):
 
     for i,q in enumerate(ready_qernels):
         vsqs = q.get_virtual_subqernels()
-        if i == 10:
-            fids.append(fidelity(vsqs[3].get_results(), perfect_results[i]))
-        else:
-            fids.append(fidelity(vsqs[0].get_results(), perfect_results[i]))
+        fids.append(fidelity(vsqs[0].get_results(), perfect_results[i]))
 
 
     for i in range(len(ready_qernels)):
@@ -712,6 +706,192 @@ def getMatchingScores(args: list[str]):
 
     print(to_execute)
 
+def getMatchersFidelities(args: list[str]):
+    lower_limit = int(args[1])
+    upper_limit = lower_limit + 1
+    randomness = int(args[2])
+
+    provider = IBMProvider(token='87ae595a5a0b9624fe36f477550700ee4b4dc540061a89951f197a0cd36d639e2c5e6307d533993123eaa925d9bea2de14a02b659219646ea4750e1768c76bf1')
+    #backends = [provider.get_backend("ibm_sherbrooke"), provider.get_backend("ibm_brisbane"), provider.get_backend("ibm_auckland")]
+    simulator = AerSimulator()
+    #backends_map = {backend.name : backend for backend in backends}
+    #print(backends)
+
+    benchmark_circuits = []
+    perfect_results = []
+
+    for bench in BENCHMARK_CIRCUITS:
+        circuits = get_circuits(bench, (lower_limit, upper_limit))
+        for c in circuits:
+            benchmark_circuits.append(c)
+            #q = Qernel(c)
+            #basic_analysis_pass.run(q)
+            #metadata = q.get_metadata()
+            #aggr_metadata.append([bench, metadata["num_qubits"], metadata["depth"], metadata["num_nonlocal_gates"], metadata["num_measurements"]])
+            perfect_results.append(execute(c, simulator, shots=8192))
+
+    """
+    to_execute_auckland = []
+
+    for i in range(len(benchmark_circuits)):
+        to_execute_auckland = to_execute_auckland + transpile_and_prepare(benchmark_circuits[i], backends[2], randomness)
+
+    to_execute_sherbrooke = []
+
+    layouts = [
+        [42, 43, 44, 45, 54, 63, 64, 65, 66, 67, 73, 85], [41, 42, 43, 44, 45, 54, 64, 65, 66, 73, 84, 85], [91, 104, 105, 106, 107, 108, 111, 112, 122, 121, 120, 119], [],
+        [91, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108], [100, 101, 102, 103, 104, 110, 111, 118, 119, 120, 121, 122],
+        [91, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108],[91, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108]
+    ]
+
+    for i in range(len(benchmark_circuits)):
+        if i != 3:
+            to_execute_sherbrooke = to_execute_sherbrooke + [transpile(benchmark_circuits[i], backends[0], optimization_level=3, initial_layout=layouts[i])] * randomness
+
+    to_execute_brisbane = [transpile(benchmark_circuits[3], backends[1], optimization_level=3, initial_layout=[1, 2, 3, 4, 5, 6, 7, 15, 20, 21, 22, 23])] * randomness
+
+    print(len(to_execute_auckland))
+    print(len(to_execute_sherbrooke))
+    print(len(to_execute_brisbane))
+
+    job_auck = backends[2].run(to_execute_auckland, shots=8192)
+    job_id = job_auck.job_id() 
+ 
+    with open(job_id, 'w') as file:
+        file.write(job_id)
+
+    job_sherb = backends[0].run(to_execute_sherbrooke, shots=8192)
+    job_id = job_sherb.job_id() 
+ 
+    with open(job_id, 'w') as file:
+        file.write(job_id)
+    
+    job_brisb = backends[1].run(to_execute_brisbane, shots=8192)
+    job_id = job_brisb.job_id() 
+ 
+    with open(job_id, 'w') as file:
+        file.write(job_id)
+
+    """
+    job_auck = provider.retrieve_job('cmtk1sfeskrg008xxvb0')
+    job_sherb = provider.retrieve_job('cmtk1szeskrg008xxvbg')
+    job_brisb = provider.retrieve_job('cmtk1tq605a0008f1nag')
+
+    results_auck = job_auck.result().get_counts()
+    results_sherb = job_sherb.result().get_counts()
+    results_brisb = job_brisb.result().get_counts()
+
+    results_agg = results_sherb[0:15] + results_brisb + results_sherb[15:]
+
+    for r in results_brisb:
+        results_sherb.insert(3 * randomness, r)
+
+    fidelities_auck = []
+    fidelities_auck_std = []
+    counter = 0
+
+    #print(len(results_auck))
+
+    for i in range(len(benchmark_circuits)):
+        tmp_fids = []
+        for j in range(randomness):
+            tmp_fids.append(fidelity(perfect_results[i], results_auck[counter]))
+            counter = counter + 1
+        fidelities_auck.append(np.mean(tmp_fids))
+        fidelities_auck_std.append(np.std(tmp_fids))
+
+    fidelities_rest = []
+    fidelities_rest_std = []
+    counter = 0
+
+    for i in range(len(benchmark_circuits)):
+        tmp_fids = []
+        for j in range(randomness):
+            tmp_fids.append(fidelity(perfect_results[i], results_agg[counter]))
+            counter = counter + 1
+        fidelities_rest.append(np.mean(tmp_fids))
+        fidelities_rest_std.append(np.std(tmp_fids))
+
+    print(fidelities_auck)
+    print(fidelities_auck_std)
+
+    print(fidelities_rest)
+    print(fidelities_rest_std)
+
+    aggr_metadata = []
+    for i in range(len(benchmark_circuits)):
+        aggr_metadata.append([BENCHMARK_CIRCUITS[i], fidelities_auck[i], fidelities_auck_std[i], 0 , 0, fidelities_rest[i], fidelities_rest_std[i]])
+
+    write_to_csv("matcher_eval_" + str(lower_limit) + ".csv", aggr_metadata)
+
+    exit()
+
+def getSpatialHeterogeneity(args: list[str]):
+    lower_limit = int(args[1])
+    upper_limit = lower_limit + 1
+    randomness = int(args[2])
+
+    provider = IBMProvider(token='87ae595a5a0b9624fe36f477550700ee4b4dc540061a89951f197a0cd36d639e2c5e6307d533993123eaa925d9bea2de14a02b659219646ea4750e1768c76bf1')
+    #backends = provider.backends(filters=lambda b: b.num_qubits == 27, simulator=False, operational=True)
+    backends = ["ibm_cairo", "ibm_hanoi", "ibmq_kolkata", "ibm_mumbai", "ibm_algiers", "ibm_auckland"]
+    simulator = AerSimulator()
+    #backends_map = {backend.name : backend for backend in backends}
+    print(backends)
+
+    benchmark = get_circuits("ghz", (lower_limit, upper_limit))[0]
+
+    perfect_results = execute(benchmark, simulator, shots=8192)
+    job_ids = ["cmv5ge9fwrrg008851ag", "cmv5gg2jad30008eayb0", "cmv5ggtfwrrg008851b0", "cmv5gkt605a0008f2jf0", "cmv5gmjeskrg008xz26g"]
+    jobs = []
+    final_job_id = "cmtk1sfeskrg008xxvb0"
+    final_job_results = provider.retrieve_job(final_job_id).result().get_counts()
+
+    for jid in job_ids:
+        jobs.append(provider.retrieve_job(jid))
+
+
+    results = []
+
+    for j in jobs:
+        results = results + j.result().get_counts()
+        #print(j.result().time_taken)
+
+    results = results + final_job_results[5:10]
+
+    """
+    for b in backends:
+        #tqcs = [transpile(benchmark, b, optimization_level=3)] * randomness
+        tqcs = transpile_and_prepare(benchmark, b, randomness)
+
+
+        job = b.run(tqcs, shots=8192)
+        jobs.append(job)
+        job_id = job.job_id()
+        print(job_id)        
+ 
+        with open(job_id, 'w') as file:
+            file.write(b.name + ": " + job_id)
+    
+    """
+    fidelities = []
+    fidelities_stds = []
+    aggr_metadata = []
+
+    for i in range(0, len(results), 5):
+        tmp_fids = []
+        for j in range(i, i+5):
+            tmp_fids.append(fidelity(results[j], perfect_results))
+
+        fidelities.append(np.mean(tmp_fids))
+        fidelities_stds.append(np.std(tmp_fids))
+       
+    for i in range(len(fidelities)):
+        aggr_metadata.append(["ghz", 0, 0, 0 , 0, fidelities[i], fidelities_stds[i]])
+
+    write_to_csv("spatial_hetero_" + str(lower_limit) + ".csv", aggr_metadata)
+    print(fidelities)
+    print(fidelities_stds)
+
 def multiprogrammerEvaluation(args: list[str]):
     lower_limit = int(args[1])
     upper_limit = lower_limit + 1
@@ -731,6 +911,8 @@ def multiprogrammerEvaluation(args: list[str]):
     perfect_results = []
     benchmark_index = {}
 
+    
+
     for i,bench in enumerate(BENCHMARK_CIRCUITS):
         circuits = get_circuits(bench, (lower_limit, upper_limit))
 
@@ -745,11 +927,8 @@ def multiprogrammerEvaluation(args: list[str]):
             aggr_metadata.append([bench, metadata["num_qubits"] * 2, metadata["depth"], metadata["num_nonlocal_gates"], metadata["num_measurements"]])
             perfect_results.append(execute(c, simulator, shots=8192))
 
-    #for bc in benchmark_circuits:
-        #tqc = transpile(bc, backend, optimization_level=3, scheduling_method='alap')
-        #print("Utilization: ", bc.num_qubits / backend.num_qubits)
-        #print("Effective Utilization: ", getEffectiveUtilization(tqc, backend.num_qubits))
 
+    """
     merged_circuits_random = []
 
     print("---------------------------------")
@@ -793,10 +972,16 @@ def multiprogrammerEvaluation(args: list[str]):
         effective_utilization = utilization + ((min_depth / max_depth) * 100) * (circ0.num_qubits / backend.num_qubits)
         print("Effective Utilization: ", effective_utilization)
 
-    exit()
     print(random_index)
     print(best_index)
+
     results = execute(to_execute, backend, 8192, True)
+
+    """
+    job = provider.retrieve_job('cmrkwq2b37pg008q8ppg')
+    results = job.result().get_counts()
+    random_index = [(1, 9), (7, 2), (4, 5), (6, 8), (3, 0)]
+    best_index = [(3, 6), (0, 5), (1, 8), (7, 9), (2, 4)]
 
     counter = 0
     average_random_fidelities = [0 for i in range(len(perfect_results))]
@@ -1032,11 +1217,33 @@ def plot_multiprogrammer_relative():
 
     custom_plot_multiprogrammer_relative(dataframes, [], ["Rel. Fidelity"], ["Utilization [%]"])
 
+def plot_utilization_problem():
+    custom_plot_baseline_utilizations([], [""], ["Utilization [%]"], ["Benchmark"])
+
+def plot_matcher_performance():
+    filename = "matcher_eval_12.csv"
+
+    dataframe = pd.read_csv(filename)
+
+    custom_plot_matcher([dataframe], [""], ["Fidelity"], ["Benchmark"])
+
+def plot_spatial_hetero():
+    filename = "spatial_hetero_12.csv"
+
+    dataframe = pd.read_csv(filename)
+
+    custom_plot_spatial_hetero([dataframe], [""], ["Fidelity"], ["QPU"])
+
 #qosDTeval(sys.argv)
 #plot_cut_fidelities()
 #quickTest()
-getDTfidelities(sys.argv)
-#getMatchingScores(sys.argv)
+#getDTfidelities(sys.argv)
+#multiprogrammerEvaluation(sys.argv)
+#getMatchersFidelities(sys.argv)
+#plot_matcher_performance()
+#getSpatialHeterogeneity(sys.argv)
+plot_spatial_hetero()
+#getSpatialHeterogeneity(sys.argv)#
 #plot_multiprogrammer()
 #plot_multiprogrammer_relative()
 #plot_overheads()

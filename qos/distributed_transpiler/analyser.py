@@ -222,7 +222,7 @@ class QubitConnectivityGraphFromDAGPass(DAGAnalysisPass):
 
         qernel.edit_metadata(dependency_graph_metadata)
 
-class IsQAOACircuitPass(DAGAnalysisPass):
+class IsQAOACircuitPass(AnalysisPass):
     def __init__(self) -> None:
         pass
 

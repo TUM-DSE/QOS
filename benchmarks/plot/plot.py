@@ -284,6 +284,62 @@ def custom_plot_small_circuit_relative_fidelities(dataframes: list[pd.DataFrame]
 
 	plt.savefig(output_file, bbox_inches="tight")
 
+def custom_plot_baseline_utilizations(dataframes: list[pd.DataFrame], titles: list[str],
+	ylabel: list[str],
+	xlabel: list[str],
+	output_file: str = "utiization_limits.pdf"):
+
+	fig = plt.figure(figsize=COLUMN_FIGSIZE_2)
+
+	x = np.array(["QAOA-R3", "BV", "GHZ", "HS-1", "QAOA-P1", "QSVM", "TL-1", "VQE-1", "W-STATE"])
+	#x = dataframes[0]["bench_name"]
+
+	nrows = 1
+	ncols = 1
+	gs = gridspec.GridSpec(nrows=nrows, ncols=ncols)
+
+	axis = [fig.add_subplot(gs[i, j]) for i in range(nrows) for j in range(ncols)]
+
+	axis[0].set_ylabel(ylabel[0])
+	axis[0].set_xlabel(xlabel[0])
+	#axis[0].set_yscale(0, 100)
+	axis[0].set_ylim(0, 100)
+
+	#ytick_locations = [1e0, 1e1, 1e2, 1e3, 1e4, 1e5]
+	#ytick_labels = ['0', '1', '2', '4', '8', '16', '32']
+	#axis[0].set_yticklabels(ytick_labels)
+
+	arr = [29.6, 29.6, 29.6, 29.6, 29.6, 14.8, 22.2, 22.2, 29.6,]
+	
+
+	y = np.array(
+		[
+			arr
+		]
+	)
+
+	yerr = np.array(
+		[
+			[0, 0, 0, 0, 0, 0, 0, 0, 0]
+		]
+	)
+
+	axis[0].axhline(np.mean(arr), color="red", linestyle="-", linewidth=1)
+	print(np.mean(arr))
+	
+	#print(y)
+	#print(yerr)
+	axis[0].set_xticklabels(x)
+	axis[0].grid(axis="y", linestyle="-", zorder=-1)
+
+	grouped_bar_plot(axis[0], y.T, yerr.T, [""], show_average_text=True, average_text_position=40)
+
+	axis[0].set_title(titles[0], fontsize=FONTSIZE, fontweight="bold")
+	
+	fig.text(0.5, 0.93, HIGHERISBETTER, ha="center", va="center", fontweight="bold", color="navy", fontsize=ISBETTER_FONTSIZE)
+
+	plt.savefig(output_file, bbox_inches="tight")
+
 def custom_plot_small_circuit_relative_properties(dataframes: list[pd.DataFrame], titles: list[str],
 	ylabel: list[str],
 	xlabel: list[str],
@@ -566,7 +622,7 @@ def custom_plot_multiprogrammer(dataframes: list[pd.DataFrame], titles: list[str
 	axis[0].set_ylabel(ylabel[0])
 	axis[0].set_xticklabels(x)
 	axis[0].grid(axis="y", linestyle="-", zorder=-1)
-	axis[0].set_ylim(0, 1.1)
+	axis[0].set_ylim(0, 1.0)
 
 	to_plot = []
 
@@ -655,6 +711,93 @@ def custom_plot_multiprogrammer_relative(dataframes: list[pd.DataFrame], titles:
 	#axis[0].set_title(titles[0], fontsize=FONTSIZE, fontweight="bold")
 	
 	fig.text(0.5, 0.95, HIGHERISBETTER, ha="center", va="center", fontweight="bold", color="navy", fontsize=ISBETTER_FONTSIZE)
+
+	plt.savefig(output_file, bbox_inches="tight")
+
+def custom_plot_matcher(dataframes: list[pd.DataFrame], titles: list[str],
+	ylabel: list[str],
+	xlabel: list[str],
+	output_file: str = "static_scheduler.pdf"):
+
+	fig = plt.figure(figsize=COLUMN_FIGSIZE)
+
+	nrows = 1
+	ncols = 1
+	gs = gridspec.GridSpec(nrows=nrows, ncols=ncols)
+
+	axis = [fig.add_subplot(gs[i, j]) for i in range(nrows) for j in range(ncols)]
+
+	x = np.array(["QAOA-R3", "GHZ", "HS-1", "QAOA-P1", "QSVM", "TL-1", "VQE-1", "W-STATE"])
+
+	axis[0].set_xlabel(xlabel[0])
+	axis[0].set_ylabel(ylabel[0])
+	axis[0].set_xticklabels(x)
+	axis[0].grid(axis="y", linestyle="-", zorder=-1)
+	axis[0].set_ylim(0, 1)
+	#axis[0].axhline(1, color="red", linestyle="-", linewidth=2)
+
+	y = np.array(
+		dataframes[0][["num_qubits", "fidelity"]].values
+	)
+
+	yerr = np.array(
+
+		dataframes[0][["depth", "fidelity_std"]].values
+
+	)
+
+	grouped_bar_plot(axis[0], y, yerr, ["IBM Auckland", "QOS"], show_average_text=False)
+
+	axis[0].legend()
+	#axis[0].set_title(titles[0], fontsize=FONTSIZE, fontweight="bold")
+	
+	fig.text(0.5, 0.93, HIGHERISBETTER, ha="center", va="center", fontweight="bold", color="navy", fontsize=ISBETTER_FONTSIZE)
+
+	plt.savefig(output_file, bbox_inches="tight")
+
+def custom_plot_spatial_hetero(dataframes: list[pd.DataFrame], titles: list[str],
+	ylabel: list[str],
+	xlabel: list[str],
+	output_file: str = "spatial_heterogeneity.pdf"):
+
+	fig = plt.figure(figsize=COLUMN_FIGSIZE)
+
+	nrows = 1
+	ncols = 1
+	gs = gridspec.GridSpec(nrows=nrows, ncols=ncols)
+
+	axis = [fig.add_subplot(gs[i, j]) for i in range(nrows) for j in range(ncols)]
+
+	x = np.array(["cairo", "hanoi", "kolkata", "mumbai", "algiers", "auckland"])
+
+	axis[0].set_xlabel(xlabel[0])
+	axis[0].set_ylabel(ylabel[0])
+	axis[0].set_xticklabels(x)
+	axis[0].grid(axis="y", linestyle="-", zorder=-1)
+	axis[0].set_ylim(0, 1)
+	#axis[0].axhline(1, color="red", linestyle="-", linewidth=2)
+
+	y = np.array(
+		[
+			dataframes[0]["fidelity"]
+		]
+	)
+
+	yerr = np.array(
+		[
+			dataframes[0]["fidelity_std"]
+		]
+
+	)
+
+	#print(y)
+	#print(yerr)
+	grouped_bar_plot(axis[0], y.T, yerr.T, [""], show_average_text=False)
+
+	#axis[0].legend()
+	#axis[0].set_title(titles[0], fontsize=FONTSIZE, fontweight="bold")
+	
+	fig.text(0.5, 0.93, HIGHERISBETTER, ha="center", va="center", fontweight="bold", color="navy", fontsize=ISBETTER_FONTSIZE)
 
 	plt.savefig(output_file, bbox_inches="tight")
 

@@ -19,7 +19,7 @@ plt.rcParams.update({"font.size": FONTSIZE})
 def grouped_bar_plot(
     ax: plt.Axes,
     y: np.ndarray,
-    #yerr: np.ndarray,
+    yerr: np.ndarray,
     bar_labels: list[str],
     colors: list[str] | None = None,
     hatches: list[str] | None = None,
@@ -72,9 +72,11 @@ def grouped_bar_plot(
 
     for i in range(num_bars):
         y_bars = y[:, i]
-        #yerr_bars = yerr[:, i]
+        yerr_bars = yerr[:, i]
 
         color, hatch = colors[i % len(colors)], hatches[i % len(hatches)]
+
+        #print(color)
 
         ax.bar(
             x + (i * bar_width),
@@ -82,7 +84,7 @@ def grouped_bar_plot(
             bar_width,
             hatch=hatch,
             label=bar_labels[i],
-            #yerr=yerr_bars,
+            yerr=yerr_bars,
             color=color,
             edgecolor="black",
             linewidth=1.5,

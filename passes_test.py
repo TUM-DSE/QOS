@@ -13,6 +13,8 @@ from qiskit import *
 from qiskit.result import marginal_counts
 from qiskit_aer import AerSimulator
 
+import matplotlib.pyplot as plt
+
 from qos.types import Qernel
 from qos.distributed_transpiler.virtualizer import GVInstatiator, GVKnitter
 from qvm.qvm.virtual_circuit import generate_instantiations
@@ -150,8 +152,9 @@ def main3():
         print(calculate_fidelity(vq._circuit, result))
 
 def FrozenQubitsAndQVMExample():
-    qc_full = QuantumCircuit.from_qasm_file("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/k_regular/gridsearch_100/ideal/3_24_1^M=2_0^P=1.qasm")
+    qc_full = QuantumCircuit.from_qasm_file("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/3_7_1^P=1.qasm")
 
+    qc_small = QuantumCircuit.from_qasm_file("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/frozenqubits_full/ba/gridsearch_100/ideal/3_7_1^M=1_0^P=1.qasm")
     #qc_full_properties = load_pickle("/home/manosgior/Downloads/FrozenQubits_data_and_sourcecode/experiments/qaoa/ba/gridsearch_100/ideal/1_7_1^P=1.pkl")
     print(qc_full)
     #provider = IBMProvider(instance="ibm-q/open/main")
@@ -159,6 +162,55 @@ def FrozenQubitsAndQVMExample():
     backend = FakeGuadalupe()
 
     qernel = Qernel(qc_full)
+    small_qernel = Qernel(qc_small)
+
+    analyzer = QubitConnectivityGraphFromDAGPass()
+
+    q2 = copy.deepcopy(qernel)
+    q2_small = copy.deepcopy(small_qernel)
+
+    analyzer.run(qernel)
+    analyzer.run(small_qernel)
+
+
+    graph = qernel.get_metadata()["qubit_connectivity_graph"]
+    graph_small = small_qernel.get_metadata()["qubit_connectivity_graph"]
+    
+    qr_pass = RandomQubitReusePass(5)
+    instantiator = GVInstatiator()
+   
+
+    qr_pass.run(q2)
+    qr_pass.run(q2_small)
+
+    instantiator.run(q2)
+    instantiator.run(q2_small)
+
+    #print(q2_small.get_subqernels()[0].get_circuit())
+    
+
+    analyzer.run(q2.get_subqernels()[0])
+    analyzer.run(q2_small.get_subqernels()[0])
+
+    
+
+    graph_qr = q2.get_subqernels()[0].get_metadata()["qubit_connectivity_graph"]
+    graph_qr_small = q2_small.get_subqernels()[0].get_metadata()["qubit_connectivity_graph"]
+
+    plt.subplot(221)
+    nx.draw(graph)
+    plt.subplot(222)
+    nx.draw(graph_small)
+    plt.subplot(223)
+    nx.draw(graph_qr)
+    plt.subplot(224)
+    nx.draw(graph_qr_small)
+
+
+    plt.savefig("graph.png")
+    #plt.savefig("graph_small.png")
+
+    exit()
 
     dt = DistributedTranspiler(size_to_reach=4, budget=4, methods=["GV", "WC", "QR", "QF"])
     dt.run(qernel)
