@@ -6,6 +6,7 @@ import matplotlib.ticker as ticker
 from matplotlib import gridspec
 import os
 import pdb
+import typing
 
 FONTSIZE = 12
 ISBETTER_FONTSIZE = FONTSIZE + 2
@@ -105,12 +106,12 @@ def bar_plot(
     bar_labels: list[str],
     colors: list[str] | None = None,
     hatches: list[str] | None = None,
-    show_average_text: bool = False,
-    average_text_position: float = 1.05,
     spacing: float = 2,
     zorder: int = 2000,
     filename: str = None,
     y_integer: bool = False,
+    text=None,
+    text_pos:tuple=None
     ):
     if colors is None:
         colors = sns.color_palette("pastel")
@@ -171,6 +172,9 @@ def bar_plot(
         error_kw=dict(lw=2, capsize=3),
         zorder=zorder,
     )
+    if text != None:
+        plt.text(*text_pos, text)
+
     if y_integer:
         y_ticks_integer = np.arange(0, max(y) + 1, (max(y) // 10) + 1)
         ax.set_yticks(ticks=y_ticks_integer)

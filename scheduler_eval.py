@@ -21,8 +21,9 @@ import seaborn as sns
 import numpy as np
 
 #This number is just the number of uncut circuits, this will be multiplied by CIRC_CUT_FACTOR
-CIRC_NUMBER = 2
+CIRC_NUMBER = 5
 CIRC_CUT_FACTOR = 20 #This means that each random benchmark will be halved in terms of size and copied 30 times
+NCLIENTS = 7
 #Circuit width is defined by an uniform distribution
 WIDTH_MIN = 8
 WIDTH_MAX = 24
@@ -32,8 +33,8 @@ SHOTS_DEVIATION = 2048
 SHOTS_MEAN = 8192
 
 #Submittion time interval is defined by a guassion function
-TIME_DEVIATION = 0.22
-TIME_MEAN = 3.5
+TIME_DEVIATION = (NCLIENTS/7)*0.22 #This might not be correct but should be close
+TIME_MEAN = (NCLIENTS/7)*3.5
 
 #TIME_DEVIATION = 0.25
 #TIME_MEAN = 3.5
@@ -47,7 +48,7 @@ RANDOM_WIDTH = lambda: randint(WIDTH_MIN, WIDTH_MAX)
 RANDOM_SHOTS = lambda : np.clip(np.random.normal(SHOTS_MEAN, SHOTS_DEVIATION),a_min=0, a_max=None)
 
 #FID_WEIGHTS = [0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1]
-FID_WEIGHTS = [0.5,0.6,0.7,0.8,0.9,1]
+FID_WEIGHTS = [0.6,0.7,0.8,0.9,1]
 
 #RANDOM_DEPTH = lambda : np.clip(np.random.normal(DEPTH_MEAN, DEPTH_DEVIATION),a_min=0, a_max=None)
 
@@ -78,16 +79,17 @@ def random_time():
   while tmp==0:
     tmp = RANDOM_TIME()
 
-  return round(tmp,3)
+  return tmp
 
 def get_random_circuit(next_qernel_id, current_time):
     #Since I am using 30x factor, each random bechmark will be halved in terms of sized copied 30 times
     random_bench = BENCHMARK_CIRCUITS[randint(0, len(BENCHMARK_CIRCUITS)-1)]
     #pdb.set_trace()
+    width = random_width()//2
     
     all_cuts = []
     for i in range(CIRC_CUT_FACTOR):
-        new_qernel = Qernel(get_circuit(random_bench, random_width()//2))
+        new_qernel = Qernel(get_circuit(random_bench, width))
         new_qernel.submit_time = current_time
         new_qernel.id = str(next_qernel_id)
         next_qernel_id += 1
@@ -154,14 +156,17 @@ def hard_job():
                 avg_wait += j[3]
 
         avg_fid_list.append(avg_fid/(CIRC_NUMBER*CIRC_CUT_FACTOR))
-        avg_wait_list.append(avg_wait/(CIRC_NUMBER*CIRC_CUT_FACTOR))
+        avg_wait_list.append(avg_wait/CIRC_NUMBER)
 
         bar_plot(
             y=np.array([i[1] for i in dist]),
             bar_labels=[i[0] for i in dist],
             filename='dist{}.png'.format(str(fid)),
-            y_integer=True,)
-      
+            y_integer=True,
+            text='Avg fidelity: {}\nAvg waitting time:{}'.format(round(avg_fid/(CIRC_NUMBER*CIRC_CUT_FACTOR),4), round(avg_wait/(CIRC_NUMBER),3)),
+            text_pos=(len(dist)+1, 10)
+            )
+    
     return all_all_queues, avg_fid_list, avg_wait_list
 
 
@@ -182,13 +187,13 @@ def final_plot(fid, wait):
     line_data['avg_wait'] = wait
     line_data['avg_fid'] = fid
     fig, ax1 = plt.subplots()
-    ax1.legend(loc='upper left')
-    sns.lineplot(data=line_data, x='fid_weights', y='avg_fid', ax=ax1, label='Avg fidelity(%)', marker='o', color=colors[0])
     ax2 = ax1.twinx()
+    ax1.legend(loc='upper left')
+    sns.lineplot(data=line_data, x='fid_weights', y='avg_fid', ax=ax1, label='Avg fidelity', marker='o', color=colors[0])
     yticks = np.arange(min(fid), max(fid), (max(fid)-min(fid))/10)
-    yticks = [int(i) for i in yticks]
-    print(yticks)
+    yticks = [round(i,3) for i in yticks]
     ax1.set_yticks(yticks)
+    print(yticks)
     yticks = np.arange(min(wait), max(wait), (max(wait)-min(wait))/10)
     yticks = [round(i,3) for i in yticks]
     print(yticks)
@@ -202,14 +207,25 @@ def final_plot(fid, wait):
     #plt.xticks(FID_WEIGHTS)
     save_figure(fig, 'test')
 
-    #plot_lines_2yaxis(
-    #    xkey='fid_weights',
-    #    xlabel='Fidelity weights',
-    #    ykeys=['avg_fid', 'avg_wait'],
-    #    labels=['Avg fidelity(%)', 'Avg waitting time(s)'],
-    #    data=line_data,
-    #    filename='avg_error_and_wait')
+def line_plot(x, y, xlabel='XLabel', ylabel='YLabel',filename='filename', ticks_rounding=lambda x:x):
 
+    line_data = pd.DataFrame()
+    print(FID_WEIGHTS)
+    line_data['x'] = x
+    sns.set_theme()
+    colors = sns.color_palette("pastel")
+    line_data['y'] = y
+    fig, ax1 = plt.subplots()
+    sns.lineplot(data=line_data, x='x', y='y', ax=ax1, label=ylabel, marker='o', color=colors[0])
+    yticks = np.arange(min(y), max(y), (max(y)-min(y))/10)
+    yticks = [round(i,3) for i in yticks]
+    yticks = [ticks_rounding(i) for i in yticks]
+    ax1.set_yticks(yticks)
+    ax1.legend(loc='upper left')
+    ax1.set_ylabel(ylabel, color=colors[0])
+    ax1.set_xlabel(xlabel)
+    #plt.xticks(FID_WEIGHTS)
+    save_figure(fig, filename)
 
 #Info on Local queue 5 values
 # qernel id
@@ -219,4 +235,8 @@ def final_plot(fid, wait):
 # predicted error
 
 this = hard_job()
-final_plot(this[1], this[2])
+pdb.set_trace()
+line_plot(FID_WEIGHTS, this[1], xlabel='Fidelity weights', ylabel='Avg fidelity', filename='avg_fid', ticks_rounding=lambda x:round(x,3))
+line_plot(FID_WEIGHTS, this[2], xlabel='Fidelity weights', ylabel='Avg waiting time(s)', filename='avg_wait', ticks_rounding=lambda x:int(x))
+
+#final_plot(this[1], this[2])

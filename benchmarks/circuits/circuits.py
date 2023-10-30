@@ -19,7 +19,7 @@ BENCHMARK_CIRCUITS = [
     #"qaoa_r2",
     "qaoa_r3",
     #"qaoa_r4",
-    #"bv",
+    "bv",
     "ghz",
     "hamsim_1",
     #"hamsim_2",

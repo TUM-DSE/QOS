@@ -11,7 +11,7 @@ import qos.database as db
 from qiskit import execute
 from qiskit.transpiler import CouplingMap
 import json
-from qos.secrets import IBM_TOKEN
+from ibm_token import IBM_TOKEN
 import pdb
 from qos.tools import predict_queue_time
 
