@@ -148,23 +148,15 @@ pyvenv.cfg
 .pdm-python
 
 secrets.py
-avg_error_and_wait.png
-avg_error_and_wait1.png
+avg_error_and_wait*
 dag_dag.png
-dist.png
-dist0.1.png
-dist0.3.png
-dist0.5.png
-dist0.7.png
-dist0.8.png
-dist0.9.png
-dist0.75.png
-dist0.85.png
-dist0.95.png
-dist1.png
+dist*
 dump.rdb
 pdm.lock
 qos/time_estimator/regression_model.joblib
 ibm_token.py
 
 dataset/
+
+shell.nix
+*.pdf

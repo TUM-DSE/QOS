@@ -126,7 +126,7 @@ def addQPU(qpu: QPU) -> int:
         for a, b in qpu.args.items():
             db.hset(qpuId, a, b)
 
-    logger.log(10, "Added QPU to the database")
+    #logger.log(10, "Added QPU to the database")
 
     return newId
 
