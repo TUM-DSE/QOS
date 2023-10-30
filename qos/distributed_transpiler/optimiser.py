@@ -288,6 +288,7 @@ class RandomQubitReusePass(QubitReusePass):
             qc = q.get_circuit()
             virtual_circuit = VirtualCircuit(qc)        
             random_qubit_reuser_pass.run(virtual_circuit)
+            print(virtual_circuit._circuit)
             sub_qernel = Qernel()
             sub_qernel.set_circuit(virtual_circuit)    
             sub_qernel.set_metadata(q.get_metadata())
