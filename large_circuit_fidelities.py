@@ -1228,7 +1228,7 @@ def plot_matcher_performance():
     custom_plot_matcher([dataframe], [""], ["Fidelity"], ["Benchmark"])
 
 def plot_spatial_hetero():
-    filename = "spatial_hetero_12.csv"
+    filename = "results/spatial_hetero_12.csv"
 
     dataframe = pd.read_csv(filename)
 

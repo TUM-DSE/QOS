@@ -839,7 +839,7 @@ def custom_plot_scal_hetero_challenges(dataframes: list[pd.DataFrame], titles: l
 	axis[0].set_xticklabels(x0)
 	axis[0].grid(axis="y", linestyle="-", zorder=-1)
 
-	grouped_bar_plot(axis[0], y.T, yerr.T, ["2"])
+	grouped_bar_plot(axis[0], y.T, yerr.T, [""])
 
 	axis[0].set_title(titles[0], fontsize=FONTSIZE, fontweight="bold")
 
