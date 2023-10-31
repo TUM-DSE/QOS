@@ -801,6 +801,77 @@ def custom_plot_spatial_hetero(dataframes: list[pd.DataFrame], titles: list[str]
 
 	plt.savefig(output_file, bbox_inches="tight")
 
+def custom_plot_scal_hetero_challenges(dataframes: list[pd.DataFrame], titles: list[str],
+	ylabel: list[str],
+	xlabel: list[str],
+	output_file: str = "first_challenges.pdf"):
+
+	#fig = plt.figure(figsize=WIDE_FIGSIZE)
+
+	nrows = 1
+	ncols = 3
+	gs = gridspec.GridSpec(nrows=nrows, ncols=ncols)
+
+	fig, axis = plt.subplots(1, ncols, figsize=WIDE_FIGSIZE, sharey=True)
+
+	#axis = [fig.add_subplot(gs[i, j]) for i in range(nrows) for j in range(ncols)]
+
+	axis[0].set_ylabel(ylabel[0])
+	axis[0].set_xlabel(xlabel[0])
+	axis[0].set_ylim(0, 1)
+	x0 = np.array([4, 8, 12, 16, 20, 24])
+
+	y = np.array(
+		[
+			[np.mean(df["fidelity"]) for df in dataframes[0:6]]
+		]
+	)
+
+	yerr = np.array(
+		[
+			[np.mean(df["fidelity_std"]) for df in dataframes[0:6]]
+		]
+	)
+
+	axis[0].set_xticklabels(x0)
+	axis[0].grid(axis="y", linestyle="-", zorder=-1)
+
+	grouped_bar_plot(axis[0], y.T, yerr.T, ["2"])
+
+	axis[0].set_title(titles[0], fontsize=FONTSIZE, fontweight="bold")
+
+	x1 = np.array(["cairo", "hanoi", "kolk.", "mumb.", "algiers", "auck."])
+
+	axis[1].set_xlabel(xlabel[1])
+	axis[1].set_xticklabels(x1)
+	axis[1].grid(axis="y", linestyle="-", zorder=-1)
+	axis[1].set_ylim(0, 1)
+	#axis[0].axhline(1, color="red", linestyle="-", linewidth=2)
+
+	y = np.array(
+		[
+			dataframes[6]["fidelity"]
+		]
+	)
+
+	yerr = np.array(
+		[
+			dataframes[6]["fidelity_std"]
+		]
+
+	)
+
+	grouped_bar_plot(axis[1], y.T, yerr.T, [""], show_average_text=False)
+
+	axis[1].set_title(titles[1], fontsize=FONTSIZE, fontweight="bold")
+
+	fig.text(0.5, 1.02, HIGHERISBETTER, ha="center", va="center", fontweight="bold", color="navy", fontsize=ISBETTER_FONTSIZE)
+
+	plt.savefig(output_file, bbox_inches="tight")
+
+	return
+
+
 def custom_plot_dataframes(
 	dataframes: list[pd.DataFrame],
 	keys: list[list[str]],
