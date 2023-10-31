@@ -7,39 +7,38 @@ import seaborn as sns
 import numpy as np
 from .utils import *
 import matplotlib.pyplot as plt
+from .utils import COLUMN_FIGSIZE
+from matplotlib import gridspec
 
-def line_plot(x, y, xlabel='XLabel', ylabel='YLabel', filename='filename', higher_lower_isBetter='no', legend:str|list[str] ='legend', (fig,ax):Tuple(plt.Figure, plt.axis)='None'):
 
-    #pdb.set_trace()
-    if (fig,ax) == 'None':
-        fig, ax = plt.subplots()
+def line_plot(x, y, xlabel='XLabel', ylabel='YLabel', legend:str|list[str]=None, show_legend=True, axis=None):
+    
+    if axis == None:
+        fig = plt.figure(figsize=COLUMN_FIGSIZE)
+        nrows = 1
+        ncols = 1
+        gs = gridspec.GridSpec(nrows=nrows, ncols=ncols)
+        ax = [fig.add_subplot(gs[i, j]) for i in range(nrows) for j in range(ncols)][0]
     else:
-        ax = ax
+        ax = axis
+
+    sns.set_theme()
+    sns.set_style("whitegrid")
+    ax.grid(True)
 
     if isinstance(y, list):
         line_data = pd.DataFrame()
         line_data['x'] = x
         line_data.set_index('x', inplace=True)
-        #line_data['line_legend'] = legend
-        sns.set_theme()
-        sns.set_style("whitegrid")
         colors = sns.color_palette("pastel")
         ax.set_xlabel(xlabel, color='black')
         ax.set_ylabel(ylabel, color='black')
 
-        #line_data['y'] = y
         for i in range(len(y)):
-            #line_data['y'+str(i)] = y[i]
-            sns.lineplot(x=x, y=y[i], ax=ax, marker=line_markers[i], legend='brief', color=colors[i], dashes=False, label=legend[i])
-            #sns.lineplot(data=line_data, ax=ax1, markers=line_markers[:len(y)] , legend='brief', palette=colors[:len(y)], dashes=False)
-        #ax1.set_ylabel(legend, color='black')
-
-        fig.text(0.5, 1, HIGHERISBETTER if higher_lower_isBetter=='higher' else LOWERISBETTER , ha="center", va="center", fontweight="bold", color="navy", fontsize=ISBETTER_FONTSIZE)
-
-        ax.legend(loc='upper left')
-
-        save_figure(fig, filename)
-        plt.close()
+            if legend == None:
+                sns.lineplot(x=x, y=y[i], ax=ax, marker=line_markers[i], color=colors[i], dashes=False)
+            else:
+                sns.lineplot(x=x, y=y[i], ax=ax, marker=line_markers[i], color=colors[i], label=legend[i], dashes=False, legend=False if not show_legend else True)
 
     else:
         line_data = pd.DataFrame()
@@ -51,21 +50,13 @@ def line_plot(x, y, xlabel='XLabel', ylabel='YLabel', filename='filename', highe
         fig, ax1 = plt.subplots()
         sns.lineplot(data=line_data, x='x', y='y', ax=ax1, label=ylabel, marker='o', color=colors[1])
         yticks = np.arange(min(y), max(y), (max(y)-min(y))/10)
-        yticks = [ticks_rounding(i) for i in yticks]
         ax1.set_yticks(yticks)
         ax1.legend(loc='upper left')
         ax1.set_ylabel(ylabel, color='black')
         ax1.set_xlabel(xlabel, color='black')
-        if higher_lower_isBetter == 'higher':
-            fig.text(0.5, 1, HIGHERISBETTER, ha="center", va="center", fontweight="bold", color="navy", fontsize=ISBETTER_FONTSIZE)
-        elif higher_lower_isBetter == 'lower':
-            fig.text(0.5, 1, LOWERISBETTER, ha="center", va="center", fontweight="bold", color="navy", fontsize=ISBETTER_FONTSIZE)
 
-        #plt.xticks(FID_WEIGHTS)
-        save_figure(fig, filename)
-        plt.close()
-
-    return fig
+    if axis == None:
+        return fig
 
 
 def bar_plot(
