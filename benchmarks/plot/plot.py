@@ -2,6 +2,9 @@ from scipy.stats import gmean
 from scipy.stats import iqr
 from benchmarks.plot.util import *
 
+
+FONTSIZE = 12
+ISBETTER_FONTSIZE = FONTSIZE + 2
 HIGHERISBETTER = "Higher is better ↑"
 LOWERISBETTER = "Lower is better ↓"
 
