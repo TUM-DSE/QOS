@@ -35,7 +35,7 @@ class OptimalWireCutter(VirtualizationPass):
                 raise ValueError("Could not find a solution (internal error)")
             partitions = self._find_optimal_partitons(dag, min_num_fragments)
             min_num_fragments += 1
-
+        #print("found partitions")
         edges = list(dag.edges())
         i = 0
         vgates = 0

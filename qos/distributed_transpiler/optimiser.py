@@ -171,7 +171,7 @@ class GVOptimalDecompositionPass(GateVirtualizationPass):
 
         return q
     
-    def cost(self, q: Qernel) -> int:
+    def cost(self, q: Qernel, final_cost) -> int:
         optimal_decomposition_pass = OptimalDecompositionPass(self._size_to_reach)
         vsqs = q.get_virtual_subqernels()
         cost = 0
@@ -186,6 +186,8 @@ class GVOptimalDecompositionPass(GateVirtualizationPass):
         else:
             qc = q.get_circuit()        
             cost = optimal_decomposition_pass.get_budget(qc) 
+
+        final_cost.value = cost
 
         return cost
 
@@ -288,7 +290,6 @@ class RandomQubitReusePass(QubitReusePass):
             qc = q.get_circuit()
             virtual_circuit = VirtualCircuit(qc)        
             random_qubit_reuser_pass.run(virtual_circuit)
-            print(virtual_circuit._circuit)
             sub_qernel = Qernel()
             sub_qernel.set_circuit(virtual_circuit)    
             sub_qernel.set_metadata(q.get_metadata())
@@ -359,7 +360,7 @@ class OptimalWireCuttingPass(WireCuttingPass):
 
         return q
     
-    def cost(self, q: Qernel) -> int:
+    def cost(self, q: Qernel, final_cost) -> int:
         optimal_wire_cutting_pass = OptimalWireCutter(self._size_to_reach)
         vsqs = q.get_virtual_subqernels()
         cost = 0
@@ -374,6 +375,8 @@ class OptimalWireCuttingPass(WireCuttingPass):
         else:
             qc = q.get_circuit()        
             cost = optimal_wire_cutting_pass.get_budget(qc) 
+        
+        final_cost.value = cost
 
         return cost
 

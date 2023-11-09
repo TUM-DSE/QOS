@@ -1,3 +1,6 @@
+from multiprocessing import Process, Value
+import time
+
 from qos.distributed_transpiler.analyser import *
 from qos.distributed_transpiler.optimiser import *
 
@@ -5,9 +8,11 @@ class DistributedTranspiler():
     budget: int
     methods: dict[str, bool]
     size_to_reach: int
+    ideal_size_to_reach: int
 
-    def __init__(self, size_to_reach: int = 7, budget: int = 4, methods: List[str] = []) -> None:
+    def __init__(self, size_to_reach: int = 7, ideal_size_to_reach: int = 2, budget: int = 4, methods: List[str] = []) -> None:
         self.size_to_reach = size_to_reach
+        self.ideal_size_to_reach = ideal_size_to_reach
         self.budget = budget
         self.methods = {
             "QF": False,
@@ -33,9 +38,25 @@ class DistributedTranspiler():
     def computeCuttingCosts(self, q: Qernel, size_to_reach: int):
         gv_pass = GVOptimalDecompositionPass(size_to_reach)
         wc_pass = OptimalWireCuttingPass(size_to_reach)
+        gv_cost = Value("i", 1000)
+        wc_cost = Value("i", 1000)
 
-        gv_cost = gv_pass.cost(q)
-        wc_cost = wc_pass.cost(q)
+        p = Process(target=gv_pass.cost, args=(q, gv_cost))
+        p.start()
+        p.join(600)
+        if p.is_alive():
+            p.terminate()
+            p.join()
+        gv_cost = gv_cost.value
+        #wc_cost = wc_pass.cost(q)
+        p = Process(target=wc_pass.cost, args=(q, wc_cost))
+        p.start()
+        p.join(600)
+        if p.is_alive():
+            p.terminate()
+            p.join()
+
+        wc_cost = wc_cost.value
 
         return {"GV": gv_cost, "WC": wc_cost}
     
@@ -43,10 +64,10 @@ class DistributedTranspiler():
         if self.methods["GV"]:
             gv_pass = GVOptimalDecompositionPass(size_to_reach)
             
-            cost = gv_pass.cost(q)
+            #cost = gv_pass.cost(q)
 
-            if cost <= self.budget:
-                q = gv_pass.run(q, self.budget)
+            #if cost <= self.budget:
+            q = gv_pass.run(q, self.budget)
         
         return q
     
@@ -54,10 +75,10 @@ class DistributedTranspiler():
         if self.methods["WC"]:
             wc_pass = OptimalWireCuttingPass(size_to_reach)
             
-            cost = wc_pass.cost(q)
+            #cost = wc_pass.cost(q)
 
-            if cost <= self.budget:
-                q = wc_pass.run(q, self.budget)
+            #if cost <= self.budget:
+            q = wc_pass.run(q, self.budget)
         
         return q
     
@@ -111,11 +132,11 @@ class DistributedTranspiler():
                 size_to_reach = self.size_to_reach
                 costs = self.computeCuttingCosts(q, size_to_reach)
 
-                while (costs["GV"] < budget or costs["WC"] < budget) and size_to_reach > 2:
+                while (costs["GV"] <= budget or costs["WC"] <=budget) and size_to_reach > 2:
                     size_to_reach = size_to_reach - 1
                     costs = self.computeCuttingCosts(q, size_to_reach)
             
-                if costs["GV"] >= budget and costs["WC"] >= budget:
+                while costs["GV"] > budget and costs["WC"] > budget:
                     size_to_reach = size_to_reach + 1
                     costs = self.computeCuttingCosts(q, size_to_reach)
 
@@ -134,11 +155,11 @@ class DistributedTranspiler():
             size_to_reach = self.size_to_reach
             costs = self.computeCuttingCosts(q, size_to_reach)
 
-            while (costs["GV"] < self.budget or costs["WC"] < self.budget) and size_to_reach > 2:
+            while (costs["GV"] <= self.budget or costs["WC"] <= self.budget) and size_to_reach > 2:
                 size_to_reach = size_to_reach - 1
-                costs = self.computeCuttingCosts(q, size_to_reach)
+                costs = self.computeCuttingCosts(q, size_to_reach)                
             
-            if costs["GV"] >= self.budget and costs["WC"] >= self.budget:
+            while costs["GV"] > self.budget and costs["WC"] > self.budget:
                 size_to_reach = size_to_reach + 1
                 costs = self.computeCuttingCosts(q, size_to_reach)
 
