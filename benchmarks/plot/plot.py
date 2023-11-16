@@ -853,10 +853,10 @@ def custom_plot_scal_spatial_hetero(dataframes: list[pd.DataFrame], titles: list
     )
 
 
-	x1 = np.array(["cairo", "hanoi", "kolk.", "mumb.", "algiers", "auck."])
+	x1 = np.array(["cairo", "hanoi", "kolkata", "mumbai", "algiers", "auckland"])
 
 	axis[1].set_xlabel(xlabel[1])
-	axis[1].set_xticklabels(x1)
+	axis[1].set_xticklabels(x1, rotation=45)
 	axis[1].grid(axis="y", linestyle="-", zorder=-1)
 	axis[1].set_ylim(0, 1.1)
 	#axis[0].axhline(1, color="red", linestyle="-", linewidth=2)
