@@ -201,11 +201,11 @@ def getCuttingResults(args: list[str]):
     randomness = int(args[2])
     benchmark_circuits = []
 
-    #provider = IBMProvider(token='87ae595a5a0b9624fe36f477550700ee4b4dc540061a89951f197a0cd36d639e2c5e6307d533993123eaa925d9bea2de14a02b659219646ea4750e1768c76bf1')
-    provider = IBMProvider()
-    #backend = provider.get_backend("ibm_algiers")
+    provider = IBMProvider(token='87ae595a5a0b9624fe36f477550700ee4b4dc540061a89951f197a0cd36d639e2c5e6307d533993123eaa925d9bea2de14a02b659219646ea4750e1768c76bf1')
+    #provider = IBMProvider()
+    backend = provider.get_backend("ibm_algiers")
 
-    backend = FakeKolkataV2()
+    #backend = FakeKolkataV2()
     simulator = provider.get_backend("ibmq_qasm_simulator")
     #simulator = AerSimulator()
     basic_analysis_pass = BasicAnalysisPass()
@@ -252,9 +252,9 @@ def getCuttingResults(args: list[str]):
                 to_execute.append(cqc_small)
 
     print(len(to_execute))
-    exit()
-    to_execute0 = to_execute[0:270]
-    to_execute1 = to_execute[270:]
+    #exit()
+    to_execute0 = to_execute[0:150]
+    to_execute1 = to_execute[150:]
 
     for q in ready_qernels:
         for vsq in q.get_virtual_subqernels():
@@ -570,7 +570,7 @@ def getCompilationTimes(args: list[str]):
 
     provider = IBMProvider(token='87ae595a5a0b9624fe36f477550700ee4b4dc540061a89951f197a0cd36d639e2c5e6307d533993123eaa925d9bea2de14a02b659219646ea4750e1768c76bf1')
     #provider = IBMProvider()
-    backend = provider.get_backend("ibmq_kolkata")
+    backend = provider.get_backend("ibm_brisbane")
     #backend = FakeKolkataV2()
 
     #basic_analysis_pass = BasicAnalysisPass()
@@ -623,14 +623,13 @@ def getCompilationTimes(args: list[str]):
                     tmp_comp_times.append(comp_time)
                 comp_times.append(np.mean(tmp_comp_times))
                 comp_stds.append(np.std(tmp_comp_times))
-                volumes.append(c.num_qubits * c.depth())
+                #volumes.append(c.num_qubits * c.depth())
                 #q = Qernel(tqc)            
                 qq = Qernel(c)
                 qernels.append(qq)
 
-    
     #dt = DistributedTranspiler(size_to_reach=12, budget=3, methods=["GV", "WC", "QR", "QF"])
-    dt_noQF = DistributedTranspiler(size_to_reach=12, budget=3, methods=["GV", "WC", "QR"])
+    dt_noQF = DistributedTranspiler(size_to_reach=int(lower_limit/2), budget=3, methods=["GV", "WC", "QR"])
     gate_virtualizer = GVInstatiator()
 
     #metadata_delta = []
@@ -638,18 +637,15 @@ def getCompilationTimes(args: list[str]):
     new_comp_times_stds = []
     dt_comp_times = []
     dt_comp_times_stds = []
-    new_volumes = [0 for i in range(len(qernels))]
-    old_volumes = [0 for i in range(len(qernels))]
+    #new_volumes = [0 for i in range(len(qernels))]
+    #old_volumes = [0 for i in range(len(qernels))]
 
     for i,q in enumerate(qernels):
         #print("circ: ", i)
 
-        tmp_array = []
-        for j in range(randomness):
-            qq = copy.deepcopy(q)
-            now = perf_counter()
-            optimized_q = dt_noQF.run(qq)
-            tmp_array.append(perf_counter() - now)
+        tmp_array = [0]
+        qq = copy.deepcopy(q)
+        optimized_q = dt_noQF.run(qq)
 
         dt_comp_times.append(np.mean(tmp_array))
         dt_comp_times_stds.append(np.std(tmp_array))
@@ -663,10 +659,10 @@ def getCompilationTimes(args: list[str]):
             for sq in sqs:
                 ssqs = sq.get_subqernels()
                 print(len(ssqs))
-                old_volumes[i] = old_volumes[i] + len(ssqs)
+                #old_volumes[i] = old_volumes[i] + len(ssqs)
                 for qq in ssqs:             
                     qc_small = qq.get_circuit()
-                    new_volumes[i] = new_volumes[i] + qc_small.num_qubits * qc_small.depth()
+                    #new_volumes[i] = new_volumes[i] + qc_small.num_qubits * qc_small.depth()
                     now = perf_counter()
                     transpile(qc_small, backend, optimization_level=3)
                     time = perf_counter() - now
@@ -680,13 +676,13 @@ def getCompilationTimes(args: list[str]):
         #print(len(new_comp_times), len(new_comp_times_stds))
         aggr_metadata.append([BENCHMARK_CIRCUITS[i], comp_times[i], comp_stds[i], new_comp_times[i], new_comp_times_stds[i], dt_comp_times[i], dt_comp_times_stds[i]])
 
-    print(volumes)
-    print(new_volumes)
-    print(old_volumes)
-    df_percentage = [new / old for (new, old) in zip(new_volumes, volumes)]
-    print(df_percentage)
-    print(np.mean(old_volumes))
-    print(np.mean(df_percentage))
+    #print(volumes)
+    #print(new_volumes)
+    #print(old_volumes)
+    #df_percentage = [new / old for (new, old) in zip(new_volumes, volumes)]
+    #print(df_percentage)
+    #print(np.mean(old_volumes))
+    #print(np.mean(df_percentage))
     write_to_csv("cut_circuits_overheads" + str(lower_limit) + ".csv", aggr_metadata)
 
 def getMatchingScores(args: list[str]):
@@ -1278,11 +1274,15 @@ def plot_multiprogrammer_relative():
     mc_file_path = "results/multiprogrammer_test"
     baseline_file_path = "results/large_circuits_solo_"
 
-    for i in [4, 8, 12]:
-        dataframes.append(pd.read_csv(mc_file_path + str(i * 2) + ".csv"))
+    for i in [8, 16, 24]:
+        dataframes.append(pd.read_csv(mc_file_path + str(i) + ".csv"))
         dataframes.append(pd.read_csv(baseline_file_path + str(i) + ".csv"))
 
-    custom_plot_multiprogrammer_relative(dataframes, [], ["Rel. Fidelity"], ["Utilization [%]"])
+    for i in [4, 8, 12]:
+        dataframes.append(pd.read_csv(mc_file_path + str(i * 2) + ".csv"))
+        dataframes.append(pd.read_csv(baseline_file_path + str(i) + ".csv"))    
+
+    custom_plot_multiprogrammer_relative(dataframes, ["(a) Impact on Fidelity", "(b) Effective Utilization", "(c) Relative Fidelity"], ["Fidelity", "Effective Utilization [%]", "Rel. Fidelity"], ["Utilization [%]", "Ideal Utilization [%]", "Utilization [%]"])
 
 def plot_utilization_problem():
     custom_plot_baseline_utilizations([], [""], ["Utilization [%]"], ["Benchmark"])
@@ -1327,7 +1327,7 @@ def plot_dt_util_estim():
     filename = "results/matcher_eval_12.csv"
     dataframes = []
 
-    for i in [12, 24]:
+    for i in [12, 24, 40]:
         dataframes.append(pd.read_csv(csv_file_path + str(i) + ".csv"))
 
     for i in [8, 16, 24]:
@@ -1338,6 +1338,13 @@ def plot_dt_util_estim():
 
     custom_plot_dt_mp_estim(dataframes, ["(a) Distributed Transpiler Overheads", "(b) QOS Multi-progammer", "(c) QOS Estimator"], ["Runtime [s]", "Fidelity", "Fidelity"], ["Number of Qubits", "Utilization [%]", "Benchmark"])
 
+def plot_estimator():
+    filename = "results/matcher_eval_12.csv"
+    dataframes = []
+    
+    dataframes.append(pd.read_csv(filename))
+    
+    custom_plot_estimator(dataframes, [], ["Fidelity"], ["Benchmark"])
 
 #qosDTeval(sys.argv)
 #plot_cut_fidelities()
@@ -1355,8 +1362,12 @@ def plot_dt_util_estim():
 #plot_overheads()
 #getCircuitProperties(sys.argv)
 #plot_relative_properties()
-plot_scal_spatial_hetero()
+#plot_scal_spatial_hetero()
+#getCuttingResults(sys.argv)
 #getQueueSizes(sys.argv)
 #plot_temp_util_load()
 #getCircuitProperties(sys.argv)
 #plot_cut_fidelities()
+#getCompilationTimes(sys.argv)
+#plot_dt_util_estim()
+plot_estimator()

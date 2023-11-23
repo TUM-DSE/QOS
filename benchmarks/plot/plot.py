@@ -675,22 +675,99 @@ def custom_plot_multiprogrammer_relative(dataframes: list[pd.DataFrame], titles:
 	xlabel: list[str],
 	output_file: str = "multiprogrammer_relative.pdf"):
 
-	fig = plt.figure(figsize=WIDE_FIGSIZE)
+	#fig = plt.figure(figsize=WIDE_FIGSIZE)
 
 	nrows = 1
-	ncols = 1
+	ncols = 3
 	gs = gridspec.GridSpec(nrows=nrows, ncols=ncols)
 
-	axis = [fig.add_subplot(gs[i, j]) for i in range(nrows) for j in range(ncols)]
+	#axis = [fig.add_subplot(gs[i, j]) for i in range(nrows) for j in range(ncols)]
+	fig, axis = plt.subplots(1, ncols, figsize=WIDE_FIGSIZE, gridspec_kw={'width_ratios': [1.1,0.8,1.1]})
+	fig.tight_layout()
 
-	x = np.array([30, 60, 88])
+	x0 = np.array([30, 60, 88])
 
 	axis[0].set_xlabel(xlabel[0])
 	axis[0].set_ylabel(ylabel[0])
-	axis[0].set_xticklabels(x)
+	axis[0].set_xticklabels(x0)
 	axis[0].grid(axis="y", linestyle="-", zorder=-1)
-	axis[0].set_ylim(0, 1.2)
-	axis[0].axhline(1, color="red", linestyle="-", linewidth=2)
+	axis[0].set_ylim(0, 1.0)
+
+	to_plot = []
+
+	for i in range(3):
+		to_plot.append([])
+		no_mp_mean = np.mean(dataframes[(i*2)+1]["fidelity"].to_list())
+		baseline_mp_mean = np.mean(dataframes[i*2]["fidelity"].to_list())
+		qos_mp_mean = np.mean(dataframes[i*2]["fidelity_std"].to_list())
+
+		to_plot[i].append(no_mp_mean)
+		to_plot[i].append(baseline_mp_mean)
+		to_plot[i].append(qos_mp_mean)
+		#print(qos_mp_mean / no_mp_mean, qos_mp_mean / baseline_mp_mean)
+	
+	y = np.array(
+		to_plot
+	)
+
+	to_plot = []
+
+	for i in range(3):
+		to_plot.append([])
+		to_plot[i].append(iqr(dataframes[(i*2)+1]["fidelity"].to_list(), rng=(35, 65), scale='normal'))
+		to_plot[i].append(iqr(dataframes[i*2]["fidelity"].to_list(), rng=(35, 65), scale='normal'))
+		to_plot[i].append(iqr(dataframes[i*2]["fidelity_std"].to_list(), rng=(35, 65), scale='normal'))
+
+	yerr = np.array(
+		to_plot
+	)
+	
+	grouped_bar_plot(axis[0], y, yerr, ["No M/P", "Baseline M/P", "QOS M/P"])
+	#axis[1].legend(loc="lower center", bbox_to_anchor=(0.5, -0.35), ncol=3, frameon=False)
+	axis[0].legend()
+	#axis[1].legend(loc="lower center", bbox_to_anchor=(0.5, -0.45), ncol=3, frameon=False)
+	axis[0].set_title(titles[0], fontsize=FONTSIZE, fontweight="bold")
+
+	''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+	x1 = np.array([30, 60, 88])
+
+	axis[1].set_xlabel(xlabel[1])
+	axis[1].set_ylabel(ylabel[1])
+	axis[1].set_xticklabels(x1)
+	axis[1].grid(axis="y", linestyle="-", zorder=-1)
+	axis[1].set_ylim(0, 100)
+	
+
+	y = np.array(
+		[
+			[23.3, 44.5, 70.2],
+			[25.5, 53, 81.3]
+		]
+	)
+
+	yerr = np.array(
+		[
+			[0, 0, 0],
+			[0, 0, 0]
+		]
+	)
+
+	grouped_bar_plot(axis[1], y.T, yerr.T, ["Basline M/P", "QOS M/P"])
+	axis[1].legend()
+
+	axis[1].set_title(titles[1], fontsize=FONTSIZE, fontweight="bold")
+
+	""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+	x1 = np.array([30, 60, 88])
+
+	axis[2].set_xlabel(xlabel[2])
+	axis[2].set_ylabel(ylabel[2])
+	axis[2].set_xticklabels(x1)
+	axis[2].grid(axis="y", linestyle="-", zorder=-1)
+	axis[2].set_ylim(0, 1.2)
+	axis[2].axhline(1, color="red", linestyle="-", linewidth=2)
 
 	to_plot = []
 
@@ -698,7 +775,7 @@ def custom_plot_multiprogrammer_relative(dataframes: list[pd.DataFrame], titles:
 	for i in range(3):
 		to_plot.append([])
 		for j in range(9):
-			to_plot[i].append(dataframes[i*2]["fidelity_std"][j] / dataframes[(i*2)+1]["fidelity"][j])
+			to_plot[i].append(dataframes[i*2 + 6]["fidelity_std"][j] / dataframes[(i*2)+7]["fidelity"][j])
 		#to_plot[i].append(np.mean(dataframes[(i*2)+1]["fidelity"].to_list()))
 		#to_plot[i].append(np.median(dataframes[i*2]["fidelity"].to_list()))
 		#to_plot[i].append(np.median(dataframes[i*2]["fidelity_std"].to_list()))
@@ -709,12 +786,11 @@ def custom_plot_multiprogrammer_relative(dataframes: list[pd.DataFrame], titles:
 
 	yerr = np.zeros((3, 9))
 	
-	grouped_bar_plot(axis[0], y, yerr, ["QAOA-R3", "BV", "GHZ", "HS-1", "QAOA-P1", "QSVM", "TL-1", "VQE-1", "W-STATE"], show_average_text=True, average_text_position=1.07)
-	axis[0].legend(loc="lower center", bbox_to_anchor=(0.5, -0.4), ncol=9, frameon=False)
-
-	#axis[0].set_title(titles[0], fontsize=FONTSIZE, fontweight="bold")
+	grouped_bar_plot(axis[2], y, yerr, ["QAOA-R3", "BV", "GHZ", "HS-1", "QAOA-P1", "QSVM", "TL-1", "VQE-1", "W-STATE"], show_average_text=True, average_text_position=1.1)
+	#axis[2].legend(loc="center left", bbox_to_anchor=(1, 0.5), frameon=False, fontsize=10)
+	axis[2].set_title(titles[2], fontsize=FONTSIZE, fontweight="bold")
 	
-	fig.text(0.5, 0.95, HIGHERISBETTER, ha="center", va="center", fontweight="bold", color="navy", fontsize=ISBETTER_FONTSIZE)
+	fig.text(0.5, 1.05, HIGHERISBETTER, ha="center", va="center", fontweight="bold", color="navy", fontsize=ISBETTER_FONTSIZE)
 
 	plt.savefig(output_file, bbox_inches="tight")
 
@@ -961,7 +1037,7 @@ def custom_plot_temp_util_load(dataframes: list[pd.DataFrame], titles: list[str]
 	axis1.axhline(np.mean(arr), color="red", linestyle="-", linewidth=1)
 	#print(np.mean(arr))
 	
-	axis1.set_xticklabels(x1, rotation=45, ha="right")
+	axis1.set_xticklabels(x1, rotation=30, ha="right")
 	axis1.grid(axis="y", linestyle="-", zorder=-1)
 
 	grouped_bar_plot(axis1, y.T, yerr.T, [""])
@@ -975,7 +1051,7 @@ def custom_plot_temp_util_load(dataframes: list[pd.DataFrame], titles: list[str]
 	axis2.set_ylabel(ylabel[2])
 	axis2.set_yscale("log")
 	axis2.set_ylim(1, 10000)
-	axis2.set_xticklabels(x2, rotation=45, ha="right")
+	axis2.set_xticklabels(x2, rotation=30, ha="right")
 	axis[2].axvline(2.5, color="red", linestyle="--", linewidth=1)
 	axis[2].axvline(8.5, color="red", linestyle="--", linewidth=1)
 
@@ -1011,12 +1087,13 @@ def custom_plot_dt_mp_estim(dataframes: list[pd.DataFrame], titles: list[str],
 	fig, axis = plt.subplots(1, 3, figsize=WIDE_FIGSIZE)
 	fig.tight_layout()
 
-	x0 = np.array([12, 24])	
+	x0 = np.array([12, 24, 40])	
 
 	axis[0].set_ylabel(ylabel[0])
 	axis[0].set_xlabel(xlabel[0])
 
-	axis[0].set_ylim(0, 1.5)
+	#axis[0].set_ylim(0, 1.5)
+	axis[0].set_yscale("log")
 
 	to_plot = []
 	to_plot.append([])
@@ -1032,11 +1109,17 @@ def custom_plot_dt_mp_estim(dataframes: list[pd.DataFrame], titles: list[str],
 	to_plot[1].append(np.median(dataframes[1]["fidelity"].to_list()))
 	to_plot[1].append(np.median(dataframes[1]["num_nonlocal_gates"].to_list()))
 
-	#print(np.median(dataframes[1]["num_nonlocal_gates"].to_list()) / np.median(dataframes[1]["num_qubits"].to_list()))
+	to_plot.append([])
+	to_plot[2].append(np.median(dataframes[2]["num_qubits"].to_list()))
+	to_plot[2].append(np.median(dataframes[2]["fidelity"].to_list()))
+	to_plot[2].append(np.median(dataframes[2]["num_nonlocal_gates"].to_list()))
+
+	print(np.median(dataframes[2]["num_nonlocal_gates"].to_list()) / np.median(dataframes[2]["num_qubits"].to_list()))
 
 	y0 = np.array(
 		to_plot
 	)
+	#print(dataframes[2])
 
 	to_plot = []
 	to_plot.append([])
@@ -1048,6 +1131,11 @@ def custom_plot_dt_mp_estim(dataframes: list[pd.DataFrame], titles: list[str],
 	to_plot[1].append(np.mean(dataframes[1]["depth"].to_list()))
 	to_plot[1].append(np.mean(dataframes[1]["fidelity_std"].to_list()))
 	to_plot[1].append(np.mean(dataframes[1]["num_measurements"].to_list()))
+
+	to_plot.append([])
+	to_plot[2].append(np.mean(dataframes[2]["depth"].to_list()))
+	to_plot[2].append(np.mean(dataframes[2]["fidelity_std"].to_list()))
+	to_plot[2].append(np.mean(dataframes[2]["num_measurements"].to_list()))
 	
 	yerr0 = np.array(
 		to_plot
@@ -1059,8 +1147,8 @@ def custom_plot_dt_mp_estim(dataframes: list[pd.DataFrame], titles: list[str],
 	grouped_bar_plot(axis[0], y0, yerr0, ["Baseline", "QOS Optimizer", "QOS Compilation"])
 
 	axis[0].set_title(titles[0], fontsize=FONTSIZE, fontweight="bold")
-	axis[0].text(0.7, 1.8, LOWERISBETTER, ha="center", va="center", fontweight="bold", color="navy", fontsize=ISBETTER_FONTSIZE)
-	axis[0].legend(loc="upper right")
+	axis[0].text(1, 220, LOWERISBETTER, ha="center", va="center", fontweight="bold", color="navy", fontsize=ISBETTER_FONTSIZE)
+	axis[0].legend(loc="upper left")
 
 	''''''''''''''''''''''''''''''''''''''''''''''''''''''
 	x1 = np.array([30, 60, 88])
@@ -1075,9 +1163,9 @@ def custom_plot_dt_mp_estim(dataframes: list[pd.DataFrame], titles: list[str],
 
 	for i in range(3):
 		to_plot.append([])
-		no_mp_mean = np.mean(dataframes[(i*2)+3]["fidelity"].to_list())
-		baseline_mp_mean = np.mean(dataframes[i*2 + 2]["fidelity"].to_list())
-		qos_mp_mean = np.mean(dataframes[i*2 + 2]["fidelity_std"].to_list())
+		no_mp_mean = np.mean(dataframes[(i*2)+4]["fidelity"].to_list())
+		baseline_mp_mean = np.mean(dataframes[i*2 + 3]["fidelity"].to_list())
+		qos_mp_mean = np.mean(dataframes[i*2 + 3]["fidelity_std"].to_list())
 
 		to_plot[i].append(no_mp_mean)
 		to_plot[i].append(baseline_mp_mean)
@@ -1092,9 +1180,9 @@ def custom_plot_dt_mp_estim(dataframes: list[pd.DataFrame], titles: list[str],
 
 	for i in range(3):
 		to_plot.append([])
-		to_plot[i].append(iqr(dataframes[(i*2)+3]["fidelity"].to_list(), rng=(35, 65), scale='normal'))
-		to_plot[i].append(iqr(dataframes[i*2 + 2]["fidelity"].to_list(), rng=(35, 65), scale='normal'))
-		to_plot[i].append(iqr(dataframes[i*2 + 2]["fidelity_std"].to_list(), rng=(35, 65), scale='normal'))
+		to_plot[i].append(iqr(dataframes[(i*2)+4]["fidelity"].to_list(), rng=(35, 65), scale='normal'))
+		to_plot[i].append(iqr(dataframes[i*2 + 3]["fidelity"].to_list(), rng=(35, 65), scale='normal'))
+		to_plot[i].append(iqr(dataframes[i*2 + 3]["fidelity_std"].to_list(), rng=(35, 65), scale='normal'))
 
 	yerr = np.array(
 		to_plot
@@ -1118,12 +1206,12 @@ def custom_plot_dt_mp_estim(dataframes: list[pd.DataFrame], titles: list[str],
 	axis[2].set_ylim(0, 1)
 
 	y = np.array(
-		dataframes[8][["num_qubits", "fidelity"]].values
+		dataframes[9][["num_qubits", "fidelity"]].values
 	)
 
 	yerr = np.array(
 
-		dataframes[8][["depth", "fidelity_std"]].values
+		dataframes[9][["depth", "fidelity_std"]].values
 
 	)
 
@@ -1135,6 +1223,43 @@ def custom_plot_dt_mp_estim(dataframes: list[pd.DataFrame], titles: list[str],
 
 	plt.savefig(output_file, bbox_inches="tight")
 
+def custom_plot_estimator(dataframes: list[pd.DataFrame], titles: list[str],
+	ylabel: list[str],
+	xlabel: list[str],
+	output_file: str = "estimator_results.pdf"):
+
+	fig = plt.figure(figsize=COLUMN_FIGSIZE)
+	nrows = 1
+	ncols = 1
+	gs = gridspec.GridSpec(nrows=nrows, ncols=ncols)
+	axis = [fig.add_subplot(gs[i, j]) for i in range(nrows) for j in range(ncols)]
+	fig.tight_layout()
+
+	x0 = np.array(["QAOA-R3", "GHZ", "HS-1", "QAOA-P1", "QSVM", "TL-1", "VQE-1", "W-STATE"])
+
+	axis[0].set_xlabel(xlabel[0])
+	axis[0].set_ylabel(ylabel[0])
+	axis[0].set_xticklabels(x0, rotation=0)
+	axis[0].grid(axis="y", linestyle="-", zorder=-1)
+	axis[0].set_ylim(0, 1)
+
+	y = np.array(
+		dataframes[0][["num_qubits", "fidelity"]].values
+	)
+
+	yerr = np.array(
+
+		dataframes[0][["depth", "fidelity_std"]].values
+
+	)
+
+	grouped_bar_plot(axis[0], y, yerr, ["IBM Auckland", "QOS Estimator"], show_average_text=False)
+
+	axis[0].legend()
+	#axis[0].set_title(titles[0], fontsize=FONTSIZE, fontweight="bold")
+	axis[0].text(3.6, 1.05, HIGHERISBETTER, ha="center", va="center", fontweight="bold", color="navy", fontsize=ISBETTER_FONTSIZE)
+
+	plt.savefig(output_file, bbox_inches="tight")
 
 def custom_plot_dataframes(
 	dataframes: list[pd.DataFrame],

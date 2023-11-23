@@ -65,7 +65,7 @@ def grouped_bar_plot(
     #assert y.shape == yerr.shape
 
     num_groups, num_bars = y.shape
-    #print(num_groups, len(bar_labels), num_bars)
+    print(num_groups, len(bar_labels), num_bars)
  
     assert len(bar_labels) == num_bars
     

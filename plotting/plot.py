@@ -30,7 +30,7 @@ def line_plot(x, y, xlabel='XLabel', ylabel='YLabel', legend:str|list[str]=None,
         line_data = pd.DataFrame()
         line_data['x'] = x
         line_data.set_index('x', inplace=True)
-        colors = sns.color_palette("pastel")
+        colors = sns.color_palette("deep")
         ax.set_xlabel(xlabel, color='black')
         ax.set_ylabel(ylabel, color='black')
 
