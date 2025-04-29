@@ -1,0 +1,92 @@
+# ATTENTION: The first QPU in the list should be the smallest one
+
+qpus:
+  - name: FakeKolkataV2
+    alias: fake_kolkata
+    nqbits: 27
+    type: fake
+    provider: ibm
+
+  - name: FakeWashingtonV2
+    alias: fake_washington
+    nqbits: 127
+    type: fake
+    provider: ibm
+
+  - name: FakeMumbaiV2
+    alias: fake_mumbai
+    nqbits: 27
+    type: fake
+    provider: ibm
+
+  - name: FakeMontrealV2
+    alias: fake_montreal
+    nqbits: 27
+    type: fake
+    provider: ibm
+
+##  - name: FakeGuadalupe
+##    alias: fake_guadalupe
+##    nqbits: 16
+##    type: fake
+##    provider: ibm
+##
+##  - name: FakeHanoi
+##    alias: fake_hanoi
+##    nqbits: 27
+##    type: fake
+##    provider: ibm
+
+##  - name: FakeLagos
+##    alias: fake_lagos
+##    nqbits: 7
+##    type: fake
+##    provider: ibm
+#
+##  - name: FakeAlmaden
+##    alias: fake_almaden
+##    nqbits: 20
+##    type: fake
+##    provider: ibm
+#
+##  - name: FakeCambridge
+##    alias: fake_cambridge
+##    nqbits: 28
+##    type: fake
+##    provider: ibm
+#
+##  - name: FakeSingapore
+##    alias: fake_singapore
+##    nqbits: 20
+##    type: fake
+##    provider: ibm
+#
+##  - name: FakeSydney
+##    alias: fake_sydney
+##    nqbits: 27
+##    type: fake
+##    provider: ibm
+#
+##  - name: FakeToronto
+##    alias: fake_toronto
+##    nqbits: 27
+##    type: fake
+##    provider: ibm
+#
+##  - name: FakeRochester
+##    alias: fake_rochester
+##    nqbits: 53
+##    type: fake
+##    provider: ibm
+#
+##  - name: FakeBrooklyn
+##    alias: fake_brooklyn
+##    nqbits: 27
+##    type: fake
+##    provider: ibm
+#
+##  - name: FakeBrooklyn
+##    alias: fake_brooklyn
+##    nqbits: 27
+##    type: fake
+##    provider: ibm
