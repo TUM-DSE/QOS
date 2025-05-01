@@ -1,16 +1,14 @@
 from qos.types.types import Engine
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 import qos.database as db
-from qos.types.types import Backend, Qernel
-import pdb
+from qos.types.types import Qernel
 import logging
-from qos.scheduler import Scheduler
-from qos.tools import check_layout_overlap, size_overflow, bundle_qernels
-import queue
-from multiprocessing import Process
+from qos.multiprogrammer.tools import check_layout_overlap, size_overflow, bundle_qernels
 from time import sleep
-import os
+from qos.types.types import QPU
+from qos.estimator.estimator import Estimator
 import numpy as np
+from mapomatic import layouts
 
 pipe_name = "multiprog_fifo.pipe"
 
@@ -20,24 +18,88 @@ class Multiprogrammer(Engine):
     window_size = 5
     
     def __init__(self) -> None:
-        #Process(target=self.window_monitor).start()
-        #sleep(2)
-        #return
+
         self.queue = []
         self.done_queue = []
 
-    def get_matching_score(self, q1: Qernel, q2: Qernel, weighted: bool = False, weights: List[float] = []) -> float:
+    def spatial_utilization(self, q1: Qernel, q2: Qernel, backend: QPU) -> float:
+        util1 = q1.num_qubits() / backend.num_qubits
+        util2 = q2.num_qubits() / backend.num_qubits
+
+        return util1 + util2
+
+    def effective_utilization(self, q1: Qernel, q2: Qernel, backend: QPU) -> float:
+        """
+        Calculate the effective utilization of a quantum processing unit (QPU) 
+        based on the characteristics of two Qernels.
+
+        Args:
+            q1 (Qernel): The first Qernel object, representing a quantum program.
+            q2 (Qernel): The second Qernel object, representing a quantum program.
+            backend (QPU): The quantum processing unit (QPU) backend, providing 
+                           hardware specifications such as the number of qubits.
+
+        Returns:
+            float: The effective utilization of the QPU, calculated as the sum of 
+                   spatial utilization and temporal utilization, expressed as a percentage.
+
+        Notes:
+            - Spatial utilization is determined by the Qernel with the maximum 
+              allocated qubits (C_max) relative to the total number of qubits 
+              available on the backend.
+            - Temporal utilization is a weighted sum of the spatial usage of 
+              each Qernel, where the weight is proportional to the depth of the 
+              Qernel relative to the maximum depth (D_max) among the Qernels.
+        """
+         # Find the Qernel with the maximum depth (D_max)
+        D_max = max((q1.depth(), q2.depth()))
+
+        # Find the Qernel with the maximum allocated qubits (C_max)
+        C_max = max((q1.num_qubits(), q2.depth()))
+
+        # Spatial utilization (from the Qernel with C_max)
+        spatial_util = (C_max / backend.num_qubits) * 100
+
+        # Temporal utilization (weighted sum of spatial usage)
+        temporal_util = 0.0
+        qernels = [q1, q2]
+        for q in qernels:
+            D_k = q.depth()
+            C_k = q.num_qubits
+            weight = D_k / D_max
+            temporal_util += weight * (C_k / backend.num_qubits) * 100
+
+        # Total effective utilization
+        u_eff = spatial_util + temporal_util
+
+        return u_eff
+
+    def get_matching_score(self, q1: Qernel, q2: Qernel, backend: QPU, weighted: bool = False, weights: List[float] = []) -> float:
+        """
+        Calculate the matching score between two Qernels based on various comparison metrics.
+        Args:
+            q1 (Qernel): The first Qernel to compare.
+            q2 (Qernel): The second Qernel to compare.
+            backend (QPU): The quantum processing unit (QPU) backend used for evaluation.
+            weighted (bool, optional): If True, apply weights to the comparison metrics. Defaults to False.
+            weights (List[float], optional): A list of weights for the comparison metrics in the order:
+                [effective utilization, entanglement difference, measurement difference, parallelism difference].
+                Defaults to an empty list.
+        Returns:
+            float: The calculated matching score. If weights are provided and valid, the score is a weighted sum
+            of the metrics; otherwise, it is the average of the metrics.
+        """
         score = 0
 
-        depthDiff = self.depthComparison(q1, q2)
+        util_eff = self.effective_utilization(q1, q2, backend)
         entanglementDiff = self.entanglementComparison(q1, q2)
         measurementDiff = self.measurementComparison(q1, q2)
         parallelismDiff = self.parallelismComparison(q1, q2)
 
         if weighted and sum(weights) > 0:            
-            score = weights[0] * depthDiff + weights[1] * entanglementDiff + weights[2] * measurementDiff + weights[3] * parallelismDiff
+            score = weights[0] * util_eff + weights[1] * entanglementDiff + weights[2] * measurementDiff + weights[3] * parallelismDiff
         else:
-            score = (depthDiff + entanglementDiff + measurementDiff + parallelismDiff) / 4
+            score = (util_eff + entanglementDiff + measurementDiff + parallelismDiff) / 4
     
         return score
     
@@ -78,102 +140,80 @@ class Multiprogrammer(Engine):
 
         return parallelism_result
 
-    #def submit(self, qernel: Qernel):
-    #
-    #    # Here the multiprogramming engine would do its qernel
-    #
-    #    self.multiprogram(qernel, self._base_policy)
-    #
-    #    sched = Scheduler()
-    #    sched.submit(qernel, sched._lightload_balance_policy)
-    #
-    #    return 0
+    def process_qernels(self, qernel_dict: Dict[Qernel, List[Tuple[List[int], str, float]]], threshold: float):
+        """
+        Processes a dictionary of Qernels to compute spatial utilization and matching scores 
+        for pairs of Qernels using the same backend. Filters and evaluates pairs based on 
+        utilization, matching score, and layout overlap.
 
-    #def window_monitor(self):
-    #    # pdb.set_trace()
-    #    #os.mkfifo(pipe_name)
-    #    #openfifo = open(pipe_name, "r")
+        Args:
+            qernel_dict (Dict[Qernel, List[Tuple[List[int], str, float]]]): 
+                A dictionary where keys are Qernel objects and values are lists of tuples. 
+                Each tuple contains:
+                    - A list of integers representing the layout.
+                    - A string representing the backend.
+                    - A float representing the estimated fidelity.
+            threshold (float): 
+                The minimum matching score required to process a pair of Qernels.
 
-    #    while True:
-    #        print("Waiting for message")
-    #        line = openfifo.readline()
-    #        if not line:
-    #            continue
-    #        else:
-    #            print(
-    #                line + "received message"
-    #            )
-    #            # ? This probably can just be the qernel id, and then we can get the qernel from the database?
-    #            qernel = db.getQernel(int(line))
-    #            self.multiprogram(qernel, self._restrict_policy)
+        Returns:
+            None: 
+                The bundled Qernel.
 
-    def run(self, qernels: List[Qernel] | Qernel, merge_policy='restrict') -> List[Qernel]:
+        Behavior:
+            - Computes spatial utilization for pairs of Qernels using the same backend.
+            - Keeps pairs with spatial utilization below 0.9.
+            - Sorts the filtered pairs by utilization in descending order.
+            - Evaluates each pair's matching score and checks if it exceeds the threshold.
+            - Applies policies based on layout overlap:
+                - Calls `restrict_policy()` if layouts do not overlap.
+                - Calls `re_evaluation_policy()` if layouts overlap.
+        """
+        results = []
 
+        # Iterate over the dictionary to compute spatial utilization for each pair with the same backend
+        for q1, q1_data in qernel_dict.items():
+            for q2, q2_data in qernel_dict.items():
+                if q1 == q2:
+                    continue
 
-        if merge_policy == 'restrict':
-            merge_policy = self._restrict_policy
-        else:
-            print("Merge policy not supported yet")
-            exit(1)
+                # Check if the backends (str) are the same
+                for layout1, backend1, _ in q1_data:
+                    for layout2, backend2, _ in q2_data:
+                        if backend1 == backend2:
+                            # Compute spatial utilization
+                            spatial_util = self.spatial_utilization(q1, q2, backend1)
 
-        #Its much easier to apply the merge policy if the subqernels are on the same list, just iterate through the list, or we can always pass around the root qernels, its much more clean but might take more time to look around for subqernels and subsubqernels
-        ''' 
-        if isinstance(qernels, list):
-            all_qernels = []
+                            # Filter pairs with utilization > 9
+                            if spatial_util < 0.9:
+                                results.append((q1, q2, layout1, layout2, spatial_util, backend1))
 
-            for q in qernels:
-                sub_qernels = q.get_subqernels()
-                if sub_qernels != []:
-                    for subq in sub_qernels:
-                        subsub_qernels = subq.get_subqernels()
-                        if subsub_qernels != []:
-                            for subsubq in subsub_qernels:
-                                all_qernels.append(subsubq)
-                        else:
-                            all_qernels.append(subq)
+        # Sort the pairs by utilization in descending order
+        results.sort(key=lambda x: x[4], reverse=True)
 
+        # Iterate over the pairs by highest utilization
+        for q1, q2, layout1, layout2, spatial_util, backend in results:
+            # Compute the matching score for their respective best layout
+            matching_score = self.get_matching_score(q1, q2, backend)
+
+            # Check if the matching score is over the threshold
+            if matching_score > threshold:
+                # Check if the layouts have common elements
+                if not check_layout_overlap(layout1, layout2):
+                    qernel = self.restrict_policy()
                 else:
-                    all_qernels.append(q)
-            
-                #if len(self.queue) > self.window_size:
-                #    self.done_queue.append(self.queue.pop())
+                    qernel = self.re_evaluation_policy()
 
+        return qernel
 
-            merge_policy(all_qernels, 0.1)
-            return self.done_queue
+    def run(self, qernels: List[Qernel]) -> List[Qernel]:
 
-        else:
-            this = merge_policy(qernels, 0.1)
-            return this
-        
-        return qernels
-        '''
-        #The restrict policy doesnt work if the sub and subsubqernels are on the same list
-        #merge_policy(qernels, 0.1)
 
         return qernels #<--- Comment this out
-        
-        # Copy paste here \/ your multiprogrammer code
-        # It should return the final queue of qernels to be scheduled
-
-
-
-
-
-
-        # return final_queue
-        # ---------------------
-        
-        
-        #return self.done_queue        
-    
+       
     def results(self) -> None:
         pass
-  
 
-    def test_policy(self, qernels: List[Qernel]) -> None:
-        for q in qernels:
-            return q
 
      # Merging policies:
 
@@ -184,17 +224,12 @@ class Multiprogrammer(Engine):
     #   1. Consider merging F or G or H with E, D, C, B, A, by this order. Lets consider that F could be merged with A
     #   2. The new circuits left are G and H, move the window by two circuits, this is because the new circuits need to enter the window and the size of the window is fixed
     
-    def _restrict_policy(self, new_qernels: Qernel | List[Qernel] , error_limit: float, matching_cycles=1, max_bundle=2) -> None:
-        # self.logger.log(10, "Running Restrict policy")
-        #window = db.currentWindow()
-
+    def restrict_policy(self, new_qernels: Qernel | List[Qernel] , error_limit: float, matching_cycles=1, max_bundle=2) -> None:
         # This is whole algorithm is very very unclean, but it works for now
         # This compares matching 0 of the incoming qernel with matching 0 of a qernel on the queue, the 1 to 0 then 0 to 1 and so on
         cycles = [(0,0), (1,0), (0,1), (1,1), (2,0), (0,2), (2,1), (1,2), (2,2), (3,0), (0,3), (3,1), (1,3), (3,2), (2,3), (3,3)]
 
-        if isinstance(new_qernels, Qernel):
-            #TODO
-            return
+
 
         #There is a caveat here, if a qernel has been merged the matching will always be the same, so it might make some repeated checks
 
@@ -245,6 +280,15 @@ class Multiprogrammer(Engine):
         self.done_queue = self.queue + self.done_queue
         return 0
 
+    def re_evaluation_policy(self, qernel1: Qernel, qernel2, successors=False) -> Qernel:
+        bundled_qernel = bundle_qernels(qernel1, qernel2, (0,0))
+
+        estimator = Estimator()
+        # Re-run the estimator with the bundled Qernel
+        result = estimator.run(bundled_qernel)
+
+        return result
+
     def _base_policy(self, newQernel: Qernel, error_limit: float) -> None:
         # self.logger.log(10, "Running Base policy")
 
@@ -268,5 +312,3 @@ class Multiprogrammer(Engine):
                             return 0
 
         return 0
-
-        # for i in window[0,-1]():

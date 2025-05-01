@@ -9,8 +9,6 @@ from qiskit import QuantumCircuit
 import logging
 from qiskit.converters import circuit_to_dag
 from qiskit.providers.fake_provider import *
-#from qiskit.providers.basicaer import QasmSimulatorPy
-#from qiskit_ibm_provider import IBMProvider
 from qiskit.compiler import transpile
 from qos.time_estimator.basic_estimator import CircuitEstimator
 #from settings.ibm_token import IBM_TOKEN
