@@ -171,10 +171,6 @@ class Engine(ABC):
     def run(self, args: Dict[str, Any]) -> int:
         pass
 
-#    @abstractmethod
-#    def execute(self, id: int, args: Dict[str, Any]) -> None:
-#        pass
-
     @abstractmethod
     def results(self, id: int, args: Dict[str, Any]) -> None:
         pass

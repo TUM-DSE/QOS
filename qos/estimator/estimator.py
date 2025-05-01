@@ -2,9 +2,9 @@ from typing import List
 import logging
 from random import choice
 import pickle
+import joblib
 
 from qos.types.types import Engine, Qernel
-from qos.kernel.multiprogrammer import Multiprogrammer
 import qos.database as db
 from data.ibm_token import IBM_TOKEN
 
@@ -73,11 +73,13 @@ class Estimator(Engine):
 
     _qpus = []
     _qpu_properties = {}
+    
 
-    def __init__(self, qpus: list = None) -> None:
+    def __init__(self, qpus: list = None, model_path: str = "qos/estimator") -> None:
         max_qpu_id = 0
 
         max_qpu_id = db.getLastQPUid()
+        self.model = joblib.load(model_path)  # scikit-learn model
 
         if qpus == None:
             for i in range(1, max_qpu_id + 1):
@@ -308,6 +310,12 @@ class Estimator(Engine):
 
         return out
 
+    def regression_cost_function(self, qernel: Qernel) -> float:
+        circuit = qernel.circuit
+        features = self._extract_features(circuit)
+        fidelity = self.model.predict([features])[0]
+        return float(fidelity)
+
     def idle_error(self, time, t1, t2):
         t2 = min(t1, t2)
         rate1 = 1 / t1
@@ -316,7 +324,46 @@ class Estimator(Engine):
         p_z = (1 - p_reset) * (1 - np.exp(-time * (rate2 - rate1))) / 2
         return p_z + p_reset
     
-    def best_overall_layoutv2(self, circuit, backends, successors=True, cost_function=None):
+    def best_overall_layoutv2(self, circuit, backends, successors=True, cost_function=trivialConstFunction):
+        """
+        Determines the best overall layout for a quantum circuit across multiple backends.
+
+        This function evaluates the given quantum circuit on one or more backends, 
+        identifies the best transpiled circuit based on the number of non-local gates, 
+        and computes the optimal layout for the circuit on each backend. The results 
+        are sorted by the specified cost function.
+
+        Args:
+            circuit (QuantumCircuit): The quantum circuit to be evaluated.
+            backends (List[Backend]]): A list of backends 
+                to evaluate the circuit on.
+            successors (bool, optional): If True, returns a list of all layouts sorted by 
+                the cost function. If False, returns only the best layout. Defaults to True.
+            cost_function (callable, optional): A custom cost function to evaluate layouts. 
+                If None, a default cost function is used. Defaults to trivialConstFunction.
+
+        Returns:
+            Union[List[Tuple[Layout, str, float]], Tuple[Layout, str, float], List]: 
+                - If `successors` is True, returns a list of tuples, where each tuple contains:
+                    - Layout: The optimal layout for the circuit.
+                    - str: The name of the backend.
+                    - float: The cost associated with the layout.
+                - If `successors` is False, returns the best layout tuple.
+                - If no valid layouts are found, returns an empty list.
+
+        Raises:
+            NameError: If the circuit cannot be transpiled on a given backend.
+
+        Notes:
+            - The function assumes that the circuit gates are compatible with the backend's 
+              basis gates. If not, the backend is skipped.
+            - Only backends that are not simulators and have sufficient qubits to support 
+              the circuit are considered.
+            - The function uses a matching algorithm to find candidate layouts and evaluates 
+              them using the provided or default cost function.
+        """
+        if backends is None:
+            backends = self._qpus
 
         if not isinstance(backends, list):
             backends = [backends]
@@ -364,7 +411,9 @@ class Estimator(Engine):
         return best_out
     
 
-    def best_overall_layoutv3(self, circuit, backends, successors=True, cost_function=None):
+    def best_overall_layoutv3(self, circuit, backends, successors=True, cost_function=trivialConstFunction):
+        if backends is None:
+            backends = self._qpus
         if not isinstance(backends, list):
             backends = [backends]
 
@@ -416,5 +465,5 @@ class Estimator(Engine):
             return best_out[0]
         return best_out
 
-    def results(self):
-        pass
+    def run(self, qernel: Qernel, successors=True, cost_function=trivialConstFunction):
+        return self.best_overall_layoutv2(qernel.circuit, successors=successors, cost_function=cost_function)
