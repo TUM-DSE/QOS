@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 import sys
 from qos.backends.types import QPU
-from qvm.qvm.virtual_circuit import VirtualCircuit
-from qvm.qvm.quasi_distr import *
+from qvm.virtual_circuit import VirtualCircuit
+from qvm.quasi_distr import *
 from qiskit import dagcircuit, QuantumCircuit
 from ..dag import DAG
 #from qos.distributed_transpiler.types import AnalysisPass

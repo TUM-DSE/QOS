@@ -10,8 +10,8 @@ from qiskit.circuit import (
 from qiskit.providers import BackendV2
 from qiskit_aer import AerSimulator
 
-from qvm.qvm.quasi_distr import QuasiDistr
-from qvm.qvm.virtual_gates import VirtualBinaryGate, VirtualGateEndpoint, VirtualMove
+from qvm.quasi_distr import QuasiDistr
+from qvm.virtual_gates import VirtualBinaryGate, VirtualGateEndpoint, VirtualMove
 
 
 InstanceLabelType = tuple[int, ...]

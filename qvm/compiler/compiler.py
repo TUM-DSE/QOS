@@ -5,9 +5,9 @@ from qvm.qvm.compiler.virtualization import (
     OptimalDecompositionPass,
     GreedyDependencyBreaker,
 )
-from qvm.qvm.compiler.distr_transpiler import QubitReuser
-from qvm.qvm.compiler.types import DistributedTranspilerPass, VirtualizationPass
-from qvm.qvm.compiler.util import num_virtual_gates
+from qvm.compiler.distr_transpiler import QubitReuser
+from qvm.compiler.types import DistributedTranspilerPass, VirtualizationPass
+from qvm.compiler.util import num_virtual_gates
 
 
 class QVMCompiler:

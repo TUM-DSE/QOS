@@ -8,8 +8,8 @@ from qiskit.circuit import QuantumRegister as Fragment
 from qiskit.providers.fake_provider import *
 from qiskit import transpile
 
-from qvm.qvm.virtual_circuit import VirtualCircuit, generate_instantiations
-from qvm.qvm.quasi_distr import QuasiDistr
+from qvm.virtual_circuit import VirtualCircuit, generate_instantiations
+from qvm.quasi_distr import QuasiDistr
 
 
 logger = logging.getLogger("qvm")

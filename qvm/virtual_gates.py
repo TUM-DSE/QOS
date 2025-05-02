@@ -3,7 +3,7 @@ from math import cos, pi, sin
 
 from qiskit.circuit import Barrier, Gate, QuantumCircuit, Instruction, QuantumRegister
 
-from qvm.qvm.quasi_distr import QuasiDistr
+from qvm.quasi_distr import QuasiDistr
 
 
 class WireCut(Barrier):

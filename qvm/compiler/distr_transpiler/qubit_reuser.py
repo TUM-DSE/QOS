@@ -5,9 +5,9 @@ import networkx as nx
 from qiskit.circuit import Qubit, CircuitInstruction, Reset, Measure
 from qiskit.circuit.library.standard_gates import XGate
 
-from qvm.qvm.compiler.dag import DAG
-from qvm.qvm.compiler.types import DistributedTranspilerPass
-from qvm.qvm.virtual_circuit import VirtualCircuit
+from qvm.compiler.dag import DAG
+from qvm.compiler.types import DistributedTranspilerPass
+from qvm.virtual_circuit import VirtualCircuit
 
 
 class QubitReuser(DistributedTranspilerPass):

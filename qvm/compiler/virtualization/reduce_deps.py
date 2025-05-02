@@ -3,9 +3,9 @@ import abc
 import networkx as nx
 from qiskit.circuit import QuantumCircuit, Qubit, Barrier
 
-from qvm.qvm.compiler.asp import get_optimal_symbols, dag_to_asp
-from qvm.qvm.compiler.types import VirtualizationPass
-from qvm.qvm.compiler.dag import DAG, dag_to_qcg
+from qvm.compiler.asp import get_optimal_symbols, dag_to_asp
+from qvm.compiler.types import VirtualizationPass
+from qvm.compiler.dag import DAG, dag_to_qcg
 
 
 class QubitDependencyReducer(VirtualizationPass, abc.ABC):

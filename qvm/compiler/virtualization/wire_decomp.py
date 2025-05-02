@@ -2,11 +2,11 @@ import networkx as nx
 from qiskit.circuit import QuantumCircuit, QuantumRegister, CircuitInstruction, Qubit
 from qiskit.circuit.library import SwapGate
 
-from qvm.qvm.compiler.types import VirtualizationPass
-from qvm.qvm.compiler.dag import DAG
-from qvm.qvm.compiler.asp import dag_to_asp, get_optimal_symbols
-from qvm.qvm.virtual_gates import WireCut, VirtualMove
-from qvm.qvm.compiler.util import num_virtual_gates
+from qvm.compiler.types import VirtualizationPass
+from qvm.compiler.dag import DAG
+from qvm.compiler.asp import dag_to_asp, get_optimal_symbols
+from qvm.virtual_gates import WireCut, VirtualMove
+from qvm.compiler.util import num_virtual_gates
 
 
 class OptimalWireCutter(VirtualizationPass):

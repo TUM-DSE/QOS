@@ -2,7 +2,7 @@ import abc
 
 from qiskit.circuit import QuantumCircuit
 
-from qvm.qvm.virtual_circuit import VirtualCircuit
+from qvm.virtual_circuit import VirtualCircuit
 
 
 class VirtualizationPass(abc.ABC):
