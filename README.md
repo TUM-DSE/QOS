@@ -29,7 +29,7 @@ This repository contains the source code for the **Quantum Operating System (QOS
 ## Project Structure
 
 ### `/Baseline_Multiprogramming`
-- **Description**: Implements the techniques from the paper ["A Case for Multi-Programming Quantum Computers"](https://dl.acm.org/doi/abs/10.1145/3352460.3358287) by Das et al., MICRO 2019.
+- **Description**: Implements the techniques from the paper ["A Case for Multi-Programming Quantum Computers"](https://dl.acm.org/doi/abs/10.1145/3352460.3358287) by Das et al., MICRO 2019. 
 
 ---
 
@@ -63,15 +63,15 @@ This repository contains the source code for the **Quantum Operating System (QOS
 ---
 
 ### `/FrozenQubits`
-- **Description**: Implements the techniques from the ASPLOS '23 paper ["FrozenQubits: Boosting Fidelity of QAOA by Skipping Hotspot Nodes"](https://dl.acm.org/doi/abs/10.1145/3575693.3575741) by Ayanzadeh et al.
+- **Description**: The [source code](https://zenodo.org/records/7278398) of the ASPLOS '23 paper ["FrozenQubits: Boosting Fidelity of QAOA by Skipping Hotspot Nodes"](https://dl.acm.org/doi/abs/10.1145/3575693.3575741) by Ayanzadeh et al. There are minor adapations to make it work with QOS.
 
 ---
 
 ### `/qos`
-- **Description**: The main source code for the QOS system. Please check internal READMEs.
+- **Description**: The main source code for the QOS system. Please check the internal READMEs.
 ---
 
 ### `/qvm`
-- **Description**: The main source code for the **Quantum Virtual Machine (QVM)** project, as described in the PLDI '25 paper. QVM implements circuit cutting and qubit reuse, which are leveraged by QOS's error mitigator. Please internal READMEs.
+- **Description**: The main source code for the **Quantum Virtual Machine (QVM)** project which implements circuit cutting and qubit reuse, which are leveraged by QOS's error mitigator. Please check the internal READMEs.
 ---
 
